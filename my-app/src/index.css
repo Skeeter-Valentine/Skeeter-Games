@@ -1,23 +1,39 @@
+@import url('https://fonts.googleapis.com/css2?family=IM+Fell+English&display=swap');
+
 :root {
-  --bg-primary: #0f172a;
-  --bg-secondary: #1e293b;
-  --border-color: #334155;
-  --accent-color: #6366f1;
-  --accent-hover: #4f46e5;
-  --text-main: #f8fafc;
-  --text-muted: #94a3b8;
-  --font-main: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  /* Typography */
+  --font-main: "Poor Richard", "IM Fell English", Georgia, serif;
+
+  /* Scheme 3: Neon Retro Arcade Palette */
+  --bg-primary: #0f0c1b;      /* Deep Indigo */
+  --bg-secondary: #1c1830;    /* Dark Plum */
+  --border-color: #2e2650;    /* Muted Violet Border */
+  
+  --accent-pink: #ff2a85;     /* Hot Pink */
+  --accent-pink-hover: #e01f72;
+  
+  --pop-lime: #00ff87;       /* Neon Lime (Success/Minesweeper) */
+  --pop-amber: #ffb703;      /* Bright Amber (Sudoku/Warning) */
+  --pop-cyan: #00f0ff;       /* Neon Cyan (Word games) */
+
+  --text-main: #ffffff;
+  --text-muted: #a39bbe;
 }
 
 * {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
+  font-family: var(--font-main);
 }
 
 body {
   background-color: var(--bg-primary);
   color: var(--text-main);
-  font-family: var(--font-main);
   min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+button, input, select, textarea, a {
+  font-family: var(--font-main);
 }
