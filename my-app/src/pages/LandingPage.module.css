@@ -24,11 +24,26 @@
 }
 
 .logo {
-  font-size: 1.75rem;
+  font-size: 2rem;
   font-weight: 800;
-  color: var(--accent-pink);
-  text-shadow: 0 0 10px rgba(255, 42, 133, 0.4);
+  color: var(--text-main);
   text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  letter-spacing: 1.5px;
+  transition: transform 0.2s ease;
+}
+
+.logo:hover {
+  transform: scale(1.02);
+}
+
+.logoText {
+  background: linear-gradient(135deg, #ffffff 0%, #a39bbe 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: 0 0 15px rgba(255, 42, 133, 0.3);
 }
 
 .streakBadge {

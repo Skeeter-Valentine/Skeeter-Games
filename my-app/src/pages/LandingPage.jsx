@@ -1,6 +1,8 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import styles from './LandingPage.module.css';
+import SkeeterLogo from '../components/SkeeterLogo';
+import logoImg from '../assets/logo.jpg'
 
 const GAMES = [
   {
@@ -43,11 +45,20 @@ export default function LandingPage() {
       {/* Header */}
       <header className={styles.header}>
         <div className={styles.headerContent}>
+          
+          {/* Logo with Option 1 SVG */}
           <Link to="/" className={styles.logo}>
-            🧠 Mind Arcade
-          </Link>
+        {/* 2. Use the imported image in an <img> tag */}
+        <img 
+          src={logoImg} 
+          alt="Skeeter Games Logo" 
+          className={styles.logoImage} 
+        />
+        <span className={styles.logoText}>Skeeter Games</span>
+      </Link>
+
           <div className={styles.streakBadge}>
-            🔥 <span style={{ color: '#f59e0b' }}>5 Day Streak</span>
+            🔥 <span style={{ color: '#ffb703' }}>5 Day Streak</span>
           </div>
         </div>
       </header>
