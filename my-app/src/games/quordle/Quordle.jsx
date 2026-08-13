@@ -1,128 +1,216 @@
 import React, { useState, useEffect } from 'react';
 import Board from './components/Board';
 import Keyboard from './components/Keyboard';
-import { getRandomTargetWords, isValidWord } from './constants/wordBank';
+import { getDailyTargetWords, 
+  getRandomTargetWords, 
+  isValidWord 
+} from './constants/wordBank';
 import './Quordle.css';
+import Navbar from '../../components/Navbar';
 
 const WORD_LENGTH = 5;
 const MAX_ATTEMPTS = 9;
+const TODAY_KEY = `quordle_daily_${new Date().toISOString().split('T')[0]}`;
 
-export default function App() {
+export default function Quordle() {
+  // Mode state: 'daily' (default) or 'practice'
+  const [gameMode, setGameMode] = useState('daily');
+
   const [targetWords, setTargetWords] = useState([]);
   const [guesses, setGuesses] = useState([]);
   const [currentGuess, setCurrentGuess] = useState('');
   const [gameOver, setGameOver] = useState(false);
   const [isInvalidGuess, setIsInvalidGuess] = useState(false);
 
-  useEffect(() => {
-    startNewGame();
-  }, []);
-
-  const startNewGame = () => {
-    setTargetWords(getRandomTargetWords(4));
-    setGuesses([]);
+  // Initialize or Reset Game based on selected mode
+  const initGame = (mode) => {
     setCurrentGuess('');
-    setGameOver(false);
     setIsInvalidGuess(false);
+
+    if (mode === 'daily') {
+      const dailyWords = getDailyTargetWords();
+      setTargetWords(dailyWords);
+
+      // Check if player has saved progress for today
+      const saved = localStorage.getItem(TODAY_KEY);
+      if (saved) {
+        const { guesses: savedGuesses, gameOver: savedGameOver } = JSON.parse(saved);
+        setGuesses(savedGuesses);
+        setGameOver(savedGameOver);
+      } else {
+        setGuesses([]);
+        setGameOver(false);
+      }
+    } else {
+      // Practice Mode: Fresh random words
+      setTargetWords(getRandomTargetWords(4));
+      setGuesses([]);
+      setGameOver(false);
+    }
   };
 
+  // Load Daily Mode on initial load
+  useEffect(() => {
+    initGame('daily');
+  }, []);
+
+  // Save Daily progress to localStorage
+  useEffect(() => {
+    if (gameMode === 'daily' && guesses.length > 0) {
+      localStorage.setItem(
+        TODAY_KEY,
+        JSON.stringify({ guesses, gameOver })
+      );
+    }
+  }, [guesses, gameOver, gameMode]);
+
+  // Handle Mode Switch
+  const handleModeSwitch = (newMode) => {
+    if (newMode === gameMode) return;
+    setGameMode(newMode);
+    initGame(newMode);
+  };
+
+  // Handle Input (from physical or virtual keyboard)
   const handleInput = (key) => {
-    if (gameOver || targetWords.length === 0) return;
+    if (gameOver) return;
 
-    if (key === 'ENTER') {
-      if (currentGuess.length === WORD_LENGTH) {
-        submitGuess();
-      }
-    } else if (key === 'BACKSPACE' || key === 'DELETE') {
-      setIsInvalidGuess(false);
+    const upperKey = key.toUpperCase();
+
+    if (upperKey === 'ENTER') {
+      submitGuess();
+    } else if (upperKey === 'BACKSPACE' || upperKey === 'DELETE') {
       setCurrentGuess((prev) => prev.slice(0, -1));
-    } else if (/^[A-Z]$/.test(key)) {
+      setIsInvalidGuess(false);
+    } else if (/^[A-Z]$/.test(upperKey)) {
       if (currentGuess.length < WORD_LENGTH) {
-        const nextGuess = currentGuess + key;
-        setCurrentGuess(nextGuess);
-
-        if (nextGuess.length === WORD_LENGTH && !isValidWord(nextGuess)) {
-          setIsInvalidGuess(true);
-        } else {
-          setIsInvalidGuess(false);
-        }
+        setCurrentGuess((prev) => prev + upperKey);
+        setIsInvalidGuess(false);
       }
     }
   };
 
+  // Submit Word Guess Logic
+  const submitGuess = () => {
+    if (currentGuess.length !== WORD_LENGTH) {
+      setIsInvalidGuess(true);
+      return;
+    }
+
+    if (!isValidWord(currentGuess)) {
+      setIsInvalidGuess(true);
+      return;
+    }
+
+    const newGuesses = [...guesses, currentGuess.toUpperCase()];
+    setGuesses(newGuesses);
+    setCurrentGuess('');
+
+    // Check if all 4 target words have been guessed
+    const solvedCount = targetWords.filter((target) =>
+      newGuesses.includes(target)
+    ).length;
+
+    if (solvedCount === 4 || newGuesses.length >= MAX_ATTEMPTS) {
+      setGameOver(true);
+    }
+  };
+
+  // Global Physical Keyboard Event Listener
   useEffect(() => {
     const handleKeyDown = (e) => {
-      handleInput(e.key.toUpperCase());
+      if (document.activeElement.tagName === 'BUTTON') {
+        document.activeElement.blur();
+      }
+      handleInput(e.key);
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [currentGuess, gameOver, targetWords]);
 
-  const submitGuess = () => {
-    if (!isValidWord(currentGuess)) {
-      setIsInvalidGuess(true);
-      return;
-    }
+// Calculates letter statuses across ALL 4 game boards for the keyboard
+const getLetterStatuses = () => {
+  const statuses = {};
 
-    const newGuesses = [...guesses, currentGuess];
-    setGuesses(newGuesses);
-    setCurrentGuess('');
-    setIsInvalidGuess(false);
+  // 1. Initialize every letter A-Z with 4 'empty' quadrants
+  const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  for (let char of alphabet) {
+    statuses[char] = ['empty', 'empty', 'empty', 'empty'];
+  }
 
-    const allGuessed = targetWords.every((target) =>
-      newGuesses.includes(target)
-    );
-
-    if (allGuessed || newGuesses.length === MAX_ATTEMPTS) {
-      setGameOver(true);
-    }
-  };
-
-  const getLetterStatuses = () => {
-    const statuses = {};
-    const ALL_KEYS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
-    ALL_KEYS.forEach((char) => {
-      statuses[char] = ['', '', '', ''];
-    });
-
+  // 2. Evaluate guessed letters against each of the 4 target words
+  targetWords.forEach((target, boardIdx) => {
     guesses.forEach((guess) => {
-      for (let i = 0; i < guess.length; i++) {
-        const char = guess[i];
+      for (let i = 0; i < WORD_LENGTH; i++) {
+        const letter = guess[i];
+        const currentStatus = statuses[letter][boardIdx];
 
-        targetWords.forEach((targetWord, boardIdx) => {
-          let currentStatus = statuses[char][boardIdx];
+        // Don't downgrade a green ('correct') status
+        if (currentStatus === 'correct') continue;
 
-          let newStatus = 'absent';
-          if (targetWord[i] === char) {
-            newStatus = 'correct';
-          } else if (targetWord.includes(char)) {
-            newStatus = 'present';
-          }
-
-          if (currentStatus === 'correct') return;
-          if (currentStatus === 'present' && newStatus === 'absent') return;
-
-          statuses[char][boardIdx] = newStatus;
-        });
+        if (target[i] === letter) {
+          statuses[letter][boardIdx] = 'correct';
+        } else if (target.includes(letter)) {
+          statuses[letter][boardIdx] = 'present';
+        } else {
+          // Letter is not in this board's target word
+          statuses[letter][boardIdx] = 'absent';
+        }
       }
     });
+  });
 
-    return statuses;
-  };
+  return statuses;
+};
 
   return (
     <div className="game-container">
-      <div className="header">
+      <Navbar />
+      <header className="header">
         <h1 className="game-title">SKE4DLE</h1>
-        <div className="sub-header">
-          <span>Attempts: {guesses.length}/{MAX_ATTEMPTS}</span>
-          <button className="new-game-btn" onClick={startNewGame}>
-            New Game
+
+        {/* Mode Toggle Controls */}
+        <div className="mode-toggle">
+          <button
+            className={`mode-btn ${gameMode === 'daily' ? 'active' : ''}`}
+            onClick={(e) => {
+              e.currentTarget.blur();
+              handleModeSwitch('daily');
+            }}
+          >
+            Daily
+          </button>
+          <button
+            className={`mode-btn ${gameMode === 'practice' ? 'active' : ''}`}
+            onClick={(e) => {
+              e.currentTarget.blur();
+              handleModeSwitch('practice');
+            }}
+          >
+            Practice
           </button>
         </div>
-      </div>
 
+        <div className="sub-header">
+          <span>Attempts: {guesses.length}/{MAX_ATTEMPTS}</span>
+          {gameMode === 'practice' ? (
+            <button
+              className="new-game-btn"
+              onClick={(e) => {
+                e.currentTarget.blur();
+                initGame('practice');
+              }}
+            >
+              New Game
+            </button>
+          ) : (
+            <span className="daily-badge">Daily Puzzle</span>
+          )}
+        </div>
+      </header>
+
+      {/* 2x2 Game Boards */}
       <div className="quordle-grid">
         {targetWords.map((target, boardIdx) => (
           <Board
@@ -142,6 +230,7 @@ export default function App() {
         </div>
       )}
 
+      {/* On-screen Keyboard */}
       <Keyboard
         onKeyPress={handleInput}
         letterStatuses={getLetterStatuses()}

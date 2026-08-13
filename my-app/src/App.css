@@ -182,3 +182,38 @@
     border-right-color: var(--border);
   }
 }
+
+/* src/index.css */
+
+:root {
+  /* Dark Mode Base */
+  --bg-dark: #0d0f12;
+  --surface-dark: #161a22;
+  --surface-border: #30363d;
+
+  /* Neon Accents */
+  --neon-green: #39ff14;
+  --neon-pink: #ff2a85;
+  
+  /* Text & States */
+  --text-main: #f0f6fc;
+  --text-muted: #8b949e;
+  
+  /* Status Colors for Wordle/Quordle */
+  --color-correct: var(--neon-green);
+  --color-present: var(--neon-pink);
+  --color-absent: #21262d;
+
+  /* Neon Glow Effects */
+  --glow-green: 0 0 10px rgba(57, 255, 20, 0.4);
+  --glow-pink: 0 0 10px rgba(255, 42, 133, 0.4);
+}
+
+/* Global Background and Text Color */
+body {
+  background-color: var(--bg-dark);
+  color: var(--text-main);
+  font-family: system-ui, -apple-system, sans-serif;
+  margin: 0;
+  padding: 0;
+}

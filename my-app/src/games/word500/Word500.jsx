@@ -19,7 +19,12 @@ export default function Word500() {
   const [message, setMessage] = useState('');
 
   // Start a new game
-  const startNewGame = () => {
+  const startNewGame = (e) => {
+
+    if (e && e.target) {
+    e.target.blur();
+  }
+  
     const randomWord = WORD_LIST[Math.floor(Math.random() * WORD_LIST.length)];
     setTargetWord(randomWord);
     setGuesses([]);

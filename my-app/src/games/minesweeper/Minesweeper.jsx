@@ -1,4 +1,5 @@
 import React, {useState, useEffect} from 'react';
+import Navbar from '../../components/Navbar';
 // import { Link } from 'react-router-dom';
 // import styles from './Minesweeper.module.css';
 
@@ -326,6 +327,7 @@ export default function Minesweeper() {
 
   return (
     <div style={styles.container}>
+    <Navbar title="SKE4DLE" />
       <div style={styles.gameWindow}>
         {/* Header */}
         <div style={styles.header}>
