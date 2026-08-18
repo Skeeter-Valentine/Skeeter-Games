@@ -16,10 +16,25 @@ export default function Keyboard({ onKeyPress, letterStatuses }) {
             const keyLabel = key === 'BACKSPACE' ? '⌫' : key;
             const statuses = letterStatuses[key] || ['', '', '', ''];
 
+            // Check if letter has been guessed and is absent on ALL 4 boards
+            const isAbsentAll =
+              !isWide &&
+              statuses.length === 4 &&
+              statuses.every((status) => status === 'absent');
+
+            // Build dynamic button classes
+            const keyClasses = [
+              'key',
+              isWide ? 'wide' : '',
+              isAbsentAll ? 'absent-all' : ''
+            ]
+              .filter(Boolean)
+              .join(' ');
+
             return (
               <button
                 key={key}
-                className={`key ${isWide ? 'wide' : ''}`}
+                className={keyClasses}
                 onClick={() => onKeyPress(key)}
               >
                 {!isWide && (

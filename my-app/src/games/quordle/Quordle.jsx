@@ -3,7 +3,8 @@ import Board from './components/Board';
 import Keyboard from './components/Keyboard';
 import { getDailyTargetWords, 
   getRandomTargetWords, 
-  isValidWord 
+  isValidWord,
+  getLocalDateString 
 } from './constants/wordBank';
 import './Quordle.css';
 import Navbar from '../../components/Navbar';
@@ -28,11 +29,20 @@ export default function Quordle() {
     setIsInvalidGuess(false);
 
     if (mode === 'daily') {
-      const dailyWords = getDailyTargetWords();
+
+      const todayStr = getLocalDateString();
+      const todayKey = `quordle_daily_${todayStr}`;
+      Object.keys(localStorage).forEach((key) => {
+        if (key.startsWith('quordle_daily_') && key !== todayKey) {
+          localStorage.removeItem(key);
+        }
+      });
+
+      const dailyWords = getDailyTargetWords(todayStr);
       setTargetWords(dailyWords);
 
       // Check if player has saved progress for today
-      const saved = localStorage.getItem(TODAY_KEY);
+      const saved = localStorage.getItem(todayKey);
       if (saved) {
         const { guesses: savedGuesses, gameOver: savedGameOver } = JSON.parse(saved);
         setGuesses(savedGuesses);
@@ -49,27 +59,35 @@ export default function Quordle() {
     }
   };
 
-  // Load Daily Mode on initial load
+  // 1. Initial Load & Visibility Change (Resets board automatically if day rolled over)
   useEffect(() => {
-    initGame('daily');
-  }, []);
+    initGame(gameMode);
 
-  // Save Daily progress to localStorage
+    // Re-check date when user tabs back into the page
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && gameMode === 'daily') {
+        initGame('daily');
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, [gameMode]);
+
+ // 2. Save Daily Progress cleanly under today's date key
   useEffect(() => {
-    if (gameMode === 'daily' && guesses.length > 0) {
-      localStorage.setItem(
-        TODAY_KEY,
-        JSON.stringify({ guesses, gameOver })
-      );
+    if (gameMode === 'daily') {
+      const todayKey = `quordle_daily_${getLocalDateString()}`;
+      
+      // Only write to localStorage if user has made at least one guess
+      if (guesses.length > 0) {
+        localStorage.setItem(
+          todayKey,
+          JSON.stringify({ guesses, gameOver })
+        );
+      }
     }
   }, [guesses, gameOver, gameMode]);
-
-  // Handle Mode Switch
-  const handleModeSwitch = (newMode) => {
-    if (newMode === gameMode) return;
-    setGameMode(newMode);
-    initGame(newMode);
-  };
 
   // Handle Input (from physical or virtual keyboard)
   const handleInput = (key) => {
@@ -164,6 +182,13 @@ const getLetterStatuses = () => {
   return statuses;
 };
 
+// Handler to switch between 'daily' and 'practice' modes
+const handleModeSwitch = (newMode) => {
+  if (newMode === gameMode) return; // Ignore if already in this mode
+  setGameMode(newMode);
+  initGame(newMode); // Resets board and loads target words for the selected mode
+};
+
   return (
     <div className="game-container">
       <Navbar />
@@ -174,19 +199,13 @@ const getLetterStatuses = () => {
         <div className="mode-toggle">
           <button
             className={`mode-btn ${gameMode === 'daily' ? 'active' : ''}`}
-            onClick={(e) => {
-              e.currentTarget.blur();
-              handleModeSwitch('daily');
-            }}
+            onClick={() => handleModeSwitch('daily')}
           >
             Daily
           </button>
           <button
             className={`mode-btn ${gameMode === 'practice' ? 'active' : ''}`}
-            onClick={(e) => {
-              e.currentTarget.blur();
-              handleModeSwitch('practice');
-            }}
+            onClick={() => handleModeSwitch('practice')}
           >
             Practice
           </button>

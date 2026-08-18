@@ -10,6 +10,7 @@
   /* Neon Accents */
   --neon-green: #39ff14;
   --neon-pink: #ff2a85;
+  --neon-yellow: #ffff00;
   
   /* Text & Key Defaults */
   --text-main: #f0f6fc;
@@ -18,7 +19,7 @@
 
   /* Wordle/Quordle Statuses */
   --color-correct: var(--neon-green);
-  --color-present: var(--neon-pink);
+  --color-present: var(--neon-yellow);
   --color-absent: #21262d;
 
   /* Neon Glow Effects */
@@ -237,7 +238,7 @@ body {
 .quadrant.present, .tile.present {
   background-color: var(--color-present);
   border-color: var(--color-present);
-  color: #fff;
+  color: #000000;
 }
 
 .quadrant.absent, .tile.absent {
@@ -305,4 +306,16 @@ body {
   font-weight: bold;
   text-transform: uppercase;
   letter-spacing: 1px;
+}
+
+/* Entire key styling when absent across all 4 boards */
+.key.absent-all {
+  background-color: #12151a !important; /* Very dark background */
+  border-color: #21262d !important;
+  color: #484f58 !important;            /* Dimmed out grey text */
+  opacity: 0.5;                          /* Visual indicator that key is eliminated */
+}
+
+.key.absent-all .quadrant {
+  background-color: #12151a !important;
 }

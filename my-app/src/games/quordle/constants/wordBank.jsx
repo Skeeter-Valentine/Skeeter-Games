@@ -1,4 +1,4 @@
-import wordData from './words.json';
+import wordData from '../../../constants/words.json'
 
 // Set lookups for O(1) performance
 const ANSWERS_SET = new Set(wordData.answers);
@@ -51,6 +51,16 @@ export function getDailyTargetWords(dateOverride = null) {
 
   return selectedWords;
 }
+
+// Helper to get local date in "YYYY-MM-DD" format
+export function getLocalDateString() {
+  const d = new Date();
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
 /**
  * Gets 'count' unique random target words from the answer bank.
  */
