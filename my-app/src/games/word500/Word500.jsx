@@ -1,355 +1,227 @@
-import React, { useState, useEffect } from 'react';
+// src/games/word500/Word500.jsx
+import React, { useState, useEffect, useCallback } from 'react';
+import Board from './components/Board';
+import Keyboard from './components/Keyboard';
+import StatsModal from './components/StatsModal';
+import { getRandomTargetWord, getDailyTargetWord, isValidWord } from './constants/wordBank';
+import './Word500.css';
+import Navbar from '../../components/Navbar';
 
-const WORD_LENGTH = 5;
 const MAX_ATTEMPTS = 8;
 
-// A sample list of 5-letter target words
-const WORD_LIST = [
-  'REACT', 'PLANT', 'SHARK', 'BRAIN', 'CLOUD',
-  'GRAPE', 'LIGHT', 'MONEY', 'OCEAN', 'FLAME',
-  'TRAIN', 'SMART', 'GHOST', 'BREAD', 'MUSIC',
-  'CANDY', 'WATER', 'DREAM', 'EARTH', 'FRUIT'
-];
+const DEFAULT_STATS = {
+  played: 0,
+  wins: 0,
+  currentStreak: 0,
+  maxStreak: 0,
+  guessDistribution: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0 },
+  lastPlayedDate: null
+};
 
 export default function Word500() {
+  const [gameMode, setGameMode] = useState('daily');
   const [targetWord, setTargetWord] = useState('');
   const [guesses, setGuesses] = useState([]);
   const [currentGuess, setCurrentGuess] = useState('');
-  const [gameStatus, setGameStatus] = useState('IN_PROGRESS'); // IN_PROGRESS, WON, LOST
+  const [gameOver, setGameOver] = useState(false);
   const [message, setMessage] = useState('');
-
-  // Start a new game
-  const startNewGame = (e) => {
-
-    if (e && e.target) {
-    e.target.blur();
-  }
   
-    const randomWord = WORD_LIST[Math.floor(Math.random() * WORD_LIST.length)];
-    setTargetWord(randomWord);
-    setGuesses([]);
-    setCurrentGuess('');
-    setGameStatus('IN_PROGRESS');
-    setMessage('');
-  };
+  // Stats state
+  const [stats, setStats] = useState(DEFAULT_STATS);
+  const [isStatsOpen, setIsStatsOpen] = useState(false);
 
+  const todayStr = new Date().toISOString().split('T')[0];
+
+  // Load stats from localStorage
   useEffect(() => {
-    startNewGame();
+    const savedStats = localStorage.getItem('skeedle500_stats');
+    if (savedStats) {
+      setStats(JSON.parse(savedStats));
+    }
   }, []);
 
-  // Calculate Green, Yellow, and Red counts for a guess
-  const evaluateGuess = (guess, target) => {
-    let green = 0;
-    let yellow = 0;
+  const updateStatsOnGameEnd = (isWin, attemptCount) => {
+    setStats((prev) => {
+      const isNewDay = prev.lastPlayedDate !== todayStr;
+      if (!isNewDay) return prev; // Avoid duplicate recording for the same day
 
-    const targetArr = target.split('');
-    const guessArr = guess.split('');
+      const newPlayed = prev.played + 1;
+      const newWins = isWin ? prev.wins + 1 : prev.wins;
+      const newCurrentStreak = isWin ? prev.currentStreak + 1 : 0;
+      const newMaxStreak = Math.max(prev.maxStreak, newCurrentStreak);
 
-    const targetVisited = Array(WORD_LENGTH).fill(false);
-    const guessVisited = Array(WORD_LENGTH).fill(false);
-
-    // 1. First Pass: Find exact matches (Green)
-    for (let i = 0; i < WORD_LENGTH; i++) {
-      if (guessArr[i] === targetArr[i]) {
-        green++;
-        targetVisited[i] = true;
-        guessVisited[i] = true;
+      const newDist = { ...prev.guessDistribution };
+      if (isWin && attemptCount) {
+        newDist[attemptCount] = (newDist[attemptCount] || 0) + 1;
       }
-    }
 
-    // 2. Second Pass: Find misplaced matches (Yellow)
-    for (let i = 0; i < WORD_LENGTH; i++) {
-      if (!guessVisited[i]) {
-        for (let j = 0; j < WORD_LENGTH; j++) {
-          if (!targetVisited[j] && guessArr[i] === targetArr[j]) {
-            yellow++;
-            targetVisited[j] = true;
-            break;
-          }
-        }
-      }
-    }
+      const updated = {
+        played: newPlayed,
+        wins: newWins,
+        currentStreak: newCurrentStreak,
+        maxStreak: newMaxStreak,
+        guessDistribution: newDist,
+        lastPlayedDate: todayStr
+      };
 
-    const red = WORD_LENGTH - (green + yellow);
-    return { green, yellow, red };
+      localStorage.setItem('skeedle500_stats', JSON.stringify(updated));
+      return updated;
+    });
   };
 
-  // Keyboard input handlers
+  const initGame = useCallback((mode) => {
+    setCurrentGuess('');
+    setMessage('');
+
+    if (mode === 'daily') {
+      const dailyWord = getDailyTargetWord(todayStr);
+      setTargetWord(dailyWord);
+
+      const saved = localStorage.getItem(`skeedle500_daily_${todayStr}`);
+      if (saved) {
+        const { savedGuesses, isFinished } = JSON.parse(saved);
+        setGuesses(savedGuesses);
+        setGameOver(isFinished);
+        if (isFinished) {
+          const won = savedGuesses[savedGuesses.length - 1] === dailyWord;
+          setMessage(won ? 'Daily Completed!' : `The word was ${dailyWord}`);
+        }
+      } else {
+        setGuesses([]);
+        setGameOver(false);
+      }
+    } else {
+      setTargetWord(getRandomTargetWord());
+      setGuesses([]);
+      setGameOver(false);
+    }
+  }, [todayStr]);
+
+  useEffect(() => {
+    initGame(gameMode);
+  }, [gameMode, initGame]);
+
+  const handleKeyPress = useCallback(
+    (key) => {
+      if (gameOver) return;
+
+      const upperKey = key.toUpperCase();
+
+      if (upperKey === 'BACKSPACE' || upperKey === 'DELETE') {
+        setCurrentGuess((prev) => prev.slice(0, -1));
+        setMessage('');
+      } else if (upperKey === 'ENTER') {
+        if (currentGuess.length !== 5) {
+          setMessage('Word must be 5 letters');
+          return;
+        }
+
+        if (!isValidWord(currentGuess)) {
+          setMessage('Not in word list');
+          return;
+        }
+
+        const updatedGuesses = [...guesses, currentGuess];
+        setGuesses(updatedGuesses);
+        setCurrentGuess('');
+        setMessage('');
+
+        const isWin = currentGuess === targetWord;
+        const isLoss = updatedGuesses.length >= MAX_ATTEMPTS;
+
+        if (isWin || isLoss) {
+          setGameOver(true);
+          setMessage(isWin ? 'Great job!' : `Game Over! The word was ${targetWord}`);
+
+          if (gameMode === 'daily') {
+            updateStatsOnGameEnd(isWin, updatedGuesses.length);
+            setTimeout(() => setIsStatsOpen(true), 1200);
+          }
+        }
+
+        if (gameMode === 'daily') {
+          localStorage.setItem(
+            `skeedle500_daily_${todayStr}`,
+            JSON.stringify({
+              savedGuesses: updatedGuesses,
+              isFinished: isWin || isLoss,
+            })
+          );
+        }
+      } else if (currentGuess.length < 5 && /^[A-Z]$/.test(upperKey)) {
+        setCurrentGuess((prev) => prev + upperKey);
+        setMessage('');
+      }
+    },
+    [currentGuess, gameOver, guesses, targetWord, gameMode, todayStr]
+  );
+
   useEffect(() => {
     const handleKeyDown = (e) => {
-      if (gameStatus !== 'IN_PROGRESS') return;
-
-      const key = e.key.toUpperCase();
-
-      if (key === 'ENTER') {
-        submitGuess();
-      } else if (key === 'BACKSPACE') {
-        setCurrentGuess((prev) => prev.slice(0, -1));
-      } else if (/^[A-Z]$/.test(key) && currentGuess.length < WORD_LENGTH) {
-        setCurrentGuess((prev) => prev + key);
-      }
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
+      handleKeyPress(e.key);
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [currentGuess, gameStatus, targetWord]);
-
-  const handleVirtualKey = (key) => {
-    if (gameStatus !== 'IN_PROGRESS') return;
-
-    if (key === 'ENTER') {
-      submitGuess();
-    } else if (key === 'DELETE') {
-      setCurrentGuess((prev) => prev.slice(0, -1));
-    } else if (currentGuess.length < WORD_LENGTH) {
-      setCurrentGuess((prev) => prev + key);
-    }
-  };
-
-  const submitGuess = () => {
-    if (currentGuess.length !== WORD_LENGTH) {
-      setMessage('Word must be 5 letters!');
-      setTimeout(() => setMessage(''), 2000);
-      return;
-    }
-
-    const result = evaluateGuess(currentGuess, targetWord);
-    const newGuesses = [...guesses, { word: currentGuess, ...result }];
-    setGuesses(newGuesses);
-    setCurrentGuess('');
-
-    if (result.green === WORD_LENGTH) {
-      setGameStatus('WON');
-      setMessage('🎉 Congratulations! You guessed the word!');
-    } else if (newGuesses.length >= MAX_ATTEMPTS) {
-      setGameStatus('LOST');
-      setMessage(`Game Over! The word was: ${targetWord}`);
-    }
-  };
-
-  // Inline CSS Styles
-  const styles = {
-    container: {
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      minHeight: '100vh',
-      backgroundColor: '#121213',
-      color: '#ffffff',
-      fontFamily: 'Arial, sans-serif',
-      padding: '20px',
-      boxSizing: 'border-box',
-    },
-    header: {
-      fontSize: '32px',
-      fontWeight: 'bold',
-      letterSpacing: '2px',
-      marginBottom: '10px',
-      borderBottom: '1px solid #3a3a3c',
-      paddingBottom: '10px',
-      width: '100%',
-      maxWidth: '500px',
-      textAlign: 'center',
-    },
-    board: {
-      display: 'flex',
-      flexDirection: 'column',
-      gap: '8px',
-      marginBottom: '20px',
-      width: '100%',
-      maxWidth: '420px',
-    },
-    row: {
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      gap: '10px',
-    },
-    lettersContainer: {
-      display: 'flex',
-      gap: '5px',
-    },
-    tile: {
-      width: '45px',
-      height: '45px',
-      border: '2px solid #3a3a3c',
-      backgroundColor: '#121213',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      fontSize: '20px',
-      fontWeight: 'bold',
-      borderRadius: '4px',
-      textTransform: 'uppercase',
-    },
-    statsContainer: {
-      display: 'flex',
-      gap: '6px',
-      minWidth: '130px',
-    },
-    statBadge: (bgColor) => ({
-      backgroundColor: bgColor,
-      color: '#fff',
-      padding: '4px 8px',
-      borderRadius: '4px',
-      fontSize: '14px',
-      fontWeight: 'bold',
-      display: 'flex',
-      alignItems: 'center',
-      gap: '4px',
-    }),
-    message: {
-      minHeight: '24px',
-      fontSize: '18px',
-      fontWeight: 'bold',
-      color: '#538d4e',
-      marginBottom: '15px',
-      textAlign: 'center',
-    },
-    resetBtn: {
-      backgroundColor: '#538d4e',
-      color: '#fff',
-      border: 'none',
-      padding: '10px 20px',
-      fontSize: '16px',
-      fontWeight: 'bold',
-      borderRadius: '4px',
-      cursor: 'pointer',
-      marginBottom: '20px',
-    },
-    keyboard: {
-      display: 'flex',
-      flexDirection: 'column',
-      gap: '8px',
-      width: '100%',
-      maxWidth: '500px',
-    },
-    kbRow: {
-      display: 'flex',
-      justifyContent: 'center',
-      gap: '6px',
-    },
-    keyBtn: {
-      backgroundColor: '#818384',
-      color: '#ffffff',
-      border: 'none',
-      borderRadius: '4px',
-      padding: '12px 10px',
-      fontWeight: 'bold',
-      cursor: 'pointer',
-      fontSize: '14px',
-      flex: 1,
-      maxWidth: '40px',
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
-    },
-    wideKeyBtn: {
-      backgroundColor: '#818384',
-      color: '#ffffff',
-      border: 'none',
-      borderRadius: '4px',
-      padding: '12px 10px',
-      fontWeight: 'bold',
-      cursor: 'pointer',
-      fontSize: '12px',
-      flex: 1.5,
-      maxWidth: '65px',
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
-    },
-  };
-
-  const keyboardRows = [
-    ['Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P'],
-    ['A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L'],
-    ['ENTER', 'Z', 'X', 'C', 'V', 'B', 'N', 'M', 'DELETE'],
-  ];
+  }, [handleKeyPress]);
 
   return (
-    <div style={styles.container}>
-      <div style={styles.header}>WORD500</div>
+    <div className="word500-container">
+      <Navbar />
+      <div className="skeedle-header">
+        <h2 className="skeedle-title">Skeedle500</h2>
 
-      <div style={styles.message}>{message}</div>
+        <div className="header-actions">
+          <button 
+            className="stats-btn" 
+            onClick={() => setIsStatsOpen(true)}
+            aria-label="Statistics"
+          >
+            STATS
+          </button>
+          
+          <div className="mode-toggle">
+            <button
+              className={`mode-btn ${gameMode === 'daily' ? 'active' : ''}`}
+              onClick={() => setGameMode('daily')}
+            >
+              Daily
+            </button>
+            <button
+              className={`mode-btn ${gameMode === 'practice' ? 'active' : ''}`}
+              onClick={() => setGameMode('practice')}
+            >
+              Practice
+            </button>
+          </div>
+        </div>
+      </div>
 
-      {gameStatus !== 'IN_PROGRESS' && (
-        <button style={styles.resetBtn} onClick={startNewGame}>
-          Play Again
-        </button>
+      {gameMode === 'practice' && (
+        <div className="practice-actions">
+          <button className="new-game-btn" onClick={() => initGame('practice')}>
+            Next Word
+          </button>
+        </div>
       )}
 
-      {/* Game Board */}
-      <div style={styles.board}>
-        {Array.from({ length: MAX_ATTEMPTS }).map((_, rIdx) => {
-          const guessData = guesses[rIdx];
-          const isCurrentRow = rIdx === guesses.length && gameStatus === 'IN_PROGRESS';
+      {message && <div className="word500-toast">{message}</div>}
 
-          let rowLetters = Array(WORD_LENGTH).fill('');
-          if (guessData) {
-            rowLetters = guessData.word.split('');
-          } else if (isCurrentRow) {
-            rowLetters = currentGuess
-              .padEnd(WORD_LENGTH, ' ')
-              .split('')
-              .map((char) => (char === ' ' ? '' : char));
-          }
+      <Board
+        guesses={guesses}
+        currentGuess={currentGuess}
+        maxAttempts={MAX_ATTEMPTS}
+        targetWord={targetWord}
+      />
 
-          return (
-            <div key={rIdx} style={styles.row}>
-              {/* Letters */}
-              <div style={styles.lettersContainer}>
-                {rowLetters.map((letter, cIdx) => (
-                  <div key={cIdx} style={styles.tile}>
-                    {letter}
-                  </div>
-                ))}
-              </div>
+      <Keyboard onKeyPress={handleKeyPress} />
 
-              {/* Feedback Badges */}
-              <div style={styles.statsContainer}>
-                {guessData ? (
-                  <>
-                    <span style={styles.statBadge('#538d4e')}>
-                      🟢 {guessData.green}
-                    </span>
-                    <span style={styles.statBadge('#b59f3b')}>
-                      🟡 {guessData.yellow}
-                    </span>
-                    <span style={styles.statBadge('#3a3a3c')}>
-                      🔴 {guessData.red}
-                    </span>
-                  </>
-                ) : (
-                  <span style={{ color: '#3a3a3c', fontSize: '14px' }}>
-                    ---
-                  </span>
-                )}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      {/* On-screen Keyboard */}
-      <div style={styles.keyboard}>
-        {keyboardRows.map((row, rIdx) => (
-          <div key={rIdx} style={styles.kbRow}>
-            {row.map((key) => {
-              const isWide = key === 'ENTER' || key === 'DELETE';
-              return (
-                <button
-                  key={key}
-                  style={isWide ? styles.wideKeyBtn : styles.keyBtn}
-                  onClick={() => handleVirtualKey(key)}
-                >
-                  {key}
-                </button>
-              );
-            })}
-          </div>
-        ))}
-      </div>
+      <StatsModal
+        isOpen={isStatsOpen}
+        onClose={() => setIsStatsOpen(false)}
+        stats={stats}
+      />
     </div>
   );
 }

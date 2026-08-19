@@ -1,0 +1,424 @@
+/* src/games/word500/Word500.css */
+
+:root {
+  --neon-green: #39ff14;
+  --neon-pink: #ff2a85;
+  --neon-yellow: #ffff00;
+}
+
+/* Header container stack */
+.skeedle-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  max-width: 352px;
+  margin: 0 auto 16px auto;
+}
+
+.skeedle-title {
+  color: var(--neon-pink, #ff2a85);
+  font-size: 2rem;
+  font-weight: 900;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin: 0 0 12px 0;
+  text-shadow: 0 0 12px rgba(255, 42, 133, 0.5);
+}
+
+/* Controls container placed under title */
+.sub-header-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+/* Mode Toggle Container */
+.mode-toggle {
+  display: flex;
+  background-color: var(--surface-dark, #161a22);
+  border: 1px solid var(--surface-border, #30363d);
+  border-radius: 8px;
+  padding: 3px;
+  gap: 2px;
+}
+
+/* Toggle Buttons */
+.mode-btn {
+  background: transparent;
+  border: none;
+  color: #8b949e;
+  padding: 6px 14px;
+  border-radius: 6px;
+  font-weight: bold;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.mode-btn:hover {
+  color: #ffffff;
+}
+
+.mode-btn.active {
+  background-color: var(--neon-pink, #ff2a85);
+  color: #ffffff;
+  box-shadow: 0 0 8px rgba(255, 42, 133, 0.4);
+}
+
+/* Text STATS Button */
+.stats-text-btn {
+  background: var(--surface-dark, #161a22);
+  border: 1px solid var(--surface-border, #30363d);
+  color: #ffffff;
+  padding: 6px 14px;
+  border-radius: 8px;
+  font-weight: bold;
+  font-size: 0.8rem;
+  letter-spacing: 1px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.stats-text-btn:hover {
+  background-color: #21262d;
+  border-color: var(--neon-pink, #ff2a85);
+  color: var(--neon-pink, #ff2a85);
+}
+
+/* Neon styled New Game button */
+.new-game-btn {
+  background-color: var(--surface-dark, #161a22);
+  border: 2px solid var(--neon-pink, #ff2a85);
+  color: #ffffff;
+  padding: 6px 14px;
+  border-radius: 6px;
+  font-weight: bold;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 0 8px rgba(255, 42, 133, 0.2);
+}
+
+.new-game-btn:hover {
+  background-color: rgba(255, 42, 133, 0.15);
+  box-shadow: 0 0 12px rgba(255, 42, 133, 0.5);
+  transform: translateY(-1px);
+}
+
+.new-game-btn:active {
+  transform: translateY(0);
+}
+
+.word500-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background-color: var(--bg-dark, #0d0f12);
+  color: var(--text-main, #f0f6fc);
+  padding: 20px;
+}
+
+.word500-board {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.word500-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.word500-tiles {
+  display: flex;
+  gap: 6px;
+}
+
+.word500-tile {
+  width: 44px;
+  height: 44px;
+  border: 2px solid var(--surface-border, #30363d);
+  background-color: var(--surface-dark, #161a22);
+  color: var(--text-main, #f0f6fc);
+  font-size: 1.25rem;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-transform: uppercase;
+  border-radius: 4px;
+}
+
+/* Feedback Score Boxes Container */
+.word500-score-boxes {
+  display: flex;
+  gap: 6px;
+  margin-left: 12px;
+}
+
+/* Base style matching .word500-tile */
+.score-box {
+  width: 44px;
+  height: 44px;
+  border: 2px solid var(--surface-border, #30363d);
+  background-color: var(--surface-dark, #161a22);
+  color: #ffffff;
+  font-size: 1.25rem;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  box-sizing: border-box;
+  transition: all 0.2s ease;
+}
+
+/* Neon Green Box */
+.score-box.q-green.active {
+  background-color: rgba(57, 255, 20, 0.15);
+  border-color: var(--neon-green);
+  color: var(--neon-green);
+  box-shadow: 0 0 10px rgba(57, 255, 20, 0.4), inset 0 0 4px rgba(57, 255, 20, 0.2);
+}
+
+/* Neon Yellow Box */
+.score-box.q-yellow.active {
+  background-color: rgba(255, 255, 0, 0.15);
+  border-color: var(--neon-yellow);
+  color: var(--neon-yellow);
+  box-shadow: 0 0 10px rgba(255, 255, 0, 0.4), inset 0 0 4px rgba(255, 255, 0, 0.2);
+}
+
+/* Neon Pink Box */
+.score-box.q-pink.active {
+  background-color: rgba(255, 42, 133, 0.15);
+  border-color: var(--neon-pink);
+  color: var(--neon-pink);
+  box-shadow: 0 0 10px rgba(255, 42, 133, 0.4), inset 0 0 4px rgba(255, 42, 133, 0.2);
+}
+
+/* Keyboard Container - matches full width of board */
+.word500-keyboard {
+  width: 100%;
+  max-width: 352px; /* Matches total board width (tiles + score badges) */
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0 auto;
+}
+
+/* Keyboard Rows - stretched to flush edges */
+.word500-keyboard-row {
+  display: flex;
+  width: 100%;
+  gap: 4px;
+}
+
+/* Key Base Styles */
+.word500-key {
+  flex: 1;
+  height: 52px;
+  background-color: var(--surface-dark, #161a22); /* Same as empty tile background */
+  border: 2px solid var(--surface-border, #30363d); /* Same as empty tile border */
+  border-radius: 4px;
+  color: #ffffff; /* White text */
+  font-weight: bold;
+  font-size: 0.95rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  user-select: none;
+  padding: 0;
+  transition: background-color 0.15s ease, border-color 0.15s ease, transform 0.05s ease;
+}
+
+.word500-key:hover {
+  background-color: #21262d;
+  border-color: #8b949e;
+}
+
+.word500-key:active {
+  transform: scale(0.96);
+}
+
+/* Wide keys (ENTER / BACKSPACE) */
+.word500-key.wide {
+  flex: 1.5;
+  font-size: 0.75rem;
+}
+
+/* Mode Toggle Container */
+.mode-toggle {
+  display: flex;
+  background-color: var(--surface-dark, #161a22);
+  border: 1px solid var(--surface-border, #30363d);
+  border-radius: 8px;
+  padding: 3px;
+  gap: 2px;
+}
+
+/* Toggle Buttons */
+.mode-btn {
+  background: transparent;
+  border: none;
+  color: #8b949e;
+  padding: 6px 14px;
+  border-radius: 6px;
+  font-weight: bold;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.mode-btn:hover {
+  color: #ffffff;
+}
+
+.mode-btn.active {
+  background-color: var(--neon-pink, #ff2a85);
+  color: #ffffff;
+  box-shadow: 0 0 8px rgba(255, 42, 133, 0.4);
+}
+
+/* Practice New Game Row */
+.practice-actions {
+  display: flex;
+  justify-content: flex-end;
+  width: 100%;
+  max-width: 352px;
+  margin: 0 auto 12px auto;
+}
+
+/* Header Actions */
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.stats-btn {
+  background: var(--surface-dark, #161a22);
+  border: 1px solid var(--surface-border, #30363d);
+  border-radius: 6px;
+  padding: 5px 10px;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: background-color 0.2s ease;
+}
+
+.stats-btn:hover {
+  background-color: #21262d;
+}
+
+/* Modal Overlay */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+/* Modal Content Box */
+.modal-content {
+  background-color: var(--surface-dark, #161a22);
+  border: 2px solid var(--neon-pink, #ff2a85);
+  border-radius: 12px;
+  padding: 24px;
+  width: 90%;
+  max-width: 360px;
+  position: relative;
+  color: #ffffff;
+  box-shadow: 0 0 20px rgba(255, 42, 133, 0.3);
+  text-align: center;
+}
+
+.modal-close {
+  position: absolute;
+  top: 12px;
+  right: 16px;
+  background: none;
+  border: none;
+  color: #8b949e;
+  font-size: 1.5rem;
+  cursor: pointer;
+}
+
+.modal-close:hover {
+  color: #ffffff;
+}
+
+/* Stats Summary Grid */
+.stats-grid {
+  display: flex;
+  justify-content: space-between;
+  margin: 16px 0;
+}
+
+.stat-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+}
+
+.stat-value {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: var(--neon-pink, #ff2a85);
+}
+
+.stat-label {
+  font-size: 0.7rem;
+  color: #8b949e;
+  text-transform: uppercase;
+  margin-top: 4px;
+}
+
+/* Guess Distribution Bars */
+.guess-distribution {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 12px;
+}
+
+.dist-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dist-num {
+  font-weight: bold;
+  width: 12px;
+  font-size: 0.85rem;
+}
+
+.dist-bar-container {
+  flex: 1;
+  background-color: #21262d;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.dist-bar {
+  background-color: var(--neon-pink, #ff2a85);
+  color: #ffffff;
+  font-size: 0.75rem;
+  font-weight: bold;
+  padding: 2px 6px;
+  text-align: right;
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
