@@ -26,6 +26,33 @@
   text-shadow: 0 0 12px rgba(255, 42, 133, 0.5);
 }
 
+/* src/games/word500/Word500.css */
+
+.skeedle-title-btn {
+  background: none;
+  border: none;
+  color: var(--neon-pink, #ff2a85);
+  font-size: 2rem;
+  font-weight: 900;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin: 0 0 12px 0;
+  padding: 0;
+  cursor: pointer;
+  text-shadow: 0 0 12px rgba(255, 42, 133, 0.5);
+  transition: transform 0.15s ease, text-shadow 0.15s ease;
+  user-select: none;
+}
+
+.skeedle-title-btn:hover {
+  text-shadow: 0 0 18px rgba(255, 42, 133, 0.8);
+  transform: scale(1.02);
+}
+
+.skeedle-title-btn:active {
+  transform: scale(0.98);
+}
+
 /* Controls container placed under title */
 .sub-header-controls {
   display: flex;
@@ -67,11 +94,11 @@
   box-shadow: 0 0 8px rgba(255, 42, 133, 0.4);
 }
 
-/* Text STATS Button */
-.stats-text-btn {
+/* Text STATS Button with Neon Pink Text */
+.stats-btn {
   background: var(--surface-dark, #161a22);
-  border: 1px solid var(--surface-border, #30363d);
-  color: #ffffff;
+  border: 1px solid var(--neon-pink, #ff2a85);
+  color: var(--neon-pink, #ff2a85);
   padding: 6px 14px;
   border-radius: 8px;
   font-weight: bold;
@@ -79,12 +106,17 @@
   letter-spacing: 1px;
   cursor: pointer;
   transition: all 0.2s ease;
+  box-shadow: 0 0 6px rgba(255, 42, 133, 0.2);
 }
 
-.stats-text-btn:hover {
-  background-color: #21262d;
-  border-color: var(--neon-pink, #ff2a85);
-  color: var(--neon-pink, #ff2a85);
+.stats-btn:hover {
+  background-color: rgba(255, 42, 133, 0.15);
+  box-shadow: 0 0 12px rgba(255, 42, 133, 0.5);
+  transform: translateY(-1px);
+}
+
+.stats-btn:active {
+  transform: translateY(0);
 }
 
 /* Neon styled New Game button */
@@ -421,4 +453,37 @@
   text-align: right;
   border-radius: 4px;
   transition: width 0.3s ease;
+}
+
+/* Interactive Submitted Tiles */
+.word500-tile.clickable {
+  cursor: pointer;
+  user-select: none;
+  transition: background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.word500-tile.clickable:hover {
+  border-color: #8b949e;
+}
+
+/* Note Tag Color Overrides */
+.word500-tile.note-green {
+  background-color: rgba(57, 255, 20, 0.2);
+  border-color: var(--neon-green, #39ff14);
+  color: var(--neon-green, #39ff14);
+  box-shadow: 0 0 6px rgba(57, 255, 20, 0.3);
+}
+
+.word500-tile.note-yellow {
+  background-color: rgba(255, 255, 0, 0.2);
+  border-color: var(--neon-yellow, #ffff00);
+  color: var(--neon-yellow, #ffff00);
+  box-shadow: 0 0 6px rgba(255, 255, 0, 0.3);
+}
+
+.word500-tile.note-pink {
+  background-color: rgba(255, 42, 133, 0.2);
+  border-color: var(--neon-pink, #ff2a85);
+  color: var(--neon-pink, #ff2a85);
+  box-shadow: 0 0 6px rgba(255, 42, 133, 0.3);
 }

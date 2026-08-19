@@ -42,7 +42,7 @@ function getWord500Feedback(guess, target) {
   return { green, yellow, pink };
 }
 
-export default function Board({ guesses, currentGuess, maxAttempts, targetWord }) {
+export default function Board({ guesses, currentGuess, maxAttempts, targetWord, tileNotes, onTileClick }) {
   return (
     <div className="word500-board">
       {Array.from({ length: maxAttempts }).map((_, rowIndex) => {
@@ -54,28 +54,37 @@ export default function Board({ guesses, currentGuess, maxAttempts, targetWord }
           <div key={rowIndex} className="word500-row">
             {/* 5-Tile Word Input */}
             <div className="word500-tiles">
-              {Array.from({ length: 5 }).map((_, tileIndex) => (
-                <div key={tileIndex} className="word500-tile">
-                  {guess[tileIndex] || ''}
-                </div>
-              ))}
+              {Array.from({ length: 5 }).map((_, tileIndex) => {
+                const letter = guess[tileIndex] || '';
+                const key = `${rowIndex}-${tileIndex}`;
+                const noteColor = isSubmitted ? (tileNotes[key] || 'none') : 'none';
+
+                return (
+                  <div
+                    key={tileIndex}
+                    className={`word500-tile ${isSubmitted ? 'clickable' : ''} note-${noteColor}`}
+                    onClick={() => isSubmitted && onTileClick(rowIndex, tileIndex)}
+                  >
+                    {letter}
+                  </div>
+                );
+              })}
             </div>
 
-            {/* 3-Box Feedback Grid with Green, Yellow, and Pink */}
-           <div className="word500-score-boxes">
-                <div className={`score-box q-green ${isSubmitted ? 'active' : ''}`}>
-                    {isSubmitted ? feedback.green : ''}
-                </div>
-                <div className={`score-box q-yellow ${isSubmitted ? 'active' : ''}`}>
-                    {isSubmitted ? feedback.yellow : ''}
-                </div>
-                <div className={`score-box q-pink ${isSubmitted ? 'active' : ''}`}>
-                    {isSubmitted ? feedback.pink : ''}
-                </div>
-                </div>
+            {/* 3-Box Feedback Grid */}
+            <div className="word500-score-boxes">
+              <div className={`score-box q-green ${isSubmitted ? 'active' : ''}`}>
+                {isSubmitted ? feedback.green : ''}
+              </div>
+              <div className={`score-box q-yellow ${isSubmitted ? 'active' : ''}`}>
+                {isSubmitted ? feedback.yellow : ''}
+              </div>
+              <div className={`score-box q-pink ${isSubmitted ? 'active' : ''}`}>
+                {isSubmitted ? feedback.pink : ''}
+              </div>
+            </div>
           </div>
         );
       })}
     </div>
-  );
-}
+  );}

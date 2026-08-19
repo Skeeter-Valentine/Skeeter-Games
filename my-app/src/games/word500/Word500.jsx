@@ -25,6 +25,7 @@ export default function Word500() {
   const [currentGuess, setCurrentGuess] = useState('');
   const [gameOver, setGameOver] = useState(false);
   const [message, setMessage] = useState('');
+  const [tileNotes, setTileNotes] = useState({});
   
   // Stats state
   const [stats, setStats] = useState(DEFAULT_STATS);
@@ -72,6 +73,7 @@ export default function Word500() {
   const initGame = useCallback((mode) => {
     setCurrentGuess('');
     setMessage('');
+    setTileNotes({});
 
     if (mode === 'daily') {
       const dailyWord = getDailyTargetWord(todayStr);
@@ -96,6 +98,28 @@ export default function Word500() {
       setGameOver(false);
     }
   }, [todayStr]);
+
+  const handleTileClick = (rowIndex, tileIndex) => {
+  const key = `${rowIndex}-${tileIndex}`;
+  const currentColor = tileNotes[key] || 'none';
+  
+
+  const colorCycle = {
+    none: 'green',
+    green: 'yellow',
+    yellow: 'pink',
+    pink: 'none'
+  };
+
+  setTileNotes((prev) => ({
+    ...prev,
+    [key]: colorCycle[currentColor]
+  }));
+};
+
+const handleResetNotes = () => {
+  setTileNotes({});
+  };
 
   useEffect(() => {
     initGame(gameMode);
@@ -170,7 +194,13 @@ export default function Word500() {
     <div className="word500-container">
       <Navbar />
       <div className="skeedle-header">
-        <h2 className="skeedle-title">Skeedle500</h2>
+        <button 
+        className="skeedle-title-btn" 
+        onClick={handleResetNotes}
+        title="Click to reset tile notes"
+      >
+        Skeedle500
+      </button>
 
         <div className="header-actions">
           <button 
@@ -213,6 +243,8 @@ export default function Word500() {
         currentGuess={currentGuess}
         maxAttempts={MAX_ATTEMPTS}
         targetWord={targetWord}
+        tileNotes={tileNotes}
+        onTileClick={handleTileClick}
       />
 
       <Keyboard onKeyPress={handleKeyPress} />
