@@ -1,0 +1,229 @@
+/* src/pages/Game2048.css */
+.game2048-container {
+  min-height: 100vh;
+  background-color: #0f0c1b;
+  color: #ffffff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.game2048-main {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 2rem 1rem;
+  max-width: 500px;
+  width: 100%;
+}
+
+.game2048-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  margin-bottom: 1.5rem;
+}
+
+.game2048-title {
+  font-size: 3rem;
+  font-weight: 900;
+  background: linear-gradient(135deg, #ccff00 0%, #ff00aa 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin: 0;
+}
+
+.game2048-score-box {
+  background-color: #1b172d;
+  padding: 0.5rem 1.25rem;
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.score-label {
+  font-size: 0.75rem;
+  color: #a39bbe;
+  font-weight: 700;
+}
+
+.score-value {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #00f0ff;
+}
+
+.game2048-reset-btn {
+  background: linear-gradient(135deg, #ff2a85 0%, #ff00aa 100%);
+  color: #fff;
+  border: none;
+  padding: 0.75rem 1.25rem;
+  border-radius: 10px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.game2048-reset-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0 15px rgba(255, 42, 133, 0.5);
+}
+
+/* 4x4 Grid Board */
+.game2048-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  grid-template-rows: repeat(4, 1fr);
+  gap: 12px;
+  background-color: #161226;
+  padding: 14px;
+  border-radius: 16px;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* Base Tile */
+.game2048-tile {
+  background-color: #211c38;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  font-weight: 800;
+  color: #ffffff;
+  transition: all 0.15s ease-in-out;
+}
+
+/* Smoothly Evolving Neon Tile Colors */
+.tile-2 {
+  background-color: #d53ef8;
+  color: #ffffff;
+  box-shadow: 0 0 10px rgba(213, 62, 248, 0.3);
+}
+
+.tile-4 {
+  background-color: #e635c0;
+  color: #ffffff;
+  box-shadow: 0 0 10px rgba(230, 53, 192, 0.35);
+}
+
+.tile-8 {
+  background-color: #f4328c;
+  color: #ffffff;
+  box-shadow: 0 0 12px rgba(244, 50, 140, 0.4);
+}
+
+.tile-16 {
+  background-color: #f94162;
+  color: #ffffff;
+  box-shadow: 0 0 12px rgba(249, 65, 98, 0.45);
+}
+
+.tile-32 {
+  background-color: #fa573e;
+  color: #ffffff;
+  box-shadow: 0 0 14px rgba(250, 87, 62, 0.5);
+}
+
+.tile-64 {
+  background-color: #f77321;
+  color: #ffffff;
+  box-shadow: 0 0 14px rgba(247, 115, 33, 0.55);
+}
+
+.tile-128 {
+  background-color: #f09308;
+  color: #0d1117;
+  font-size: 1.75rem;
+  box-shadow: 0 0 16px rgba(240, 147, 8, 0.6);
+}
+
+.tile-256 {
+  background-color: #e2b400;
+  color: #0d1117;
+  font-size: 1.75rem;
+  box-shadow: 0 0 18px rgba(226, 180, 0, 0.65);
+}
+
+.tile-512 {
+  background-color: #a3d200;
+  color: #0d1117;
+  font-size: 1.75rem;
+  box-shadow: 0 0 20px rgba(163, 210, 0, 0.7);
+}
+
+.tile-1024 {
+  background-color: #3fe05d;
+  color: #0d1117;
+  font-size: 1.5rem;
+  box-shadow: 0 0 22px rgba(63, 224, 93, 0.8);
+}
+
+.tile-2048 {
+  background-color: #00e5ff;
+  color: #0d1117;
+  font-size: 1.5rem;
+  box-shadow: 0 0 28px rgba(0, 229, 255, 0.9);
+  animation: pulseNeon 1.5s infinite alternate;
+}
+
+/* Board Wrapper */
+.game2048-board {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  background-color: #161226;
+  padding: 14px;
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* Static Background Cells */
+.game2048-grid-background {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  grid-template-rows: repeat(4, 1fr);
+  gap: 12px;
+  width: 100%;
+  height: 100%;
+}
+
+.game2048-cell {
+  background-color: #211c38;
+  border-radius: 10px;
+}
+
+/* Sliding Tiles Overlay */
+.game2048-tiles-layer {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  right: 14px;
+  bottom: 14px;
+}
+
+.game2048-tile {
+  position: absolute;
+  width: calc((100% - 36px) / 4);
+  height: calc((100% - 36px) / 4);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  font-weight: 800;
+  
+  /* Smooth Slide Transition */
+  transition: transform 0.12s ease-in-out;
+  transform: translate(
+    calc(var(--c) * 100% + var(--c) * 12px),
+    calc(var(--r) * 100% + var(--r) * 12px)
+  );
+}

@@ -1,0 +1,194 @@
+/* src/games/minesweeper/Minesweeper.css */
+
+@font-face {
+  font-family: 'Poor Richard';
+  src: local('Poor Richard');
+}
+
+.minesweeper-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-family: 'Poor Richard', 'Georgia', serif;
+  background-color: #121213;
+  color: #ffffff;
+  padding: 20px;
+  user-select: none;
+  overflow-x: auto;
+}
+
+.ms-title {
+  color: var(--neon-pink, #ff2a85);
+  font-size: 2.2rem;
+  font-weight: 900;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  margin: 0 0 10px 0;
+  text-shadow: 0 0 12px rgba(255, 42, 133, 0.5);
+}
+
+/* Difficulty Toggle Switch */
+.diff-toggle {
+  display: flex;
+  background-color: #161a22;
+  border: 1px solid #30363d;
+  border-radius: 8px;
+  padding: 3px;
+  gap: 2px;
+  margin-bottom: 16px;
+}
+
+.diff-btn {
+  background: transparent;
+  border: none;
+  color: #8b949e;
+  padding: 6px 14px;
+  border-radius: 6px;
+  font-weight: bold;
+  font-size: 0.85rem;
+  font-family: 'Poor Richard', 'Georgia', serif;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.diff-btn:hover {
+  color: #ffffff;
+}
+
+.diff-btn.active {
+  background-color: var(--neon-pink, #ff2a85);
+  color: #ffffff;
+  box-shadow: 0 0 8px rgba(255, 42, 133, 0.4);
+}
+
+/* Classic Outer Window Styling */
+.ms-classic-window {
+  background-color: #1b1e24;
+  padding: 12px;
+  border-top: 3px solid #30363d;
+  border-left: 3px solid #30363d;
+  border-right: 3px solid #0d1117;
+  border-bottom: 3px solid #0d1117;
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.6);
+  max-width: 100%;
+}
+
+/* Header Container */
+.ms-classic-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: #161a22;
+  padding: 8px 12px;
+  margin-bottom: 12px;
+  border-top: 3px solid #0d1117;
+  border-left: 3px solid #0d1117;
+  border-right: 3px solid #30363d;
+  border-bottom: 3px solid #30363d;
+}
+
+/* Digital Counters */
+.ms-digital-display {
+  background-color: #000000;
+  color: var(--neon-pink, #ff2a85);
+  font-family: monospace;
+  font-size: 1.8rem;
+  font-weight: bold;
+  padding: 2px 8px;
+  letter-spacing: 2px;
+  border-top: 2px solid #0d1117;
+  border-left: 2px solid #0d1117;
+  border-right: 2px solid #30363d;
+  border-bottom: 2px solid #30363d;
+  text-shadow: 0 0 8px rgba(255, 42, 133, 0.6);
+}
+
+/* Center Face Button */
+.ms-face-btn {
+  width: 40px;
+  height: 40px;
+  background-color: #21262d;
+  font-size: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border-top: 3px solid #30363d;
+  border-left: 3px solid #30363d;
+  border-right: 3px solid #0d1117;
+  border-bottom: 3px solid #0d1117;
+  padding: 0;
+  transition: transform 0.05s ease;
+}
+
+.ms-face-btn:active {
+  border-top: 3px solid #0d1117;
+  border-left: 3px solid #0d1117;
+  border-right: 3px solid #30363d;
+  border-bottom: 3px solid #30363d;
+}
+
+/* Board Frame */
+.ms-classic-board {
+  display: flex;
+  flex-direction: column;
+  background-color: #161a22;
+  padding: 4px;
+  border-top: 3px solid #0d1117;
+  border-left: 3px solid #0d1117;
+  border-right: 3px solid #30363d;
+  border-bottom: 3px solid #30363d;
+}
+
+.ms-row {
+  display: flex;
+}
+
+/* Cell Styling */
+.ms-classic-cell {
+  width: 30px;
+  height: 30px;
+  font-family: 'Poor Richard', 'Georgia', serif;
+  font-size: 1.2rem;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  box-sizing: border-box;
+  touch-action: manipulation;
+}
+
+/* Unrevealed Boxy Cell */
+.ms-classic-cell.unrevealed {
+  background-color: #21262d;
+  border-top: 3px solid #30363d;
+  border-left: 3px solid #30363d;
+  border-right: 3px solid #0d1117;
+  border-bottom: 3px solid #0d1117;
+  cursor: pointer;
+}
+
+.ms-classic-cell.unrevealed:active {
+  border-top: 1px solid #0d1117;
+  border-left: 1px solid #0d1117;
+  border-right: 1px solid #30363d;
+  border-bottom: 1px solid #30363d;
+}
+
+/* Revealed Flat Cell */
+.ms-classic-cell.revealed {
+  background-color: #0d1117;
+  border: 1px solid #161a22;
+  cursor: pointer;
+}
+
+/* Neon Numbers */
+.ms-classic-cell.num-1 { color: #39ff14; text-shadow: 0 0 6px rgba(57, 255, 20, 0.4); }
+.ms-classic-cell.num-2 { color: #ffff00; text-shadow: 0 0 6px rgba(255, 255, 0, 0.4); }
+.ms-classic-cell.num-3 { color: #ff2a85; text-shadow: 0 0 6px rgba(255, 42, 133, 0.4); }
+.ms-classic-cell.num-4 { color: #00f0ff; text-shadow: 0 0 6px rgba(0, 240, 255, 0.4); }
+.ms-classic-cell.num-5 { color: #ff9900; text-shadow: 0 0 6px rgba(255, 153, 0, 0.4); }
+.ms-classic-cell.num-6 { color: #bf00ff; text-shadow: 0 0 6px rgba(191, 0, 255, 0.4); }
+.ms-classic-cell.num-7 { color: #ff0055; }
+.ms-classic-cell.num-8 { color: #ffffff; }

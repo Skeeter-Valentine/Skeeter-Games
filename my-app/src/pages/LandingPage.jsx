@@ -1,91 +1,50 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import styles from './LandingPage.module.css';
-import SkeeterLogo from '../components/SkeeterLogo';
-import logoImg from '../assets/logo.jpg'
+import './LandingPage.css';
+import logoImg from '../assets/logo.jpg';
+import mineskeeterImg from '../assets/mineskeeter.png';
+import ske4dleImg from '../assets/ske4dle.png';
+import skeedle500Img from '../assets/skeedle500.png';
+import skeedlePlusImg from '../assets/skeedle+.png';
+import skeetisImg from '../assets/skeetis.png';
+import game2048Img from '../assets/2048.png';
 
 const GAMES = [
-  {
-    id: 'minesweeper',
-    title: 'Minesweeper',
-    path: '/minesweeper',
-    category: 'Logic',
-    desc: 'Clear the grid without detonating hidden mines.',
-    icon: '💣'
-  },
-  {
-    id: 'quordle',
-    title: 'Quordle',
-    path: '/quordle',
-    category: 'Word',
-    desc: 'Solve 4 word puzzles simultaneously in 9 tries.',
-    icon: '🔤'
-  },
-  {
-    id: 'word500',
-    title: 'Word500',
-    path: '/word500',
-    category: 'Deduction',
-    desc: 'Guess the hidden word using color hints.',
-    icon: '🧩'
-  },
-  {
-    id: 'sudoku',
-    title: 'Sudoku',
-    path: '/sudoku',
-    category: 'Numbers',
-    desc: 'Fill the 9x9 grid so every row contains 1–9.',
-    icon: '🔢'
-  }
+  { id: 'minesweeper', title: 'Mineskeeter', path: '/minesweeper', image: mineskeeterImg },
+  { id: 'quordle', title: 'Ske4dle', path: '/quordle', image: ske4dleImg },
+  { id: 'word500', title: 'Skeedle500', path: '/word500', image: skeedle500Img },
+  { id: 'sudoku', title: 'Skeedle+', path: '/sudoku', image: skeedlePlusImg },
+  { id: 'skeetis', title: 'Skeetis', path: '/skeetis', image: skeetisImg },
+  { id: '2048', title: '2048', path: '/2048', image: game2048Img }
 ];
 
 export default function LandingPage() {
   return (
-    <div className={styles.container}>
+    <div className="landing-container">
       {/* Header */}
-      <header className={styles.header}>
-        <div className={styles.headerContent}>
-          
-          {/* Logo with Option 1 SVG */}
-          <Link to="/" className={styles.logo}>
-        {/* 2. Use the imported image in an <img> tag */}
-        <img 
-          src={logoImg} 
-          alt="Skeeter Games Logo" 
-          className={styles.logoImage} 
-        />
-        <span className={styles.logoText}>Skeeter Games</span>
-      </Link>
-
-          <div className={styles.streakBadge}>
-            🔥 <span style={{ color: '#ffb703' }}>5 Day Streak</span>
-          </div>
+      <header className="landing-header">
+        <div className="landing-header-content">
+          <Link to="/" className="landing-logo">
+            <img 
+              src={logoImg} 
+              alt="Skeeter Games Logo" 
+              className="landing-logo-image" 
+            />
+            <span className="landing-logo-text">Skeeter Games</span>
+          </Link>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className={styles.main}>
-        {/* Hero Section */}
-        <section className={styles.hero}>
-          <h1 className={styles.heroTitle}>Daily Mini-Games</h1>
-          <p className={styles.heroSubtitle}>
-            Train your brain daily with quick word, number, and logic puzzles.
-          </p>
-        </section>
-
-        {/* Game Cards Grid */}
-        <div className={styles.grid}>
+      <main className="landing-main">
+        <div className="landing-grid">
           {GAMES.map((game) => (
-            <Link key={game.id} to={game.path} className={styles.card}>
-              <div>
-                <div className={styles.cardTop}>
-                  <span className={styles.icon}>{game.icon}</span>
-                  <span className={styles.badge}>{game.category}</span>
-                </div>
-                <h2 className={styles.gameTitle}>{game.title}</h2>
-                <p className={styles.description}>{game.desc}</p>
-              </div>
-              <div className={styles.playBtn}>Play Now →</div>
+            <Link key={game.id} to={game.path} className="landing-card" aria-label={game.title}>
+              <img 
+                src={game.image} 
+                alt={game.title} 
+                className="landing-card-image" 
+              />
             </Link>
           ))}
         </div>
