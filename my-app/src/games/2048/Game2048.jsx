@@ -12,6 +12,8 @@ export default function Game2048() {
   const [history, setHistory] = useState([]);
   const [undoCount, setUndoCount] = useState(0);
   const [isTestMode, setIsTestMode] = useState(false);
+  const lastMoveTimeRef = useRef(Date.now());
+  const [slideSpeed, setSlideSpeed] = useState(120);
 
   const createTile = (r, c, value = Math.random() < 0.9 ? 2 : 4) => ({
     id: nextId.current++,
@@ -29,6 +31,8 @@ export default function Game2048() {
       secondR = Math.floor(Math.random() * 4);
       secondC = Math.floor(Math.random() * 4);
     } while (secondR === first.r && secondC === first.c);
+
+    
 
     const second = createTile(secondR, secondC);
     setTiles([first, second]);
@@ -77,93 +81,108 @@ export default function Game2048() {
     setUndoCount((prev) => prev + 5);
   };
 
-  const move = useCallback((direction) => {
-    if (isTestMode) return; // Freeze inputs while in test mode
+ const move = useCallback((direction) => {
+  if (isTestMode) return;
 
-    const grid = Array(GRID_SIZE).fill(null).map(() => Array(GRID_SIZE).fill(null));
-    tiles.forEach((tile) => {
-      grid[tile.r][tile.c] = { ...tile, isMerged: false };
-    });
+  const now = Date.now();
+  const timeSinceLastMove = now - lastMoveTimeRef.current;
+  lastMoveTimeRef.current = now;
 
-    let moved = false;
-    let addedScore = 0;
-    const updatedTiles = [];
+  // Speed up transition when moves happen rapidly (scale down to 50ms min)
+  const currentSpeed = Math.max(50, Math.min(120, timeSinceLastMove * 0.8));
+  setSlideSpeed(currentSpeed);
 
-    const isVertical = direction === 'UP' || direction === 'DOWN';
-    const isReverse = direction === 'RIGHT' || direction === 'DOWN';
+  // --- Grid calculation logic ---
+  const grid = Array(GRID_SIZE).fill(null).map(() => Array(GRID_SIZE).fill(null));
+  tiles.forEach((tile) => {
+    grid[tile.r][tile.c] = { ...tile, isMerged: false };
+  });
 
-    for (let i = 0; i < GRID_SIZE; i++) {
-      let line = [];
-      for (let j = 0; j < GRID_SIZE; j++) {
-        const r = isVertical ? j : i;
-        const c = isVertical ? i : j;
-        if (grid[r][c]) line.push(grid[r][c]);
-      }
+  let moved = false;
+  let addedScore = 0;
+  const updatedTiles = [];
 
-      if (isReverse) line.reverse();
+  const isVertical = direction === 'UP' || direction === 'DOWN';
+  const isReverse = direction === 'RIGHT' || direction === 'DOWN';
 
-      let mergedLine = [];
-      let skipNext = false;
+  for (let i = 0; i < GRID_SIZE; i++) {
+    let line = [];
+    for (let j = 0; j < GRID_SIZE; j++) {
+      const r = isVertical ? j : i;
+      const c = isVertical ? i : j;
+      if (grid[r][c]) line.push(grid[r][c]);
+    }
 
-      for (let k = 0; k < line.length; k++) {
-        if (skipNext) {
-          skipNext = false;
-          continue;
-        }
+    if (isReverse) line.reverse();
 
-        const current = line[k];
-        const next = line[k + 1];
+    let k = 0;
+    let targetPos = 0;
 
-        if (next && current.value === next.value) {
-          const newValue = current.value * 2;
-          addedScore += newValue;
+    while (k < line.length) {
+      const current = line[k];
+      const next = line[k + 1];
 
-          mergedLine.push({ ...current, value: newValue, isMerged: true });
-          skipNext = true;
-          moved = true;
-        } else {
-          mergedLine.push({ ...current, isMerged: false });
-        }
-      }
+      const actualIndex = isReverse ? GRID_SIZE - 1 - targetPos : targetPos;
+      const targetR = isVertical ? actualIndex : i;
+      const targetC = isVertical ? i : actualIndex;
 
-      if (isReverse) mergedLine.reverse();
+      if (next && current.value === next.value) {
+        const newValue = current.value * 2;
+        addedScore += newValue;
 
-      mergedLine.forEach((tile, index) => {
-        const targetIndex = isReverse ? GRID_SIZE - mergedLine.length + index : index;
-        const newR = isVertical ? targetIndex : i;
-        const newC = isVertical ? i : targetIndex;
-
-        if (tile.r !== newR || tile.c !== newC) {
+        if (current.r !== targetR || current.c !== targetC || next.r !== targetR || next.c !== targetC) {
           moved = true;
         }
 
-        updatedTiles.push({ ...tile, r: newR, c: newC });
-      });
-    }
+        // Keep a unique incrementing ID on merge so React doesn't reuse key nodes
+        updatedTiles.push({
+          id: nextId.current++,
+          r: targetR,
+          c: targetC,
+          value: newValue,
+          isMerged: true,
+        });
 
-    if (!moved) return;
+        k += 2;
+      } else {
+        if (current.r !== targetR || current.c !== targetC) {
+          moved = true;
+        }
 
-    const occupied = new Set(updatedTiles.map((t) => `${t.r}-${t.c}`));
-    const emptySpots = [];
-    for (let r = 0; r < GRID_SIZE; r++) {
-      for (let c = 0; c < GRID_SIZE; c++) {
-        if (!occupied.has(`${r}-${c}`)) emptySpots.push({ r, c });
+        updatedTiles.push({
+          ...current,
+          r: targetR,
+          c: targetC,
+          isMerged: false,
+        });
+
+        k += 1;
       }
+
+      targetPos++;
     }
+  }
 
-    if (emptySpots.length > 0) {
-      const spot = emptySpots[Math.floor(Math.random() * emptySpots.length)];
-      updatedTiles.push(createTile(spot.r, spot.c));
+  if (!moved) return;
+
+  // Add spawn tile immediately
+  const occupied = new Set(updatedTiles.map((t) => `${t.r}-${t.c}`));
+  const emptySpots = [];
+  for (let r = 0; r < GRID_SIZE; r++) {
+    for (let c = 0; c < GRID_SIZE; c++) {
+      if (!occupied.has(`${r}-${c}`)) emptySpots.push({ r, c });
     }
+  }
 
-    setHistory((prevHistory) => [
-      ...prevHistory,
-      { tiles, score },
-    ]);
+  if (emptySpots.length > 0) {
+    const spot = emptySpots[Math.floor(Math.random() * emptySpots.length)];
+    updatedTiles.push(createTile(spot.r, spot.c));
+  }
 
-    setScore((prev) => prev + addedScore);
-    setTiles(updatedTiles);
-  }, [tiles, score, isTestMode]);
+  setHistory((prev) => [...prev, { tiles, score }]);
+  setScore((prev) => prev + addedScore);
+  setTiles(updatedTiles);
+}, [tiles, score, isTestMode]);
 
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -179,6 +198,8 @@ export default function Game2048() {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [move]);
+
+  
 
   return (
     <div className="game2048-container">
