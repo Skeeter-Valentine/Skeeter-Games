@@ -86,9 +86,42 @@
   display: block;
 }
 
-/* Mobile responsive fallback */
+/* Ensure the body and container allow natural vertical scrolling */
+html, body {
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.landing-container {
+  min-height: 100vh;
+  background-color: var(--bg-primary);
+  color: var(--text-main);
+  display: flex;
+  flex-direction: column;
+  overflow-y: visible; /* Prevents container from clipping scrollable content */
+}
+
+.landing-main {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 2.5rem 1.5rem;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Mobile Responsive Adjustments */
 @media (max-width: 600px) {
+  .landing-header {
+    padding: 0.75rem 1rem;
+  }
+
+  .landing-main {
+    padding: 1.5rem 1rem;
+  }
+
   .landing-grid {
-    grid-template-columns: repeat(1, 1fr);
+    grid-template-columns: 1fr;
+    gap: 1.25rem;
   }
 }

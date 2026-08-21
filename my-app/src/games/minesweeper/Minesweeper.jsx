@@ -234,6 +234,27 @@ export default function Minesweeper() {
     return String(clamped).padStart(3, '0');
   };
 
+  useEffect(() => {
+      // 1. Create and inject the external gtag script
+      const gtagScript = document.createElement('script');
+      gtagScript.src = 'https://www.googletagmanager.com/gtag/js?id=G-9TBQNYQE6V';
+      gtagScript.async = true;
+      document.head.appendChild(gtagScript);
+  
+      // 2. Initialize dataLayer and gtag config
+      window.dataLayer = window.dataLayer || [];
+      function gtag() {
+        window.dataLayer.push(arguments);
+      }
+      gtag('js', new Date());
+      gtag('config', 'G-9TBQNYQE6V');
+  
+      // Cleanup script on unmount
+      return () => {
+        document.head.removeChild(gtagScript);
+      };
+    }, []);
+
   return (
     <div className="minesweeper-container">
     <Navbar />

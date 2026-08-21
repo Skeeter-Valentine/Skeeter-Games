@@ -8,6 +8,7 @@ import skeedle500Img from '../assets/skeedle500.png';
 import skeedlePlusImg from '../assets/skeedle+.png';
 import skeetisImg from '../assets/skeetis.png';
 import game2048Img from '../assets/2048.png';
+import { useEffect } from 'react';
 
 const GAMES = [
   { id: 'minesweeper', title: 'Mineskeeter', path: '/minesweeper', image: mineskeeterImg },
@@ -18,7 +19,30 @@ const GAMES = [
   { id: '2048', title: '2048', path: '/2048', image: game2048Img }
 ];
 
+
 export default function LandingPage() {
+
+  useEffect(() => {
+    // 1. Create and inject the external gtag script
+    const gtagScript = document.createElement('script');
+    gtagScript.src = 'https://www.googletagmanager.com/gtag/js?id=G-9TBQNYQE6V';
+    gtagScript.async = true;
+    document.head.appendChild(gtagScript);
+
+    // 2. Initialize dataLayer and gtag config
+    window.dataLayer = window.dataLayer || [];
+    function gtag() {
+      window.dataLayer.push(arguments);
+    }
+    gtag('js', new Date());
+    gtag('config', 'G-9TBQNYQE6V');
+
+    // Cleanup script on unmount
+    return () => {
+      document.head.removeChild(gtagScript);
+    };
+  }, []);
+
   return (
     <div className="landing-container">
       {/* Header */}

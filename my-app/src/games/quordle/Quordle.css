@@ -319,3 +319,44 @@ body {
 .key.absent-all .quadrant {
   background-color: #12151a !important;
 }
+
+/* ==========================================================================
+   HIDDEN KEYBOARD INPUT STYLES
+   ========================================================================== */
+
+/* Place the input off-screen visually while keeping it interactable for mobile browsers */
+.hidden-keyboard-input {
+  position: absolute;
+  opacity: 0;
+  top: -9999px;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  border: none;
+}
+
+/* Allow the body and game-container to scale naturally when the phone keyboard opens */
+body {
+  background-color: var(--bg-dark);
+  color: var(--text-main);
+  font-family: 'Poor Richard', 'Georgia', serif;
+  font-weight: bold;
+  text-align: center;
+  /* Change overflow: hidden to overflow-y: auto to allow view shifts on smaller mobile screens */
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+.game-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 100vh;
+  /* Use dynamic viewport height (dvh) if supported so it resizes smoothly with mobile keyboards */
+  min-height: 100dvh; 
+  width: 100%;
+  max-width: 420px;
+  margin: 0 auto;
+  padding: 8px 12px;
+}
