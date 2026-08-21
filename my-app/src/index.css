@@ -7,23 +7,25 @@
   /* Scheme 3: Neon Retro Arcade Palette */
   --bg-primary: #0f0c1b;      /* Deep Indigo */
   --bg-secondary: #1c1830;    /* Dark Plum */
-  --border-color: #2e2650;    /* Muted Violet Border */
   
   --accent-pink: #ff2a85;     /* Hot Pink */
   --accent-pink-hover: #e01f72;
   
-  --pop-lime: #00ff87;       /* Neon Lime (Success/Minesweeper) */
-  --pop-amber: #ffb703;      /* Bright Amber (Sudoku/Warning) */
-  --pop-cyan: #00f0ff;       /* Neon Cyan (Word games) */
+  --pop-lime: #00ff87;       /* Neon Lime */
+  --pop-amber: #ffb703;      /* Bright Amber */
+  --pop-cyan: #00f0ff;       /* Neon Cyan */
 
   --text-main: #ffffff;
   --text-muted: #a39bbe;
 }
 
-* {
+/* Universal border reset */
+*, *::before, *::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
+  border: none; /* Removes borders from everything */
+  outline: none;
   font-family: var(--font-main);
 }
 
