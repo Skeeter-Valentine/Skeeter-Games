@@ -100,78 +100,31 @@
   transition: all 0.15s ease-in-out;
 }
 
-/* Smoothly Evolving Neon Tile Colors */
-.tile-2 {
-  background-color: #d53ef8;
-  color: #ffffff;
-  box-shadow: 0 0 10px rgba(213, 62, 248, 0.3);
-}
+/* Dynamic Color Progression */
 
-.tile-4 {
-  background-color: #e635c0;
-  color: #ffffff;
-  box-shadow: 0 0 10px rgba(230, 53, 192, 0.35);
-}
+/* 2 to 16: White to Saturated Teal */
+.game2048-tile.tile-2     { background-color: #f5fafd; color: #5a6872; }
+.game2048-tile.tile-4     { background-color: #b0e8f5; color: #1f4e5b; } /* More saturated blue-cyan */
+.game2048-tile.tile-8     { background-color: #79d7e4; color: #ffffff; }
+.game2048-tile.tile-16    { background-color: #12abbd; color: #ffffff; }
 
-.tile-8 {
-  background-color: #f4328c;
-  color: #ffffff;
-  box-shadow: 0 0 12px rgba(244, 50, 140, 0.4);
-}
+/* 32 to 1024: Highlighter Punch */
+.game2048-tile.tile-32    { background-color: #00f0ff; color: #1a1a1a; } /* Neon Sky Blue */
+.game2048-tile.tile-64    { background-color: #00ff99; color: #1a1a1a; } /* Highlighter Mint */
+.game2048-tile.tile-128   { background-color: #cfff00; color: #1a1a1a; } /* Highlighter Chartreuse */
+.game2048-tile.tile-256   { background-color: #ff0055; color: #ffffff; } /* Electric Punch */
+.game2048-tile.tile-512   { background-color: #ff5500; color: #ffffff; } /* Highlighter Coral */
+.game2048-tile.tile-1024  { background-color: #f0a800; color: #ffffff; --glow-color: rgba(240, 168, 0, 0.8); }
 
-.tile-16 {
-  background-color: #f94162;
-  color: #ffffff;
-  box-shadow: 0 0 12px rgba(249, 65, 98, 0.45);
-}
+/* 2048: Rich Sun Gold */
+.game2048-tile.tile-2048  { background-color: #ffcc00; color: #1a1a1a; --glow-color: rgba(255, 204, 0, 0.9); }
 
-.tile-32 {
-  background-color: #fa573e;
-  color: #ffffff;
-  box-shadow: 0 0 14px rgba(250, 87, 62, 0.5);
-}
-
-.tile-64 {
-  background-color: #f77321;
-  color: #ffffff;
-  box-shadow: 0 0 14px rgba(247, 115, 33, 0.55);
-}
-
-.tile-128 {
-  background-color: #f09308;
-  color: #0d1117;
-  font-size: 1.75rem;
-  box-shadow: 0 0 16px rgba(240, 147, 8, 0.6);
-}
-
-.tile-256 {
-  background-color: #e2b400;
-  color: #0d1117;
-  font-size: 1.75rem;
-  box-shadow: 0 0 18px rgba(226, 180, 0, 0.65);
-}
-
-.tile-512 {
-  background-color: #a3d200;
-  color: #0d1117;
-  font-size: 1.75rem;
-  box-shadow: 0 0 20px rgba(163, 210, 0, 0.7);
-}
-
-.tile-1024 {
-  background-color: #3fe05d;
-  color: #0d1117;
-  font-size: 1.5rem;
-  box-shadow: 0 0 22px rgba(63, 224, 93, 0.8);
-}
-
-.tile-2048 {
-  background-color: #00e5ff;
-  color: #0d1117;
-  font-size: 1.5rem;
-  box-shadow: 0 0 28px rgba(0, 229, 255, 0.9);
-  animation: pulseNeon 1.5s infinite alternate;
-}
+/* Beyond 2048: Deep Berry & Velvet Tones */
+.game2048-tile.tile-4096  { background-color: #d80073; color: #ffffff; } /* Vivid Berry */
+.game2048-tile.tile-8192  { background-color: #a200ff; color: #ffffff; } /* Neon Grape */
+.game2048-tile.tile-16384 { background-color: #6a00f4; color: #ffffff; } /* Royal Purple */
+.game2048-tile.tile-32768 { background-color: #3f0071; color: #ffffff; } /* Dark Amethyst */
+.game2048-tile.tile-65536 { background-color: #150050; color: #ffffff; } /* Velvet Night */
 
 /* Board Wrapper */
 .game2048-board {
@@ -226,4 +179,196 @@
     calc(var(--c) * 100% + var(--c) * 12px),
     calc(var(--r) * 100% + var(--r) * 12px)
   );
+}
+
+.game2048-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.game2048-btn {
+  color: #fff;
+  border: none;
+  padding: 0.75rem 1rem;
+  border-radius: 10px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+}
+
+.reset-btn {
+  background: linear-gradient(135deg, #ff2a85 0%, #ff00aa 100%);
+}
+
+.reset-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0 15px rgba(255, 42, 133, 0.5);
+}
+
+.undo-btn {
+  background: #211c38;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.undo-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  background: #2d264a;
+  box-shadow: 0 0 12px rgba(0, 240, 255, 0.3);
+}
+
+.undo-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.game2048-stats {
+  display: flex;
+  gap: 10px;
+}
+
+.game2048-stat-box {
+  background-color: #1b172d;
+  padding: 0.5rem 1rem;
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 70px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.stat-label {
+  font-size: 0.7rem;
+  color: #a39bbe;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.stat-value {
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: #00f0ff;
+}
+
+.stat-value.undo-value {
+  color: #ff2a85;
+}
+
+/* Pop animation for merged tiles */
+@keyframes pop {
+  0% {
+    transform: translate(
+      calc(var(--c) * 100% + var(--c) * 12px),
+      calc(var(--r) * 100% + var(--r) * 12px)
+    ) scale(1);
+  }
+  50% {
+    transform: translate(
+      calc(var(--c) * 100% + var(--c) * 12px),
+      calc(var(--r) * 100% + var(--r) * 12px)
+    ) scale(1.18);
+  }
+  100% {
+    transform: translate(
+      calc(var(--c) * 100% + var(--c) * 12px),
+      calc(var(--r) * 100% + var(--r) * 12px)
+    ) scale(1);
+  }
+}
+
+.game2048-tile.merged {
+  animation: pop 0.15s ease-in-out;
+  z-index: 2;
+}
+
+.game2048-tile {
+  position: absolute;
+  width: calc((100% - 36px) / 4);
+  height: calc((100% - 36px) / 4);
+  border-radius: 8px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  
+  /* Standard dynamic sizing scoped strictly to tile boundaries */
+  font-size: clamp(2rem, 80%, 3.2rem);
+  font-weight: 800;
+  line-height: 1;
+  text-align: center;
+  
+  transition: transform 0.15s ease-in-out;
+  transform: translate(
+    calc(var(--c) * 100% + var(--c) * 12px),
+    calc(var(--r) * 100% + var(--r) * 12px)
+  );
+}
+
+/* Precise scaling per character count so numbers stay ~75% of tile width */
+.game2048-tile.digits-1,
+.game2048-tile.digits-2 {
+  font-size: clamp(2.2rem, 90%, 3.5rem);
+}
+
+.game2048-tile.digits-3 {
+  font-size: clamp(1.6rem, 65%, 2.5rem);
+}
+
+.game2048-tile.digits-4 {
+  font-size: clamp(1.2rem, 48%, 1.9rem);
+}
+
+.game2048-tile.digits-5 {
+  font-size: clamp(1rem, 38%, 1.4rem);
+}
+
+/* Pulse glow animation for 1024 & 2048 */
+@keyframes tileGlow {
+  0%, 100% {
+    box-shadow: 0 0 15px var(--glow-color, rgba(255, 255, 255, 0.5)),
+                0 0 30px var(--glow-color, rgba(255, 255, 255, 0.3));
+  }
+  50% {
+    box-shadow: 0 0 25px var(--glow-color, rgba(255, 255, 255, 0.8)),
+                0 0 45px var(--glow-color, rgba(255, 255, 255, 0.5));
+  }
+}
+
+/* --- Tile Overrides --- */
+
+/* 1024 Tile Styling */
+.game2048-tile.tile-1024 {
+  background-color: #f57f17;
+  color: #ffffff;
+  --glow-color: rgba(245, 127, 23, 0.7);
+  animation: tileGlow 2s ease-in-out infinite;
+}
+
+/* 2048 Tile Styling */
+.game2048-tile.tile-2048 {
+  background-color: #ffb300;
+  color: #ffffff;
+  --glow-color: rgba(255, 179, 0, 0.9);
+  animation: tileGlow 1.5s ease-in-out infinite;
+}
+
+/* Ensure merged pop animation plays nicely alongside continuous glow */
+.game2048-tile.tile-1024.merged,
+.game2048-tile.tile-2048.merged {
+  animation: pop 0.15s ease-in-out, tileGlow 2s ease-in-out infinite 0.15s;
+}
+
+.test-btn {
+  background: #2b254a;
+  border: 1px solid rgba(0, 240, 255, 0.3);
+}
+
+.test-btn:hover {
+  background: #393160;
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.4);
+}
+
+.test-btn.active {
+  background: #00f0ff;
+  color: #0d0a1a;
+  font-weight: 800;
 }
