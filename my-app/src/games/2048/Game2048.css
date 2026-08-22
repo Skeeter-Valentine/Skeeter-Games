@@ -19,10 +19,17 @@
 
 .game2048-header {
   display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  width: 100%;
+  margin-bottom: 1.5rem;
+}
+
+.game2048-header-top {
+  display: flex;
   justify-content: space-between;
   align-items: center;
   width: 100%;
-  margin-bottom: 1.5rem;
 }
 
 .game2048-title {
@@ -34,26 +41,29 @@
   margin: 0;
 }
 
-.game2048-score-box {
-  background-color: #1b172d;
-  padding: 0.5rem 1.25rem;
-  border-radius: 10px;
+.game2048-stats {
   display: flex;
-  flex-direction: column;
+  gap: 8px;
+}
+
+/* Bottom Row: Controls and Switch in a row */
+.game2048-controls-row {
+  display: flex;
+  justify-content: space-between;
   align-items: center;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  width: 100%;
 }
 
-.score-label {
-  font-size: 0.75rem;
-  color: #a39bbe;
-  font-weight: 700;
+.game2048-actions {
+  display: flex;
+  gap: 8px;
 }
 
-.score-value {
-  font-size: 1.5rem;
-  font-weight: 800;
-  color: #00f0ff;
+.theme-switch-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 0; /* Remove previous bottom margin */
 }
 
 .game2048-reset-btn {
@@ -376,4 +386,95 @@
   background: #00f0ff;
   color: #0d0a1a;
   font-weight: 800;
+}
+
+.game2048-board {
+  touch-action: none; /* Prevents mobile scrolling while dragging on the board */
+}
+
+/* --- Classic Theme Overrides --- */
+/* --- Classic Theme Tile Fonts --- */
+.game2048-container.theme-classic .game2048-tile {
+  font-family: 'Clear Sans', 'Helvetica Neue', Arial, sans-serif !important;
+  border-radius: 3px;
+}
+
+.theme-classic .game2048-board {
+  background-color: #bbada0;
+  border-radius: 6px;
+}
+
+.theme-classic .game2048-cell {
+  background-color: rgba(238, 228, 218, 0.35);
+  border-radius: 3px;
+}
+
+/* Classic Tile Color Palette */
+.theme-classic .tile-2 { background: #eee4da; color: #776e65; }
+.theme-classic .tile-4 { background: #ede0c8; color: #776e65; }
+.theme-classic .tile-8 { background: #f2b179; color: #f9f6f2; }
+.theme-classic .tile-16 { background: #f59563; color: #f9f6f2; }
+.theme-classic .tile-32 { background: #f67c5f; color: #f9f6f2; }
+.theme-classic .tile-64 { background: #f65e3b; color: #f9f6f2; }
+.theme-classic .tile-128 { background: #edcf72; color: #f9f6f2; box-shadow: 0 0 30px 10px rgba(243, 215, 116, 0.2381); }
+.theme-classic .tile-256 { background: #edcc61; color: #f9f6f2; box-shadow: 0 0 30px 10px rgba(243, 215, 116, 0.31746); }
+.theme-classic .tile-512 { background: #edc850; color: #f9f6f2; box-shadow: 0 0 30px 10px rgba(243, 215, 116, 0.39683); }
+.theme-classic .tile-1024 { background: #edc53f; color: #f9f6f2; box-shadow: 0 0 30px 10px rgba(243, 215, 116, 0.47619); }
+.theme-classic .tile-2048 { background: #edc22e; color: #f9f6f2; box-shadow: 0 0 30px 10px rgba(243, 215, 116, 0.55556); }
+
+.theme-switch-container {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.theme-label {
+  font-size: 0.9rem;
+  font-weight: bold;
+}
+
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 50px;
+  height: 26px;
+}
+
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #007bff;
+  transition: 0.3s;
+  border-radius: 26px;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 20px;
+  width: 20px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: 0.3s;
+  border-radius: 50%;
+}
+
+input:checked + .slider {
+  background-color: #bbada0;
+}
+
+input:checked + .slider:before {
+  transform: translateX(24px);
 }
