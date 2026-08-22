@@ -267,9 +267,14 @@ export default function Game2048() {
       setScore(newScore);
     };
 
+    window.setCustomUndos = (count) => {
+      setUndoCount(count);
+  };
+
     return () => {
       delete window.injectTile;
       delete window.setCustomScore;
+      delete window.setCustomUndos;
     };
   }, []);
 
