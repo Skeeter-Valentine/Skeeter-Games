@@ -255,6 +255,24 @@ export default function Game2048() {
     };
   }, []);
 
+  useEffect(() => {
+    window.injectTile = (r, c, value) => {
+      setTiles((prevTiles) => [
+        ...prevTiles.filter((t) => !(t.r === r && t.c === c)),
+        { id: nextId.current++, r, c, value, isMerged: false },
+      ]);
+    };
+
+    window.setCustomScore = (newScore) => {
+      setScore(newScore);
+    };
+
+    return () => {
+      delete window.injectTile;
+      delete window.setCustomScore;
+    };
+  }, []);
+
   return (
     <div className={`game2048-container theme-${theme}`}>
       <Navbar />
@@ -347,7 +365,7 @@ export default function Game2048() {
                     '--c': tile.c,
                   }}
                 >
-                  {tile.value}
+                  {tile.value === 131072 || tile.value === 131000 ? '🐐' : tile.value}
                 </div>
               );
             })}
