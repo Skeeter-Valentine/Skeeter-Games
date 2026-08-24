@@ -1,0 +1,189 @@
+/* ==========================================================================
+   PIPES CONTAINER & LAYOUT
+   ========================================================================== */
+.pipes-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 16px;
+  box-sizing: border-box;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  color: #e6edf3;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+.pipes-title {
+  margin: 0 0 8px 0;
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #39ff14;
+  text-shadow: 0 0 10px rgba(57, 255, 20, 0.3);
+  text-align: center;
+}
+
+.pipes-instructions {
+  margin: 0 0 16px 0;
+  font-size: 0.9rem;
+  color: #8b949e;
+  text-align: center;
+  line-height: 1.4;
+  max-width: 420px;
+}
+
+/* ==========================================================================
+   CONFIG & CONTROLS
+   ========================================================================== */
+.pipes-config {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+  font-size: 0.95rem;
+}
+
+.pipes-config label {
+  color: #c9d1d9;
+}
+
+.pipes-config select {
+  background-color: #161a22;
+  color: #e6edf3;
+  border: 1px solid #30363d;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  outline: none;
+  cursor: pointer;
+}
+
+.pipes-config select:focus {
+  border-color: #39ff14;
+}
+
+/* ==========================================================================
+   BOARD WRAPPER & CANVAS
+   ========================================================================== */
+.pipes-board-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  margin-bottom: 16px;
+}
+
+.pipes-canvas {
+  background-color: #0d1117;
+  border: 2px solid #30363d;
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  cursor: pointer;
+  touch-action: manipulation; /* Prevents double-tap zoom on touch screens */
+  max-width: 100%;
+  height: auto;
+}
+
+/* ==========================================================================
+   STATUS & BUTTONS
+   ========================================================================== */
+.pipes-status {
+  min-height: 28px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #8b949e;
+  text-align: center;
+  margin-bottom: 12px;
+}
+
+.pipes-status.win {
+  color: #39ff14;
+  animation: pulse 1.5s infinite;
+}
+
+.pipes-controls {
+  display: flex;
+  gap: 12px;
+}
+
+.pipes-btn {
+  background-color: #21262d;
+  color: #c9d1d9;
+  border: 1px solid #30363d;
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.pipes-btn:hover {
+  background-color: #30363d;
+  border-color: #8b949e;
+  color: #ffffff;
+}
+
+.pipes-btn:active {
+  transform: translateY(1px);
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+/* ==========================================================================
+   MEDIA QUERIES (MOBILE & SMALL SCREENS)
+   ========================================================================== */
+
+/* Small Tablets / Large Phones (Under 600px) */
+@media screen and (max-width: 600px) {
+  .pipes-container {
+    padding: 12px 8px;
+  }
+
+  .pipes-title {
+    font-size: 1.5rem;
+  }
+
+  .pipes-instructions {
+    font-size: 0.825rem;
+    margin-bottom: 12px;
+    padding: 0 8px;
+  }
+
+  .pipes-btn {
+    width: 100%;
+    padding: 12px 16px; /* Larger touch target */
+  }
+}
+
+/* Phones in Portrait Mode (Under 400px) */
+@media screen and (max-width: 400px) {
+  .pipes-title {
+    font-size: 1.3rem;
+  }
+
+  .pipes-instructions {
+    font-size: 0.775rem;
+  }
+
+  .pipes-config {
+    font-size: 0.85rem;
+  }
+
+  .pipes-config select {
+    padding: 4px 8px;
+    font-size: 0.85rem;
+  }
+
+  .pipes-status {
+    font-size: 0.95rem;
+  }
+}

@@ -5,9 +5,10 @@ import logoImg from '../assets/logo.jpg';
 import mineskeeterImg from '../assets/mineskeeter.png';
 import ske4dleImg from '../assets/ske4dle.png';
 import skeedle500Img from '../assets/skeedle500.png';
-import skeedlePlusImg from '../assets/skeedle+.png';
+// import skeedlePlusImg from '../assets/skeedle+.png';
 import game2048Img from '../assets/2048.png';
 import shikakuImg from '../assets/shikaku.png';
+import pipesImg from '../assets/pipes.png';
 import { useEffect } from 'react';
 
 const GAMES = [
@@ -16,7 +17,8 @@ const GAMES = [
   { id: 'word500', title: 'Skeedle500', path: '/word500', image: skeedle500Img },
   { id: '2048', title: '2048', path: '/2048', image: game2048Img },
   { id: 'shikaku', title: 'Shikaku', path: '/shikaku', image: shikakuImg },
-  { id: 'sudoku', title: 'Skeedle+', path: '/sudoku', image: skeedlePlusImg }
+  // { id: 'sudoku', title: 'Skeedle+', path: '/sudoku', image: skeedlePlusImg },
+  { id: 'pipes', title: 'Skeeter Piper (net)', path: '/pipes', image: pipesImg }
 ];
 
 
