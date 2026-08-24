@@ -1,0 +1,194 @@
+/* ==========================================================================
+   COLOR SCHEME & CSS VARIABLES (Matches Site Theme)
+   ========================================================================== */
+:root {
+  /* Backgrounds */
+  --bg-dark: #0d0f12;
+  --surface-dark: #161a22;
+  --surface-border: #30363d;
+
+  /* Neon Accents */
+  --neon-green: #39ff14;
+  --neon-pink: #ff2a85;
+  --neon-yellow: #ffff00;
+  
+  /* Text & Surface Defaults */
+  --text-main: #f0f6fc;
+  --text-muted: #8b949e;
+  --key-default: #21262d;
+
+  /* Neon Glow Effects */
+  --glow-green: 0 0 10px rgba(57, 255, 20, 0.4);
+  --glow-pink: 0 0 10px rgba(255, 42, 133, 0.4);
+}
+
+/* ==========================================================================
+   SHIKAKU GAME STYLES
+   ========================================================================== */
+.shikaku-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+  padding: 20px;
+  background-color: var(--bg-dark);
+  color: var(--text-main);
+  min-height: 100vh;
+}
+
+.shikaku-title {
+  margin-bottom: 8px;
+  color: var(--text-main);
+  font-size: 2.5rem;
+  letter-spacing: 1px;
+  text-shadow: var(--glow-green);
+}
+
+.shikaku-instructions {
+  color: var(--text-muted);
+  margin-top: 0;
+  margin-bottom: 20px;
+  text-align: center;
+  max-width: 480px;
+  font-size: 1rem;
+  line-height: 1.4;
+}
+
+.shikaku-config {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.shikaku-config label {
+  color: var(--text-main);
+  font-size: 1.1rem;
+}
+
+.shikaku-config select {
+  padding: 6px 14px;
+  border-radius: 6px;
+  border: 1px solid var(--surface-border);
+  background-color: var(--surface-dark);
+  color: var(--text-main);
+  font-size: 1rem;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.shikaku-config select:focus {
+  border-color: var(--neon-green);
+  box-shadow: var(--glow-green);
+}
+
+.shikaku-board-wrapper {
+  position: relative;
+  background: var(--surface-dark);
+  padding: 16px;
+  border-radius: 12px;
+  border: 1px solid var(--surface-border);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+}
+
+.shikaku-grid {
+  display: grid;
+  gap: 0;
+  border: 2px solid var(--surface-border);
+  position: relative;
+  touch-action: none;
+  background-color: var(--bg-dark);
+}
+
+.shikaku-cell {
+  box-sizing: border-box;
+  border: 1px solid var(--surface-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  color: var(--text-main);
+  background-color: var(--surface-dark);
+  position: relative;
+  z-index: 1;
+}
+
+/* Drag overlay during selection */
+.shikaku-drag-overlay {
+  position: absolute;
+  border: 2px dashed var(--neon-yellow);
+  background-color: rgba(255, 255, 0, 0.15);
+  pointer-events: none;
+  z-index: 10;
+}
+
+.shikaku-rectangles-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 5;
+}
+
+.shikaku-placed-rect {
+  position: absolute;
+  box-sizing: border-box;
+  border-radius: 4px;
+  pointer-events: auto;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+/* Valid rectangle match (Neon Green) */
+.shikaku-placed-rect.valid {
+  background-color: rgba(57, 255, 20, 0.2);
+  border: 2px solid var(--neon-green);
+  box-shadow: var(--glow-green);
+}
+
+/* Invalid rectangle match (Neon Pink) */
+.shikaku-placed-rect.invalid {
+  background-color: rgba(255, 42, 133, 0.2);
+  border: 2px solid var(--neon-pink);
+  box-shadow: var(--glow-pink);
+}
+
+.shikaku-controls {
+  margin-top: 20px;
+  display: flex;
+  gap: 12px;
+}
+
+.shikaku-btn {
+  padding: 10px 20px;
+  font-size: 1rem;
+  border: 1px solid var(--surface-border);
+  border-radius: 6px;
+  background-color: var(--key-default);
+  color: var(--text-main);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.shikaku-btn:hover {
+  border-color: var(--neon-green);
+  color: var(--neon-green);
+  box-shadow: var(--glow-green);
+}
+
+.shikaku-status {
+  margin-top: 15px;
+  font-size: 1.25rem;
+  height: 1.8rem;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.shikaku-status.win {
+  color: var(--neon-green);
+  text-shadow: var(--glow-green);
+}
