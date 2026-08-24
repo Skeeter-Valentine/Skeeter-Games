@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import './pipes.css';
+import Navbar from '../../components/Navbar';
 
 /* ==========================================================================
    DIRECTIONS & UTILITIES
@@ -336,6 +337,7 @@ export default function Pipes() {
 
   return (
     <div className="pipes-container">
+    <Navbar />
       <h1 className="pipes-title">Skeeter Piper (net)</h1>
       <p className="pipes-instructions">
         Left-click to rotate pipes clockwise. Right-click to lock/darken cells you know are correct!
