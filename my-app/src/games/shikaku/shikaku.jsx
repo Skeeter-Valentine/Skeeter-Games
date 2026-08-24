@@ -154,13 +154,15 @@ export default function Shikaku() {
 
   const gridRef = useRef(null);
 
-  const getCellSize = (size) => {
-    if (size >= 20) return 22;
-    if (size >= 15) return 28;
-    if (size >= 10) return 38;
-    if (size >= 7) return 46;
-    return 54;
-  };
+ const getCellSize = (size) => {
+  const isMobile = window.innerWidth <= 480;
+
+  if (size >= 20) return isMobile ? 16 : 22;
+  if (size >= 15) return isMobile ? 22 : 28;
+  if (size >= 10) return isMobile ? 30 : 38;
+  if (size >= 7) return isMobile ? 38 : 46;
+  return isMobile ? 44 : 54;
+};
 
   const cellSize = getCellSize(gridSize);
 
