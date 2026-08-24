@@ -192,3 +192,82 @@
   color: var(--neon-green);
   text-shadow: var(--glow-green);
 }
+
+/* ==========================================================================
+   MOBILE & RESPONSIVE MEDIA QUERIES
+   ========================================================================== */
+
+/* Tablet & Mobile Screens (768px and down) */
+@media screen and (max-width: 768px) {
+  .shikaku-container {
+    padding: 12px 8px;
+    justify-content: flex-start;
+  }
+
+  .shikaku-title {
+    font-size: 2rem;
+    margin-bottom: 4px;
+  }
+
+  .shikaku-instructions {
+    font-size: 0.9rem;
+    max-width: 90%;
+    margin-bottom: 14px;
+  }
+
+  .shikaku-config {
+    margin-bottom: 14px;
+    gap: 8px;
+  }
+
+  .shikaku-config label {
+    font-size: 0.95rem;
+  }
+
+  .shikaku-config select {
+    padding: 6px 10px;
+    font-size: 0.9rem;
+  }
+
+  .shikaku-board-wrapper {
+    padding: 8px;
+    border-radius: 8px;
+    max-width: 100%;
+    overflow: auto; /* Handles horizontal scrolling cleanly if needed */
+  }
+
+  .shikaku-controls {
+    margin-top: 16px;
+    width: 100%;
+    max-width: 340px;
+    justify-content: center;
+  }
+
+  .shikaku-btn {
+    flex: 1;
+    padding: 12px 10px; /* Bigger touch target for mobile fingers */
+    font-size: 0.95rem;
+  }
+
+  .shikaku-status {
+    font-size: 1.1rem;
+    margin-top: 10px;
+  }
+}
+
+/* Small Mobile Phones (480px and down) */
+@media screen and (max-width: 480px) {
+  .shikaku-title {
+    font-size: 1.75rem;
+  }
+
+  .shikaku-instructions {
+    font-size: 0.85rem;
+    line-height: 1.3;
+  }
+
+  .shikaku-board-wrapper {
+    padding: 4px;
+  }
+}
+
