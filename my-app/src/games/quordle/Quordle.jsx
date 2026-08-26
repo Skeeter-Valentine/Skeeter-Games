@@ -8,6 +8,7 @@ import { getDailyTargetWords,
 } from './constants/wordBank';
 import './Quordle.css';
 import Navbar from '../../components/Navbar';
+import FeedbackForm from '../../components/Feedback';
 
 const WORD_LENGTH = 5;
 const MAX_ATTEMPTS = 9;
@@ -320,6 +321,10 @@ export default function Quordle() {
         onKeyPress={handleInput}
         letterStatuses={getLetterStatuses()}
       />
+
+      <div style={{ marginTop: '24px' }}>
+        <FeedbackForm />
+      </div>
     </div>
   );
 }

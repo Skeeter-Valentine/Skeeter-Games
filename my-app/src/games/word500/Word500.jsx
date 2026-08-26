@@ -6,6 +6,7 @@ import StatsModal from './components/StatsModal';
 import { getRandomTargetWord, getDailyTargetWord, isValidWord } from './constants/wordBank';
 import './Word500.css';
 import Navbar from '../../components/Navbar';
+import FeedbackForm from '../../components/Feedback';
 
 const MAX_ATTEMPTS = 8;
 
@@ -288,6 +289,9 @@ const handleResetNotes = () => {
         onClose={() => setIsStatsOpen(false)}
         stats={stats}
       />
+      <div style={{ marginTop: '24px' }}>
+        <FeedbackForm />
+      </div>
     </div>
   );
 }

@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import './Minesweeper.css';
 import Navbar from '../../components/Navbar';
+import FeedbackForm from '../../components/Feedback';
 
 const DIFFICULTY_CONFIGS = {
   beginner: { rows: 9, cols: 9, mines: 10 },
@@ -330,6 +331,9 @@ export default function Minesweeper() {
             </div>
           ))}
         </div>
+      </div>
+      <div style={{ marginTop: '24px' }}>
+        <FeedbackForm />
       </div>
     </div>
   );

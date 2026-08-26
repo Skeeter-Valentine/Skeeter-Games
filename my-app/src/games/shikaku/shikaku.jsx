@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import './shikaku.css';
 import Navbar from '../../components/Navbar';
+import FeedbackForm from '../../components/Feedback';
 
 /* ==========================================================================
    1. HIGH-PERFORMANCE FAST GENERATOR (Recursive Slicing Algorithm)
@@ -292,7 +293,7 @@ export default function Shikaku() {
   return (
     <div className="shikaku-container">
     <Navbar />
-      <h1 className="shikaku-title">Skeekaku</h1>
+      <h1 className="shikaku-title">SKEEKAKU</h1>
 
       <div className="shikaku-config">
         <label htmlFor="grid-size-select">Grid Size:</label>
@@ -388,6 +389,9 @@ export default function Shikaku() {
           Generate New Puzzle
         </button>
       </div>
+      <div style={{ marginTop: '24px' }}>
+            <FeedbackForm />
+        </div>
     </div>
   );
 }
