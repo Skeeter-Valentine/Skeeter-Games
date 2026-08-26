@@ -1,6 +1,6 @@
 // src/games/word500/Word500.jsx
 import React, { useState, useEffect, useCallback } from 'react';
-import Board from './components/Board';
+import Board, { getWord500Feedback } from './components/Board';
 import Keyboard from './components/Keyboard';
 import StatsModal from './components/StatsModal';
 import { getRandomTargetWord, getDailyTargetWord, isValidWord } from './constants/wordBank';
@@ -211,6 +211,18 @@ const handleResetNotes = () => {
       };
     }, []);
 
+    const guessedLetters = Array.from(
+      new Set(guesses.join('').toUpperCase().split(''))
+    );
+
+    const confirmedPinkLetters = new Set();
+      guesses.forEach((g) => {
+        const { pink } = getWord500Feedback(g, targetWord);
+        if (pink === 5) {
+          g.toUpperCase().split('').forEach((letter) => confirmedPinkLetters.add(letter));
+        }
+      });
+
   return (
     <div className="word500-container">
       <Navbar />
@@ -266,9 +278,10 @@ const handleResetNotes = () => {
         targetWord={targetWord}
         tileNotes={tileNotes}
         onTileClick={handleTileClick}
+        confirmedPinkLetters={confirmedPinkLetters}
       />
 
-      <Keyboard onKeyPress={handleKeyPress} />
+      <Keyboard onKeyPress={handleKeyPress} guessedLetters={guessedLetters} />
 
       <StatsModal
         isOpen={isStatsOpen}

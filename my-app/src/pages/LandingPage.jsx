@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import './LandingPage.css';
-import logoImg from '../assets/logo.jpg';
+import logoImg from '../assets/logoFog.png';
 import mineskeeterImg from '../assets/mineskeeter.png';
 import ske4dleImg from '../assets/ske4dle.png';
 import skeedle500Img from '../assets/skeedle500.png';

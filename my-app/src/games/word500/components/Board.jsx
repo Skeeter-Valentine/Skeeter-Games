@@ -1,7 +1,6 @@
-// src/games/word500/components/Board.jsx
 import React from 'react';
 
-function getWord500Feedback(guess, target) {
+export function getWord500Feedback(guess, target) {
   if (!guess || !target || guess.length !== 5) {
     return { green: 0, yellow: 0, pink: 5 };
   }
@@ -42,7 +41,15 @@ function getWord500Feedback(guess, target) {
   return { green, yellow, pink };
 }
 
-export default function Board({ guesses, currentGuess, maxAttempts, targetWord, tileNotes, onTileClick }) {
+export default function Board({ 
+  guesses, 
+  currentGuess, 
+  maxAttempts, 
+  targetWord, 
+  tileNotes, 
+  onTileClick,
+  confirmedPinkLetters = new Set() 
+}) {
   return (
     <div className="word500-board">
       {Array.from({ length: maxAttempts }).map((_, rowIndex) => {
@@ -57,7 +64,13 @@ export default function Board({ guesses, currentGuess, maxAttempts, targetWord, 
               {Array.from({ length: 5 }).map((_, tileIndex) => {
                 const letter = guess[tileIndex] || '';
                 const key = `${rowIndex}-${tileIndex}`;
-                const noteColor = isSubmitted ? (tileNotes[key] || 'none') : 'none';
+                
+                // If the letter is in confirmedPinkLetters, default to pink unless manually overridden
+                const isConfirmedPink = isSubmitted && confirmedPinkLetters.has(letter.toUpperCase());
+                const manualNote = tileNotes[key];
+                const noteColor = isSubmitted 
+                  ? (manualNote || (isConfirmedPink ? 'pink' : 'none'))
+                  : 'none';
 
                 return (
                   <div
@@ -87,4 +100,5 @@ export default function Board({ guesses, currentGuess, maxAttempts, targetWord, 
         );
       })}
     </div>
-  );}
+  );
+}

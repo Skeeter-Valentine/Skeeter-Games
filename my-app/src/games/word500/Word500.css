@@ -487,3 +487,9 @@
   color: var(--neon-pink, #ff2a85);
   box-shadow: 0 0 6px rgba(255, 42, 133, 0.3);
 }
+
+.word500-key.used {
+  background-color: #3a3a3c;
+  color: #787c7e;
+  opacity: 0.6;
+}
