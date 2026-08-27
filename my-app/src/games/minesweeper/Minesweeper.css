@@ -61,6 +61,12 @@
   box-shadow: 0 0 8px rgba(255, 42, 133, 0.4);
 }
 
+.diff-btn.blue {
+  background-color: #00f0ff;
+  color: #333;
+  box-shadow: 0 0 8px rgba(255, 42, 133, 0.4);
+}
+
 /* Classic Outer Window Styling */
 .ms-classic-window {
   background-color: #1b1e24;

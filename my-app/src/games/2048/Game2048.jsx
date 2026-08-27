@@ -6,16 +6,43 @@ import FeedbackForm from '../../components/Feedback';
 
 const GRID_SIZE = 4;
 
+/* ==========================================================================
+   SEED & DAILY GENERATOR HELPERS
+   ========================================================================== */
+
+function mulberry32(seed) {
+  return function () {
+    let t = (seed += 0x6d2b79f5);
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+function getDailySeed(dateStr) {
+  let hash = 0;
+  for (let i = 0; i < dateStr.length; i++) {
+    hash = (hash << 5) - hash + dateStr.charCodeAt(i);
+    hash |= 0;
+  }
+  return Math.abs(hash);
+}
+
 export default function Game2048() {
+  const todayStr = new Date().toISOString().split('T')[0];
   const nextId = useRef(1);
+
+  const [gameMode, setGameMode] = useState('daily'); // 'daily' or 'classic'
   const [tiles, setTiles] = useState([]);
   const [score, setScore] = useState(0);
   const [history, setHistory] = useState([]);
   const [undoCount, setUndoCount] = useState(0);
   const [isTestMode, setIsTestMode] = useState(false);
+  const [gameWon, setGameWon] = useState(false);
   const lastMoveTimeRef = useRef(Date.now());
   const [slideSpeed, setSlideSpeed] = useState(120);
   const touchStartRef = useRef({ x: 0, y: 0 });
+
   const [theme, setTheme] = useState(() => {
     return localStorage.getItem('2048-theme') || 'skeeter';
   });
@@ -28,47 +55,140 @@ export default function Game2048() {
     setTheme((prev) => (prev === 'skeeter' ? 'classic' : 'skeeter'));
   };
 
-  const createTile = (r, c, value = Math.random() < 0.9 ? 2 : 4) => ({
+  const createTile = useCallback((r, c, value = 2) => ({
     id: nextId.current++,
     r,
     c,
     value,
     isMerged: false,
-  });
+  }), []);
 
+  // Initialize board for either Classic mode or Daily Challenge
   const initGame = useCallback(() => {
     setIsTestMode(false);
-    const first = createTile(Math.floor(Math.random() * 4), Math.floor(Math.random() * 4));
-    let secondR, secondC;
-    do {
-      secondR = Math.floor(Math.random() * 4);
-      secondC = Math.floor(Math.random() * 4);
-    } while (secondR === first.r && secondC === first.c);
+    setGameWon(false);
 
-    const second = createTile(secondR, secondC);
-    setTiles([first, second]);
+    // 1. Restore daily challenge state if exists
+    if (gameMode === 'daily') {
+      const saved = localStorage.getItem(`2048-daily-${todayStr}`);
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          setTiles(parsed.tiles);
+          setScore(parsed.score);
+          setHistory(parsed.history || []);
+          setUndoCount(parsed.undoCount || 0);
+          setGameWon(parsed.gameWon || false);
+          return;
+        } catch (e) {
+          // Fall back to new daily generation on parse error
+        }
+      }
+    }
+
     setScore(0);
     setHistory([]);
     setUndoCount(0);
-  }, []);
 
-  const enableTestState = () => {
-    const testValues = [2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384, 32768, 65536];
-    const testTiles = testValues.map((val, idx) => ({
-      id: nextId.current++,
-      r: Math.floor(idx / GRID_SIZE),
-      c: idx % GRID_SIZE,
-      value: val,
-      isMerged: false,
-    }));
+    if (gameMode === 'daily') {
+      // Deterministic Daily Preset Board Generation
+      const rng = mulberry32(getDailySeed(todayStr + '-2048'));
 
-    setTiles(testTiles);
-    setIsTestMode(true);
-  };
+      // Total tiles for daily challenge: between 8 and 10
+      const totalTilesCount = 8 + Math.floor(rng() * 3);
+
+      const allPositions = [];
+      for (let r = 0; r < GRID_SIZE; r++) {
+        for (let c = 0; c < GRID_SIZE; c++) {
+          allPositions.push({ r, c });
+        }
+      }
+
+      // Shuffle positions using the daily PRNG
+      for (let i = allPositions.length - 1; i > 0; i--) {
+        const j = Math.floor(rng() * (i + 1));
+        [allPositions[i], allPositions[j]] = [allPositions[j], allPositions[i]];
+      }
+
+      const highTierValues = [256, 512, 1024]; // Between 250 and 1300
+      const midTierValues = [32, 64, 128];     // Between 32 and 128
+      const lowTierValues = [2, 4, 8, 16];
+
+      const assignedValues = [];
+
+      // 1. Guarantee at least 1 high-tier tile (250-1300)
+      assignedValues.push(highTierValues[Math.floor(rng() * highTierValues.length)]);
+
+      // 2. Guarantee at least 3 mid-tier tiles (32-128)
+      for (let i = 0; i < 3; i++) {
+        assignedValues.push(midTierValues[Math.floor(rng() * midTierValues.length)]);
+      }
+
+      // 3. Fill remaining positions (up to totalTilesCount) with lower/mid values
+      while (assignedValues.length < totalTilesCount) {
+        const roll = rng();
+        if (roll < 0.6) {
+          assignedValues.push(lowTierValues[Math.floor(rng() * lowTierValues.length)]);
+        } else {
+          assignedValues.push(midTierValues[Math.floor(rng() * midTierValues.length)]);
+        }
+      }
+
+      // Shuffle values to distribute them randomly across chosen positions
+      for (let i = assignedValues.length - 1; i > 0; i--) {
+        const j = Math.floor(rng() * (i + 1));
+        [assignedValues[i], assignedValues[j]] = [assignedValues[j], assignedValues[i]];
+      }
+
+      const initialTiles = [];
+      let initialScore = 0;
+
+      for (let i = 0; i < assignedValues.length; i++) {
+        const pos = allPositions[i];
+        const val = assignedValues[i];
+        initialTiles.push(createTile(pos.r, pos.c, val));
+        initialScore += val;
+      }
+
+      setTiles(initialTiles);
+      setScore(initialScore);
+    } else {
+      // Classic Mode Generation (2 random tiles)
+      const firstR = Math.floor(Math.random() * 4);
+      const firstC = Math.floor(Math.random() * 4);
+      const firstVal = Math.random() < 0.9 ? 2 : 4;
+      const first = createTile(firstR, firstC, firstVal);
+
+      let secondR, secondC;
+      do {
+        secondR = Math.floor(Math.random() * 4);
+        secondC = Math.floor(Math.random() * 4);
+      } while (secondR === firstR && secondC === firstC);
+
+      const secondVal = Math.random() < 0.9 ? 2 : 4;
+      const second = createTile(secondR, secondC, secondVal);
+
+      setTiles([first, second]);
+    }
+  }, [gameMode, todayStr, createTile]);
 
   useEffect(() => {
     initGame();
   }, [initGame]);
+
+  // Persist daily challenge state
+  useEffect(() => {
+    if (gameMode === 'daily' && tiles.length > 0) {
+      const dailyPayload = {
+        tiles,
+        score,
+        history,
+        undoCount,
+        gameWon,
+      };
+      localStorage.setItem(`2048-daily-${todayStr}`, JSON.stringify(dailyPayload));
+    }
+  }, [tiles, score, history, undoCount, gameWon, gameMode, todayStr]);
 
   const handleUndo = () => {
     if (history.length === 0 || isTestMode) return;
@@ -109,6 +229,7 @@ export default function Game2048() {
     let moved = false;
     let addedScore = 0;
     const updatedTiles = [];
+    let hasReached2048 = false;
 
     const isVertical = direction === 'UP' || direction === 'DOWN';
     const isReverse = direction === 'RIGHT' || direction === 'DOWN';
@@ -137,6 +258,10 @@ export default function Game2048() {
         if (next && current.value === next.value) {
           const newValue = current.value * 2;
           addedScore += newValue;
+
+          if (newValue >= 2048) {
+            hasReached2048 = true;
+          }
 
           if (current.r !== targetR || current.c !== targetC || next.r !== targetR || next.c !== targetC) {
             moved = true;
@@ -182,13 +307,24 @@ export default function Game2048() {
 
     if (emptySpots.length > 0) {
       const spot = emptySpots[Math.floor(Math.random() * emptySpots.length)];
-      updatedTiles.push(createTile(spot.r, spot.c));
+      const spawnedVal = Math.random() < 0.9 ? 2 : 4;
+      updatedTiles.push({
+        id: nextId.current++,
+        r: spot.r,
+        c: spot.c,
+        value: spawnedVal,
+        isMerged: false,
+      });
+    }
+
+    if (hasReached2048 && !gameWon) {
+      setGameWon(true);
     }
 
     setHistory((prev) => [...prev, { tiles, score }]);
     setScore((prev) => prev + addedScore);
     setTiles(updatedTiles);
-  }, [tiles, score, isTestMode]);
+  }, [tiles, score, isTestMode, gameWon]);
 
   // Touch Event Handlers for Mobile Swiping
   const handleTouchStart = (e) => {
@@ -201,24 +337,15 @@ export default function Game2048() {
     const deltaX = touch.clientX - touchStartRef.current.x;
     const deltaY = touch.clientY - touchStartRef.current.y;
 
-    const minSwipeDistance = 30; // Minimum pixel drag required to register as a swipe
+    const minSwipeDistance = 30;
 
-    // Check if swipe distance meets threshold on either axis
     if (Math.abs(deltaX) > minSwipeDistance || Math.abs(deltaY) > minSwipeDistance) {
       if (Math.abs(deltaX) > Math.abs(deltaY)) {
-        // Horizontal swipe
-        if (deltaX > 0) {
-          move('RIGHT');
-        } else {
-          move('LEFT');
-        }
+        if (deltaX > 0) move('RIGHT');
+        else move('LEFT');
       } else {
-        // Vertical swipe
-        if (deltaY > 0) {
-          move('DOWN');
-        } else {
-          move('UP');
-        }
+        if (deltaY > 0) move('DOWN');
+        else move('UP');
       }
     }
   };
@@ -256,8 +383,7 @@ export default function Game2048() {
     };
   }, []);
 
-
-  //Code for injecting tiles and setting score/undos from the console
+  // Console injection helpers
   useEffect(() => {
     window.injectTile = (r, c, value) => {
       setTiles((prevTiles) => [
@@ -272,7 +398,7 @@ export default function Game2048() {
 
     window.setCustomUndos = (count) => {
       setUndoCount(count);
-  };
+    };
 
     return () => {
       delete window.injectTile;
@@ -280,40 +406,6 @@ export default function Game2048() {
       delete window.setCustomUndos;
     };
   }, []);
-
-
-  //Sample console injection for testing purposes. Uncomment to use in browser console.
-  /*(function recreateBoard() {
-  // 1. Clear existing tiles by setting grid to empty first
-  // (Assuming you have a way to clear or overwrite, we inject direct positions)
-  
-  // Set Score and Undos
-  window.setCustomScore(2207276);
-  window.setCustomUndos(532);
-
-  // 2. Define board setup [row, col, value]
-  const tileSetup = [
-    // Row 0
-    [0, 0, 'goat'], // Or 65536 depending on how your tile component handles the goat tile
-    [0, 1, 16384],
-    [0, 2, 4096],
-    [0, 3, 1024],
-    
-    // Row 1
-    [1, 0, 2],
-    [1, 1, 2],
-    [1, 2, 2],
-    [1, 3, 16],
-
-    // Row 2
-    [2, 3, 4]
-  ];
-
-  // 3. Inject each tile
-  tileSetup.forEach(([r, c, value]) => {
-    window.injectTile(r, c, value);
-  });
-})();*/
 
   return (
     <div className={`game2048-container theme-${theme}`}>
@@ -336,51 +428,73 @@ export default function Game2048() {
               </div>
             </div>
           </div>
+
+          <div className="diff-toggle" style={{ marginBottom: '12px' }}>
+            <button
+              className={`diff-btn ${gameMode === 'daily' ? 'active' : ''}`}
+              onClick={() => setGameMode('daily')}
+            >
+              Daily Challenge
+            </button>
+            <button
+              className={`diff-btn ${gameMode === 'classic' ? 'blue' : ''}`}
+              onClick={() => setGameMode('classic')}
+            >
+              Classic Mode
+            </button>
+          </div>
+
           <div className="game2048-controls-row">
             <div className="game2048-actions">
-            {/* Test colors button
-             <button 
-                className={`game2048-btn test-btn ${isTestMode ? 'active' : ''}`}
-                onClick={isTestMode ? initGame : enableTestState}
-              >
-                {isTestMode ? 'Exit Test' : 'Test Grid'}
-              </button> */}
-              <button 
-                className="game2048-btn undo-btn" 
-                onClick={handleUndo} 
+              <button
+                className="game2048-btn undo-btn"
+                onClick={handleUndo}
                 disabled={history.length === 0 || isTestMode}
               >
                 Undo
               </button>
-              <button 
-                className="game2048-btn undo-btn" 
-                onClick={handleUndo5x} 
+              <button
+                className="game2048-btn undo-btn"
+                onClick={handleUndo5x}
                 disabled={history.length === 0 || isTestMode}
               >
                 Undo 5x
               </button>
-              <button className="game2048-btn reset-btn" onClick={initGame}>
-                New Game
+              <button
+                className="game2048-btn reset-btn"
+                onClick={() => {
+                  if (gameMode === 'daily') {
+                    localStorage.removeItem(`2048-daily-${todayStr}`);
+                  }
+                  initGame();
+                }}
+              >
+                Reset Board
               </button>
             </div>
 
-              <div className="theme-switch-container">
-                <span className="theme-label">Skeeter</span>
-                <label className="switch">
-                  <input 
-                    type="checkbox" 
-                    checked={theme === 'classic'} 
-                    onChange={handleThemeToggle} 
-                  />
-                  <span className="slider round"></span>
-                </label>
-                <span className="theme-label">Classic</span>
-              </div>
+            <div className="theme-switch-container">
+              <span className="theme-label">Skeeter</span>
+              <label className="switch">
+                <input
+                  type="checkbox"
+                  checked={theme === 'classic'}
+                  onChange={handleThemeToggle}
+                />
+                <span className="slider round"></span>
+              </label>
+              <span className="theme-label">Classic</span>
             </div>
+          </div>
         </div>
 
-        {/* Added touch handlers directly to the game board */}
-        <div 
+        {gameWon && (
+          <div className="game2048-banner win-banner" style={{ textAlign: 'center', marginBottom: '12px', fontWeight: 'bold' }}>
+            🎉 You reached 2048! Keep playing to increase your score.
+          </div>
+        )}
+
+        <div
           className="game2048-board"
           onTouchStart={handleTouchStart}
           onTouchEnd={handleTouchEnd}
@@ -401,13 +515,17 @@ export default function Game2048() {
               return (
                 <div
                   key={tile.id}
-                  className={`game2048-tile tile-${tile.value} ${tile.isMerged ? 'merged' : ''} ${digitsClass}`}
+                  className={`game2048-tile tile-${tile.value} ${
+                    tile.isMerged ? 'merged' : ''
+                  } ${digitsClass}`}
                   style={{
                     '--r': tile.r,
                     '--c': tile.c,
                   }}
                 >
-                  {tile.value === 131072 || tile.value === 131000 ? '🐐' : tile.value}
+                  {tile.value === 131072 || tile.value === 131000
+                    ? '🐐'
+                    : tile.value}
                 </div>
               );
             })}

@@ -4,21 +4,44 @@ import Navbar from '../../components/Navbar';
 import FeedbackForm from '../../components/Feedback';
 
 /* ==========================================================================
-   1. HIGH-PERFORMANCE FAST GENERATOR (Recursive Slicing Algorithm)
+   1. SEEDED PSEUDO-RANDOM NUMBER GENERATOR (For Daily Puzzles)
    ========================================================================== */
 
-/**
- * Splits a bounding rectangle (r1, c1, r2, c2) recursively into 
- * smaller sub-rectangles until target constraints are met.
- */
-function partitionArea(r1, r2, c1, c2, rects, minArea = 2, maxAreaRatio = 0.15) {
+function mulberry32(seed) {
+  return function () {
+    let t = (seed += 0x6d2b79f5);
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+function getDailySeed(dateStr) {
+  let hash = 0;
+  for (let i = 0; i < dateStr.length; i++) {
+    hash = (hash << 5) - hash + dateStr.charCodeAt(i);
+    hash |= 0;
+  }
+  return Math.abs(hash);
+}
+
+function getDailyGridSize(dateStr) {
+  const sizes = [5, 7, 10, 15, 20];
+  const seed = getDailySeed(dateStr + '-size');
+  return sizes[seed % sizes.length];
+}
+
+/* ==========================================================================
+   2. HIGH-PERFORMANCE PUZZLE GENERATOR
+   ========================================================================== */
+
+function partitionArea(r1, r2, c1, c2, rects, minArea = 2, maxAreaRatio = 0.15, rng = Math.random) {
   const height = r2 - r1 + 1;
   const width = c2 - c1 + 1;
   const area = height * width;
 
   const maxAllowedArea = Math.max(6, Math.floor((r2 + 1) * (c2 + 1) * maxAreaRatio));
 
-  // Determine if valid cuts exist where BOTH resulting pieces will have area >= minArea (2)
   const validHorizontalCuts = [];
   for (let cut = r1; cut < r2; cut++) {
     const topArea = (cut - r1 + 1) * width;
@@ -39,39 +62,33 @@ function partitionArea(r1, r2, c1, c2, rects, minArea = 2, maxAreaRatio = 0.15) 
 
   const canSplitH = validHorizontalCuts.length > 0;
   const canSplitV = validVerticalCuts.length > 0;
-
-  const shouldSplit = (area > maxAllowedArea) || (area >= minArea * 2 && Math.random() < 0.70);
+  const shouldSplit = (area > maxAllowedArea) || (area >= minArea * 2 && rng() < 0.70);
 
   if (!shouldSplit || (!canSplitH && !canSplitV)) {
     rects.push({ r1, r2, c1, c2, area });
     return;
   }
 
-  // Choose orientation based on valid options and dimensions
   let splitHorizontally = false;
   if (canSplitH && canSplitV) {
-    if (height > width) splitHorizontally = Math.random() < 0.7;
-    else if (width > height) splitHorizontally = Math.random() < 0.3;
-    else splitHorizontally = Math.random() < 0.5;
+    if (height > width) splitHorizontally = rng() < 0.7;
+    else if (width > height) splitHorizontally = rng() < 0.3;
+    else splitHorizontally = rng() < 0.5;
   } else {
     splitHorizontally = canSplitH;
   }
 
   if (splitHorizontally) {
-    const cut = validHorizontalCuts[Math.floor(Math.random() * validHorizontalCuts.length)];
-    partitionArea(r1, cut, c1, c2, rects, minArea, maxAreaRatio);
-    partitionArea(cut + 1, r2, c1, c2, rects, minArea, maxAreaRatio);
+    const cut = validHorizontalCuts[Math.floor(rng() * validHorizontalCuts.length)];
+    partitionArea(r1, cut, c1, c2, rects, minArea, maxAreaRatio, rng);
+    partitionArea(cut + 1, r2, c1, c2, rects, minArea, maxAreaRatio, rng);
   } else {
-    const cut = validVerticalCuts[Math.floor(Math.random() * validVerticalCuts.length)];
-    partitionArea(r1, r2, c1, cut, rects, minArea, maxAreaRatio);
-    partitionArea(r1, r2, cut + 1, c2, rects, minArea, maxAreaRatio);
+    const cut = validVerticalCuts[Math.floor(rng() * validVerticalCuts.length)];
+    partitionArea(r1, r2, c1, cut, rects, minArea, maxAreaRatio, rng);
+    partitionArea(r1, r2, cut + 1, c2, rects, minArea, maxAreaRatio, rng);
   }
 }
 
-/**
- * Post-processing pass to merge adjacent small rectangles (areas 2 & 3)
- * into larger valid rectangles to reduce small-clue clutter.
- */
 function mergeSmallRectangles(rects, maxSmallPercentage = 0.20) {
   let smallCount = rects.filter((r) => r.area <= 3).length;
 
@@ -88,7 +105,6 @@ function mergeSmallRectangles(rects, maxSmallPercentage = 0.20) {
         const a = rects[i];
         const b = rects[j];
 
-        // Check if a and b can merge vertically into one rectangle
         if (a.c1 === b.c1 && a.c2 === b.c2 && (a.r2 + 1 === b.r1 || b.r2 + 1 === a.r1)) {
           const newR1 = Math.min(a.r1, b.r1);
           const newR2 = Math.max(a.r2, b.r2);
@@ -100,7 +116,6 @@ function mergeSmallRectangles(rects, maxSmallPercentage = 0.20) {
           break;
         }
 
-        // Check if a and b can merge horizontally into one rectangle
         if (a.r1 === b.r1 && a.r2 === b.r2 && (a.c2 + 1 === b.c1 || b.c2 + 1 === a.c1)) {
           const newC1 = Math.min(a.c1, b.c1);
           const newC2 = Math.max(a.c2, b.c2);
@@ -116,23 +131,21 @@ function mergeSmallRectangles(rects, maxSmallPercentage = 0.20) {
       if (merged) break;
     }
 
-    if (!merged) break; // Stop if no further merges are possible
+    if (!merged) break;
     smallCount = rects.filter((r) => r.area <= 3).length;
   }
 }
 
-function generateFastPuzzle(n) {
+function generateFastPuzzle(n, rng = Math.random) {
   const rects = [];
-  partitionArea(0, n - 1, 0, n - 1, rects, 2);
-
-  // Merge excess 2s and 3s into larger blocks
+  partitionArea(0, n - 1, 0, n - 1, rects, 2, 0.15, rng);
   mergeSmallRectangles(rects, 0.15);
 
   const clues = Array(n).fill(null).map(() => Array(n).fill(0));
 
   for (const rect of rects) {
-    const randomR = rect.r1 + Math.floor(Math.random() * (rect.r2 - rect.r1 + 1));
-    const randomC = rect.c1 + Math.floor(Math.random() * (rect.c2 - rect.c1 + 1));
+    const randomR = rect.r1 + Math.floor(rng() * (rect.r2 - rect.r1 + 1));
+    const randomC = rect.c1 + Math.floor(rng() * (rect.c2 - rect.c1 + 1));
     clues[randomR][randomC] = rect.area;
   }
 
@@ -140,11 +153,14 @@ function generateFastPuzzle(n) {
 }
 
 /* ==========================================================================
-   2. REACT COMPONENT
+   3. REACT COMPONENT
    ========================================================================== */
 
 export default function Shikaku() {
-  const [gridSize, setGridSize] = useState(15);
+  const todayStr = new Date().toISOString().split('T')[0];
+
+  const [gameMode, setGameMode] = useState('daily');
+  const [gridSize, setGridSize] = useState(() => getDailyGridSize(todayStr));
   const [cluesGrid, setCluesGrid] = useState([]);
   const [placedRects, setPlacedRects] = useState([]);
   const [isDragging, setIsDragging] = useState(false);
@@ -152,34 +168,107 @@ export default function Shikaku() {
   const [dragCurrent, setDragCurrent] = useState(null);
   const [status, setStatus] = useState('');
   const [isWin, setIsWin] = useState(false);
+  
+  const [showCounter, setShowCounter] = useState(true);
+  const [cursorPos, setCursorPos] = useState({ x: 0, y: 0 });
+
+  const [seconds, setSeconds] = useState(0);
+  const [isTimerActive, setIsTimerActive] = useState(true);
 
   const gridRef = useRef(null);
 
- const getCellSize = (size) => {
-  const isMobile = window.innerWidth <= 480;
+  const formatTime = (totalSeconds) => {
+    const mins = Math.floor(totalSeconds / 60);
+    const secs = totalSeconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
 
-  if (size >= 20) return isMobile ? 16 : 22;
-  if (size >= 15) return isMobile ? 22 : 28;
-  if (size >= 10) return isMobile ? 30 : 38;
-  if (size >= 7) return isMobile ? 38 : 46;
-  return isMobile ? 44 : 54;
-};
+  useEffect(() => {
+    let interval = null;
+    if (isTimerActive && !isWin) {
+      interval = setInterval(() => {
+        setSeconds((prevSeconds) => prevSeconds + 1);
+      }, 1000);
+    } else {
+      clearInterval(interval);
+    }
+    return () => clearInterval(interval);
+  }, [isTimerActive, isWin]);
 
-  const cellSize = getCellSize(gridSize);
-
-  const startNewGame = useCallback(() => {
+  const startNewGame = useCallback((overrideMode = gameMode, overrideSize = gridSize) => {
     setStatus('');
-    setIsWin(false);
 
-    // Instant execution with zero freeze
-    const { clues } = generateFastPuzzle(gridSize);
-    setCluesGrid(clues);
+    let clues;
+    if (overrideMode === 'daily') {
+      const dailySize = getDailyGridSize(todayStr);
+      setGridSize(dailySize);
+      const seed = getDailySeed(todayStr);
+      const rng = mulberry32(seed);
+      clues = generateFastPuzzle(dailySize, rng).clues;
+      setCluesGrid(clues);
+
+      // Restore saved daily progress if it exists
+      const saved = localStorage.getItem(`shikaku-daily-state-${todayStr}`);
+      if (saved) {
+        try {
+          const { placedRects: savedRects, seconds: savedSeconds, isWin: savedWin } = JSON.parse(saved);
+          setPlacedRects(savedRects || []);
+          setSeconds(savedSeconds || 0);
+          setIsWin(!!savedWin);
+          setIsTimerActive(!savedWin);
+          if (savedWin) {
+            setStatus(`🎉 Daily Puzzle Solved in ${formatTime(savedSeconds || 0)}!`);
+          }
+          return;
+        } catch (err) {
+          // If parsing fails, fall through to clear reset
+        }
+      }
+    } else {
+      clues = generateFastPuzzle(overrideSize, Math.random).clues;
+      setCluesGrid(clues);
+    }
+
     setPlacedRects([]);
-  }, [gridSize]);
+    setSeconds(0);
+    setIsWin(false);
+    setIsTimerActive(true);
+  }, [gameMode, gridSize, todayStr]);
 
   useEffect(() => {
     startNewGame();
-  }, [gridSize, startNewGame]);
+  }, [gameMode, startNewGame]);
+
+  // Persist Daily Challenge progress automatically whenever state updates
+  useEffect(() => {
+    if (gameMode === 'daily' && cluesGrid.length > 0) {
+      const dailyState = {
+        placedRects,
+        seconds,
+        isWin,
+      };
+      localStorage.setItem(`shikaku-daily-state-${todayStr}`, JSON.stringify(dailyState));
+    }
+  }, [placedRects, seconds, isWin, gameMode, cluesGrid, todayStr]);
+
+  const handleModeChange = (mode) => {
+    setGameMode(mode);
+    if (mode === 'daily') {
+      const dailySize = getDailyGridSize(todayStr);
+      setGridSize(dailySize);
+    }
+  };
+
+  const getCellSize = (size) => {
+    const isMobile = window.innerWidth <= 480;
+    if (size >= 20) return isMobile ? 16 : 22;
+    if (size >= 15) return isMobile ? 22 : 28;
+    if (size >= 10) return isMobile ? 30 : 38;
+    if (size >= 7) return isMobile ? 38 : 46;
+    return isMobile ? 44 : 54;
+  };
+
+  const cellSize = getCellSize(gridSize);
 
   const getGridCoords = (e) => {
     if (!gridRef.current) return { r: 0, c: 0 };
@@ -243,8 +332,10 @@ export default function Shikaku() {
     }
 
     if (totalCoveredCells === gridSize * gridSize) {
-      setStatus('🎉 Puzzle Solved!');
+      const modeText = gameMode === 'daily' ? 'Daily Puzzle' : 'Puzzle';
+      setStatus(`🎉 ${modeText} Solved in ${formatTime(seconds)}!`);
       setIsWin(true);
+      setIsTimerActive(false);
     } else {
       setStatus('');
       setIsWin(false);
@@ -253,6 +344,10 @@ export default function Shikaku() {
 
   const handleStart = (e) => {
     if (e.target.classList.contains('shikaku-placed-rect')) return;
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    setCursorPos({ x: clientX, y: clientY });
+
     const coords = getGridCoords(e);
     setIsDragging(true);
     setDragStart(coords);
@@ -261,6 +356,10 @@ export default function Shikaku() {
 
   const handleMove = (e) => {
     if (!isDragging) return;
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    setCursorPos({ x: clientX, y: clientY });
+
     setDragCurrent(getGridCoords(e));
   };
 
@@ -289,25 +388,79 @@ export default function Shikaku() {
   };
 
   const dragOverlayBounds = isDragging && dragStart && dragCurrent ? getRectBounds(dragStart, dragCurrent) : null;
+  const highlightedWidth = dragOverlayBounds ? dragOverlayBounds.c2 - dragOverlayBounds.c1 + 1 : 0;
+  const highlightedHeight = dragOverlayBounds ? dragOverlayBounds.r2 - dragOverlayBounds.r1 + 1 : 0;
+  const highlightedArea = highlightedWidth * highlightedHeight;
 
   return (
     <div className="shikaku-container">
-    <Navbar />
-      <h1 className="shikaku-title">SKEEKAKU</h1>
+      <Navbar />
+      <h1 className="shikaku-title">SHIKAKU</h1>
 
-      <div className="shikaku-config">
-        <label htmlFor="grid-size-select">Grid Size:</label>
-        <select
-          id="grid-size-select"
-          value={gridSize}
-          onChange={(e) => setGridSize(parseInt(e.target.value, 10))}
+      <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
+        <button
+          className={`shikaku-btn ${gameMode === 'daily' ? 'active' : ''}`}
+          onClick={() => handleModeChange('daily')}
+          style={{
+            fontWeight: gameMode === 'daily' ? 'bold' : 'normal',
+            backgroundColor: gameMode === 'daily' ? '#00f0ff' : '#333',
+            color: gameMode === 'daily' ? '#333' : '#fff'
+          }}
         >
-          <option value={5}>5 x 5</option>
-          <option value={7}>7 x 7</option>
-          <option value={10}>10 x 10</option>
-          <option value={15}>15 x 15</option>
-          <option value={20}>20 x 20</option>
-        </select>
+          Daily Challenge ({gridSize}x{gridSize})
+        </button>
+        <button
+          className={`shikaku-btn ${gameMode === 'custom' ? 'active' : ''}`}
+          onClick={() => handleModeChange('custom')}
+          style={{
+            fontWeight: gameMode === 'custom' ? 'bold' : 'normal',
+            backgroundColor: gameMode === 'custom' ? '#ff10f0' : '#333',
+            color: gameMode === 'custom' ? '#fff' : '#fff'
+          }}
+        >
+          Custom Game
+        </button>
+      </div>
+
+      <div className="shikaku-config" style={{ gap: '16px', flexWrap: 'wrap' }}>
+        {gameMode === 'custom' ? (
+          <div>
+            <label htmlFor="grid-size-select">Grid Size: </label>
+            <select
+              id="grid-size-select"
+              value={gridSize}
+              onChange={(e) => {
+                const newSize = parseInt(e.target.value, 10);
+                setGridSize(newSize);
+                startNewGame('custom', newSize);
+              }}
+            >
+              <option value={5}>5 x 5</option>
+              <option value={7}>7 x 7</option>
+              <option value={10}>10 x 10</option>
+              <option value={15}>15 x 15</option>
+              <option value={20}>20 x 20</option>
+            </select>
+          </div>
+        ) : (
+          <div style={{ fontWeight: '500' }}>
+            <strong>{todayStr}</strong>
+          </div>
+        )}
+
+        <div style={{ fontWeight: 'bold', fontSize: '1rem', minWidth: '90px' }}>
+          ⏱️ {formatTime(seconds)}
+        </div>
+
+        <label style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
+          <input
+            type="checkbox"
+            checked={showCounter}
+            onChange={(e) => setShowCounter(e.target.checked)}
+            style={{ cursor: 'pointer' }}
+          />
+          Show Cell Counter
+        </label>
       </div>
 
       <div className="shikaku-board-wrapper">
@@ -345,8 +498,8 @@ export default function Shikaku() {
               style={{
                 top: `${dragOverlayBounds.r1 * cellSize}px`,
                 left: `${dragOverlayBounds.c1 * cellSize}px`,
-                width: `${(dragOverlayBounds.c2 - dragOverlayBounds.c1 + 1) * cellSize}px`,
-                height: `${(dragOverlayBounds.r2 - dragOverlayBounds.r1 + 1) * cellSize}px`
+                width: `${highlightedWidth * cellSize}px`,
+                height: `${highlightedHeight * cellSize}px`
               }}
             />
           )}
@@ -372,26 +525,56 @@ export default function Shikaku() {
         </div>
       </div>
 
+      {isDragging && showCounter && dragOverlayBounds && (
+        <div
+          style={{
+            position: 'fixed',
+            left: `${cursorPos.x + 15}px`,
+            top: `${cursorPos.y - 25}px`,
+            backgroundColor: 'rgba(20, 20, 20, 0.9)',
+            color: '#fff',
+            padding: '4px 8px',
+            borderRadius: '6px',
+            fontSize: '13px',
+            fontWeight: 'bold',
+            pointerEvents: 'none',
+            zIndex: 9999,
+            boxShadow: '0px 2px 8px rgba(0,0,0,0.4)',
+            whiteSpace: 'nowrap'
+          }}
+        >
+          {highlightedArea}
+        </div>
+      )}
+
       <div className={`shikaku-status ${isWin ? 'win' : ''}`}>{status}</div>
 
       <div className="shikaku-controls">
         <button
           className="shikaku-btn"
           onClick={() => {
+            if (gameMode === 'daily') {
+              localStorage.removeItem(`shikaku-daily-state-${todayStr}`);
+            }
             setPlacedRects([]);
             setStatus('');
             setIsWin(false);
+            setSeconds(0);
+            setIsTimerActive(true);
           }}
         >
           Reset Board
         </button>
-        <button className="shikaku-btn" onClick={startNewGame}>
-          Generate New Puzzle
-        </button>
+        {gameMode === 'custom' && (
+          <button className="shikaku-btn" onClick={() => startNewGame('custom', gridSize)}>
+            Generate New Puzzle
+          </button>
+        )}
       </div>
+
       <div style={{ marginTop: '24px' }}>
-            <FeedbackForm />
-        </div>
+        <FeedbackForm />
+      </div>
     </div>
   );
 }
