@@ -410,7 +410,7 @@ const initBoard = useCallback(() => {
   return (
     <div className="minesweeper-container">
       <Navbar />
-      <h2 className="ms-title">MINESWEEPER</h2>
+      <h2 className="ms-title">MINESKEETER</h2>
 
       <div className="diff-toggle">
         <button

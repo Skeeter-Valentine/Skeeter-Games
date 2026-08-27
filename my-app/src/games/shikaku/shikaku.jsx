@@ -395,7 +395,7 @@ export default function Shikaku() {
   return (
     <div className="shikaku-container">
       <Navbar />
-      <h1 className="shikaku-title">SHIKAKU</h1>
+      <h1 className="shikaku-title">SKEEKAKU</h1>
 
       <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
         <button
