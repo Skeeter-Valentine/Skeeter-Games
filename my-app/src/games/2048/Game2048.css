@@ -320,19 +320,24 @@
 /* Precise scaling per character count so numbers stay ~75% of tile width */
 .game2048-tile.digits-1,
 .game2048-tile.digits-2 {
-  font-size: clamp(2.2rem, 90%, 3.5rem);
+  font-size: clamp(3.0rem, 90%, 3.5rem);
 }
 
 .game2048-tile.digits-3 {
-  font-size: clamp(1.6rem, 65%, 2.5rem);
+  font-size: clamp(2.2rem, 65%, 2.5rem);
 }
 
 .game2048-tile.digits-4 {
-  font-size: clamp(1.2rem, 48%, 1.9rem);
+  font-size: clamp(1.6rem, 48%, 1.9rem);
 }
 
 .game2048-tile.digits-5 {
-  font-size: clamp(1rem, 38%, 1.4rem);
+  font-size: clamp(1.4rem, 38%, 1.4rem);
+}
+
+/* Add styling for 6-digit tiles to prevent text overflow */
+.game2048-tile.digits-6 {
+  font-size: clamp(1.2rem, 30%, 1.2rem);
 }
 
 /* Softer box-shadow ranges in keyframes */
@@ -491,4 +496,52 @@ input:checked + .slider:before {
   background-color: #00f0ff;
   color: #333;
   box-shadow: 0 0 8px rgba(255, 42, 133, 0.4);
+}
+
+/* Neon rainbow gradient for the 131072 goat tile in Skeeter mode */
+.theme-skeeter .game2048-tile.tile-131072 {
+  background: linear-gradient(
+    135deg,
+    #ff0055,
+    #ff7700,
+    #ffff00,
+    #00ff66,
+    #00ffff,
+    #7700ff,
+    #ff00ff
+  );
+  background-size: 400% 400%;
+  animation: neonRainbowShift 4s ease infinite;
+  color: #fff;
+  text-shadow: 0 0 8px rgba(255, 255, 255, 0.8), 0 0 15px rgba(0, 255, 255, 0.6);
+}
+
+/* Optional smooth animation to make the neon gradient shift dynamically */
+@keyframes neonRainbowShift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+/* Black background and white text for tiles above 2048 in Classic mode */
+.theme-classic .tile-4096,
+.theme-classic .tile-8192,
+.theme-classic .tile-16384,
+.theme-classic .tile-32768,
+.theme-classic .tile-65536,
+.theme-classic .tile-131072 {
+  background: #000000;
+  color: #f9f6f2;
+  box-shadow: 0 0 30px 10px rgba(0, 0, 0, 0.4);
+}
+
+/* Make the goat emoji larger in Skeeter mode */
+.theme-skeeter .game2048-tile.tile-131072 {
+  font-size: 2.5rem !important;
 }

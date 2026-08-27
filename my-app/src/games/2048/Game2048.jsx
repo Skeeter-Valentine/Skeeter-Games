@@ -32,13 +32,21 @@ export default function Game2048() {
   const todayStr = new Date().toISOString().split('T')[0];
   const nextId = useRef(1);
 
-  const [gameMode, setGameMode] = useState('daily'); // 'daily' or 'classic'
+  const [gameMode, setGameMode] = useState('daily'); // 'daily', 'classic', or 'unlimited'
+  const [unlimitedSeed, setUnlimitedSeed] = useState(() => Math.floor(Math.random() * 1000000));
   const [tiles, setTiles] = useState([]);
   const [score, setScore] = useState(0);
   const [history, setHistory] = useState([]);
   const [undoCount, setUndoCount] = useState(0);
   const [isTestMode, setIsTestMode] = useState(false);
   const [gameWon, setGameWon] = useState(false);
+  const [winTimeFormatted, setWinTimeFormatted] = useState('');
+  
+  // Timer states
+  const [elapsedTime, setElapsedTime] = useState(0);
+  const [isTimerRunning, setIsTimerRunning] = useState(false);
+  const timerIntervalRef = useRef(null);
+
   const lastMoveTimeRef = useRef(Date.now());
   const [slideSpeed, setSlideSpeed] = useState(120);
   const touchStartRef = useRef({ x: 0, y: 0 });
@@ -63,12 +71,42 @@ export default function Game2048() {
     isMerged: false,
   }), []);
 
-  // Initialize board for either Classic mode or Daily Challenge
+  const formatTime = (seconds) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  const startTimer = useCallback(() => {
+    if (!isTimerRunning) {
+      setIsTimerRunning(true);
+      timerIntervalRef.current = setInterval(() => {
+        setElapsedTime((prev) => prev + 1);
+      }, 1000);
+    }
+  }, [isTimerRunning]);
+
+  const stopTimer = useCallback(() => {
+    setIsTimerRunning(false);
+    if (timerIntervalRef.current) {
+      clearInterval(timerIntervalRef.current);
+      timerIntervalRef.current = null;
+    }
+  }, []);
+
+  useEffect(() => {
+    return () => stopTimer();
+  }, [stopTimer]);
+
+  // Initialize board for Daily Challenge, Unlimited Puzzles, or Classic Mode
   const initGame = useCallback(() => {
+    stopTimer();
+    setElapsedTime(0);
     setIsTestMode(false);
     setGameWon(false);
+    setWinTimeFormatted('');
 
-    // 1. Restore daily challenge state if exists
+    // 1. Restore daily challenge state if exists (only for strict daily mode)
     if (gameMode === 'daily') {
       const saved = localStorage.getItem(`2048-daily-${todayStr}`);
       if (saved) {
@@ -90,11 +128,15 @@ export default function Game2048() {
     setHistory([]);
     setUndoCount(0);
 
-    if (gameMode === 'daily') {
-      // Deterministic Daily Preset Board Generation
-      const rng = mulberry32(getDailySeed(todayStr + '-2048'));
+    if (gameMode === 'daily' || gameMode === 'unlimited') {
+      const currentSeed =
+        gameMode === 'daily'
+          ? getDailySeed(todayStr + '-2048')
+          : getDailySeed(unlimitedSeed.toString() + '-unlimited-2048');
 
-      // Total tiles for daily challenge: between 8 and 10
+      const rng = mulberry32(currentSeed);
+
+      // Total tiles for puzzle layout: between 8 and 10
       const totalTilesCount = 8 + Math.floor(rng() * 3);
 
       const allPositions = [];
@@ -104,27 +146,27 @@ export default function Game2048() {
         }
       }
 
-      // Shuffle positions using the daily PRNG
+      // Shuffle positions using the PRNG
       for (let i = allPositions.length - 1; i > 0; i--) {
         const j = Math.floor(rng() * (i + 1));
         [allPositions[i], allPositions[j]] = [allPositions[j], allPositions[i]];
       }
 
-      const highTierValues = [256, 512, 1024]; // Between 250 and 1300
-      const midTierValues = [32, 64, 128];     // Between 32 and 128
+      const highTierValues = [256, 512, 1024];
+      const midTierValues = [32, 64, 128];
       const lowTierValues = [2, 4, 8, 16];
 
       const assignedValues = [];
 
-      // 1. Guarantee at least 1 high-tier tile (250-1300)
+      // 1. Guarantee at least 1 high-tier tile
       assignedValues.push(highTierValues[Math.floor(rng() * highTierValues.length)]);
 
-      // 2. Guarantee at least 3 mid-tier tiles (32-128)
+      // 2. Guarantee at least 3 mid-tier tiles
       for (let i = 0; i < 3; i++) {
         assignedValues.push(midTierValues[Math.floor(rng() * midTierValues.length)]);
       }
 
-      // 3. Fill remaining positions (up to totalTilesCount) with lower/mid values
+      // 3. Fill remaining positions
       while (assignedValues.length < totalTilesCount) {
         const roll = rng();
         if (roll < 0.6) {
@@ -134,7 +176,7 @@ export default function Game2048() {
         }
       }
 
-      // Shuffle values to distribute them randomly across chosen positions
+      // Shuffle values
       for (let i = assignedValues.length - 1; i > 0; i--) {
         const j = Math.floor(rng() * (i + 1));
         [assignedValues[i], assignedValues[j]] = [assignedValues[j], assignedValues[i]];
@@ -170,7 +212,7 @@ export default function Game2048() {
 
       setTiles([first, second]);
     }
-  }, [gameMode, todayStr, createTile]);
+  }, [gameMode, todayStr, unlimitedSeed, createTile, stopTimer]);
 
   useEffect(() => {
     initGame();
@@ -297,6 +339,8 @@ export default function Game2048() {
 
     if (!moved) return;
 
+    startTimer(); // Start the timer on the first valid move
+
     const occupied = new Set(updatedTiles.map((t) => `${t.r}-${t.c}`));
     const emptySpots = [];
     for (let r = 0; r < GRID_SIZE; r++) {
@@ -319,12 +363,14 @@ export default function Game2048() {
 
     if (hasReached2048 && !gameWon) {
       setGameWon(true);
+      stopTimer();
+      setWinTimeFormatted(formatTime(elapsedTime));
     }
 
     setHistory((prev) => [...prev, { tiles, score }]);
     setScore((prev) => prev + addedScore);
     setTiles(updatedTiles);
-  }, [tiles, score, isTestMode, gameWon]);
+  }, [tiles, score, isTestMode, gameWon, startTimer, stopTimer, elapsedTime]);
 
   // Touch Event Handlers for Mobile Swiping
   const handleTouchStart = (e) => {
@@ -423,13 +469,18 @@ export default function Game2048() {
               </div>
 
               <div className="game2048-stat-box">
+                <span className="stat-label">TIME</span>
+                <span className="stat-value">{formatTime(elapsedTime)}</span>
+              </div>
+
+              <div className="game2048-stat-box">
                 <span className="stat-label">UNDOS</span>
                 <span className="stat-value undo-value">{undoCount}</span>
               </div>
             </div>
           </div>
 
-          <div className="diff-toggle" style={{ marginBottom: '12px' }}>
+          <div className="diff-toggle" style={{ marginBottom: '12px', display: 'flex', justifyContent: 'center', gap: '8px' }}>
             <button
               className={`diff-btn ${gameMode === 'daily' ? 'active' : ''}`}
               onClick={() => setGameMode('daily')}
@@ -441,6 +492,15 @@ export default function Game2048() {
               onClick={() => setGameMode('classic')}
             >
               Classic Mode
+            </button>
+            <button
+              className={`diff-btn ${gameMode === 'unlimited' ? 'active' : ''}`}
+              onClick={() => {
+                setGameMode('unlimited');
+                setUnlimitedSeed(Math.floor(Math.random() * 1000000));
+              }}
+            >
+              Unlimited Puzzles
             </button>
           </div>
 
@@ -465,11 +525,13 @@ export default function Game2048() {
                 onClick={() => {
                   if (gameMode === 'daily') {
                     localStorage.removeItem(`2048-daily-${todayStr}`);
+                  } else if (gameMode === 'unlimited') {
+                    setUnlimitedSeed(Math.floor(Math.random() * 1000000));
                   }
                   initGame();
                 }}
               >
-                Reset Board
+                {gameMode === 'unlimited' ? 'New Puzzle' : 'Reset Board'}
               </button>
             </div>
 
@@ -488,9 +550,39 @@ export default function Game2048() {
           </div>
         </div>
 
+        {(gameMode === 'daily' || gameMode === 'unlimited') && !gameWon && (
+          <div 
+            className="game2048-banner" 
+            style={{ 
+              textAlign: 'center', 
+              marginBottom: '12px', 
+              fontSize: '1.15rem', 
+              fontWeight: 'bold',
+              backgroundColor: 'rgba(238, 228, 218, 0.5)',
+              padding: '12px 16px',
+              borderRadius: '8px',
+              boxShadow: '0 4px 6px rgba(0, 0, 0, 0.05)'
+            }}
+          >
+            Can you reach 2048 from this precarious position?
+          </div>
+        )}
+
         {gameWon && (
-          <div className="game2048-banner win-banner" style={{ textAlign: 'center', marginBottom: '12px', fontWeight: 'bold' }}>
-            🎉 You reached 2048! Keep playing to increase your score.
+          <div 
+            className="game2048-banner win-banner" 
+            style={{ 
+              textAlign: 'center', 
+              marginBottom: '12px', 
+              fontSize: '1.15rem', 
+              fontWeight: 'bold',
+              backgroundColor: 'rgba(237, 194, 46, 0.25)',
+              padding: '12px 16px',
+              borderRadius: '8px',
+              boxShadow: '0 4px 6px rgba(0, 0, 0, 0.05)'
+            }}
+          >
+            🎉 You reached 2048 in {winTimeFormatted || formatTime(elapsedTime)}!
           </div>
         )}
 
@@ -523,7 +615,7 @@ export default function Game2048() {
                     '--c': tile.c,
                   }}
                 >
-                  {tile.value === 131072 || tile.value === 131000
+                  {(tile.value === 131072 || tile.value === 131000) && theme === 'skeeter'
                     ? '🐐'
                     : tile.value}
                 </div>
@@ -536,3 +628,12 @@ export default function Game2048() {
     </div>
   );
 }
+
+/*
+window.injectTile(0,0,131072)
+window.injectTile(0,1,16384)
+window.injectTile(0,2,4096)
+window.injectTile(0,3,1024)
+window.setCustomScore(2207276)
+window.setCustomUndos(532)
+*/
