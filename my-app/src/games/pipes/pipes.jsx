@@ -44,10 +44,9 @@ export default function Pipes() {
   const canvasRef = useRef(null);
 
   const getCellSize = useCallback((size) => {
-  // Uses screen width minus padding, capped at 480px on desktop
-  const availableWidth = Math.min(window.innerWidth - 32, 480);
-  return Math.floor(availableWidth / size);
-}, []);
+    const availableWidth = Math.min(window.innerWidth - 32, 480);
+    return Math.floor(availableWidth / size);
+  }, []);
 
   const [cellSize, setCellSize] = useState(() => getCellSize(gridSize));
 
@@ -206,8 +205,8 @@ export default function Pipes() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     const halfCell = cellSize / 2;
-    const outerR = Math.max(3, Math.floor(cellSize * 0.16)); 
-    const bulbR = Math.max(6, Math.floor(cellSize * 0.28));
+    const outerR = Math.max(4, Math.floor(cellSize * 0.20));
+    const bulbR = Math.max(6, Math.floor(cellSize * 0.30));
 
     for (let r = 0; r < gridSize; r++) {
       for (let c = 0; c < gridSize; c++) {
@@ -221,7 +220,7 @@ export default function Pipes() {
         const isServer = (r === serverPos.r && c === serverPos.c);
         const connectionCount = countBits(mask);
 
-        const borderWidth = isPowered ? 3.0 : 1.5;
+        const borderWidth = isPowered ? 3.5 : 2.5;
         const innerR = Math.max(1, outerR - borderWidth);
 
         // 1. Tile Background
@@ -239,12 +238,12 @@ export default function Pipes() {
 
         if (connectionCount === 0) continue;
 
-        const borderColor = isPowered 
-          ? 'rgb(255, 182, 193)' 
-          : 'rgba(255, 182, 193, 0.45)';
+        const borderColor = isPowered
+          ? 'rgb(255, 182, 193)'
+          : 'rgba(255, 182, 193, 0.85)';
 
-        const fluidColor = isPowered 
-          ? 'rgba(57, 255, 20, 0.65)' 
+        const fluidColor = isPowered
+          ? 'rgba(57, 255, 20, 0.75)'
           : '#0d0f12';
 
         const buildPipePath = (radius, endpointCapRadius) => {
@@ -308,8 +307,11 @@ export default function Pipes() {
     if (!canvas) return;
 
     const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+
+    const x = (e.clientX - rect.left) * scaleX;
+    const y = (e.clientY - rect.top) * scaleY;
 
     const c = Math.floor(x / cellSize);
     const r = Math.floor(y / cellSize);
@@ -325,8 +327,11 @@ export default function Pipes() {
     if (!canvas) return;
 
     const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+
+    const x = (e.clientX - rect.left) * scaleX;
+    const y = (e.clientY - rect.top) * scaleY;
 
     const c = Math.floor(x / cellSize);
     const r = Math.floor(y / cellSize);
@@ -338,7 +343,7 @@ export default function Pipes() {
 
   return (
     <div className="pipes-container">
-    <Navbar />
+      <Navbar />
       <h1 className="pipes-title">SKEETER PIPER</h1>
       <p className="pipes-instructions">
         Left-click to rotate pipes clockwise. Right-click to lock/darken cells you know are correct!
@@ -376,8 +381,8 @@ export default function Pipes() {
         </button>
       </div>
       <div style={{ marginTop: '24px' }}>
-            <FeedbackForm />
-        </div>
+        <FeedbackForm />
+      </div>
     </div>
   );
 }

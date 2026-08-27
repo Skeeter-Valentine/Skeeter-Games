@@ -256,6 +256,8 @@ export default function Game2048() {
     };
   }, []);
 
+
+  //Code for injecting tiles and setting score/undos from the console
   useEffect(() => {
     window.injectTile = (r, c, value) => {
       setTiles((prevTiles) => [
@@ -278,6 +280,40 @@ export default function Game2048() {
       delete window.setCustomUndos;
     };
   }, []);
+
+
+  //Sample console injection for testing purposes. Uncomment to use in browser console.
+  /*(function recreateBoard() {
+  // 1. Clear existing tiles by setting grid to empty first
+  // (Assuming you have a way to clear or overwrite, we inject direct positions)
+  
+  // Set Score and Undos
+  window.setCustomScore(2207276);
+  window.setCustomUndos(532);
+
+  // 2. Define board setup [row, col, value]
+  const tileSetup = [
+    // Row 0
+    [0, 0, 'goat'], // Or 65536 depending on how your tile component handles the goat tile
+    [0, 1, 16384],
+    [0, 2, 4096],
+    [0, 3, 1024],
+    
+    // Row 1
+    [1, 0, 2],
+    [1, 1, 2],
+    [1, 2, 2],
+    [1, 3, 16],
+
+    // Row 2
+    [2, 3, 4]
+  ];
+
+  // 3. Inject each tile
+  tileSetup.forEach(([r, c, value]) => {
+    window.injectTile(r, c, value);
+  });
+})();*/
 
   return (
     <div className={`game2048-container theme-${theme}`}>
