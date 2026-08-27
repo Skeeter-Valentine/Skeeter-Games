@@ -118,9 +118,8 @@ export default function Minesweeper() {
 
   // Initialize Board with Popped Safe Bubble
   // Initialize Board
-const initBoard = useCallback(() => {
-    stopTimer();
-    setTimer(0);
+// Initialize Board
+  const initBoard = useCallback(() => {
     startTimeRef.current = null;
 
     // 1. Restore daily challenge state if exists
@@ -133,9 +132,16 @@ const initBoard = useCallback(() => {
           setGameStatus(parsed.gameStatus);
           setFlagsLeft(parsed.flagsLeft);
           setTimer(parsed.timer);
-          if (parsed.gameStatus === 'playing') {
+          if (parsed.gameStatus === 'playing' && parsed.timer > 0) {
             startTimeRef.current = Date.now() - parsed.timer * 1000;
             setIsTimerRunning(true);
+            // Restart the interval for restored games
+            timerIntervalRef.current = setInterval(() => {
+              if (startTimeRef.current) {
+                const seconds = Math.floor((Date.now() - startTimeRef.current) / 1000);
+                setTimer(Math.min(seconds, 999));
+              }
+            }, 200);
           }
           return;
         } catch (e) {
@@ -200,10 +206,10 @@ const initBoard = useCallback(() => {
         }
       }
 
-      // Automatically pop the initial bubble zone for daily mode
+      // Automatically pop the initial bubble zone for daily mode (Timer remains paused)
       revealTile(startR, startC, newBoard);
     } else {
-      // CLASSIC MODE: Place mines randomly across the whole board (no pre-popped tiles)
+      // CLASSIC MODE
       let placedMines = 0;
       while (placedMines < mines) {
         const r = Math.floor(rng() * rows);
@@ -214,7 +220,6 @@ const initBoard = useCallback(() => {
         }
       }
 
-      // Calculate neighbor counts
       for (let r = 0; r < rows; r++) {
         for (let c = 0; c < cols; c++) {
           if (newBoard[r][c].isMine) continue;
@@ -240,10 +245,6 @@ const initBoard = useCallback(() => {
     revealTile,
     stopTimer,
     setTimer,
-    setBoard,
-    setGameStatus,
-    setFlagsLeft,
-    setIsTimerRunning,
   ]);
 
   useEffect(() => {
