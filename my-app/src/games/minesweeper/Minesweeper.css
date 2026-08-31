@@ -78,7 +78,7 @@
   border-right: 3px solid #0d1117;
   border-bottom: 3px solid #0d1117;
   box-shadow: 0 0 15px rgba(0, 0, 0, 0.6);
-  width: 100%;
+  width: fit-content;
   max-width: 98vw;
   box-sizing: border-box;
   display: flex;
@@ -145,17 +145,18 @@
 
 /* Zoom and pan wrapper container */
 .ms-zoom-container {
-  width: 100%;
-  overflow-x: auto;
-  overflow-y: hidden;
+  width: 100vw;
+  max-width: 100%;
+  overflow: auto;
   display: flex;
-  justify-content: center;
-  align-items: center;
-  touch-action: pan-x pan-y;
+  justify-content: flex-start;
+  align-items: flex-start;
+  touch-action: pan-x pan-y pinch-zoom;
   position: relative;
+  -webkit-overflow-scrolling: touch;
 }
 
-/* Board Frame - Rigid Grid Layout */
+/* Board Frame - Dynamic and fitting container */
 .ms-classic-board {
   display: flex;
   flex-direction: column;
@@ -165,10 +166,10 @@
   border-left: 3px solid #0d1117;
   border-right: 3px solid #30363d;
   border-bottom: 3px solid #30363d;
-  transform-origin: top center;
+  transform-origin: top left;
   transition: transform 0.05s ease-out;
-  width: 100%;
-  max-width: 98vw;
+  width: min(92vw, 80vh);
+  aspect-ratio: auto;
   box-sizing: border-box;
 }
 
@@ -178,13 +179,12 @@
   width: 100%;
 }
 
-/* Cell Styling with Strict Rigid Dimensions & Uniform Borders to Prevent Shifting */
+/* Cell Styling with Stable Non-Shifting Flex Layout */
 .ms-classic-cell {
-  flex: 0 0 auto;
-  width: calc(100% / var(--board-cols, 9)); /* fallback, controlled by flex sizing */
+  flex: 1 1 0px;
   aspect-ratio: 1 / 1;
   font-family: 'Poor Richard', 'Georgia', serif;
-  font-size: clamp(10px, 2.6vw, 1.4rem);
+  font-size: clamp(10px, 2.4vw, 1.3rem);
   line-height: 1;
   font-weight: bold;
   display: flex;
@@ -193,11 +193,7 @@
   padding: 0;
   box-sizing: border-box;
   touch-action: manipulation;
-}
-
-/* Ensure flex distributes equal non-overlapping space */
-.ms-row > .ms-classic-cell {
-  flex: 1 1 0px;
+  min-width: 0;
 }
 
 /* Unrevealed Boxy Cell */
@@ -217,7 +213,7 @@
   border-bottom: 3px solid #30363d;
 }
 
-/* Revealed Flat Cell - Maintaining identical 3px border width to prevent size shifts */
+/* Revealed Flat Cell - Maintaining identical 3px border to block shifts */
 .ms-classic-cell.revealed {
   background-color: #0d1117;
   border: 3px solid #161a22;
