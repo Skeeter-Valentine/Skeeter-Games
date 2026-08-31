@@ -10,10 +10,6 @@ const DIFFICULTY_CONFIGS = {
   expert: { rows: 16, cols: 30, mines: 99 },
 };
 
-/* ==========================================================================
-   SEED & DAILY GENERATOR HELPERS
-   ========================================================================== */
-
 function mulberry32(seed) {
   return function () {
     let t = (seed += 0x6d2b79f5);
@@ -47,10 +43,10 @@ function getDailyBoardConfig(dateStr) {
 export default function Minesweeper() {
   const todayStr = new Date().toISOString().split('T')[0];
 
-  const [gameMode, setGameMode] = useState('daily'); // 'daily' or 'classic'
+  const [gameMode, setGameMode] = useState('daily');
   const [difficulty, setDifficulty] = useState('beginner');
   const [board, setBoard] = useState([]);
-  const [gameStatus, setGameStatus] = useState('playing'); // 'playing', 'won', 'lost'
+  const [gameStatus, setGameStatus] = useState('playing');
   const [flagsLeft, setFlagsLeft] = useState(0);
 
   // Timer state
@@ -59,12 +55,18 @@ export default function Minesweeper() {
   const startTimeRef = useRef(null);
   const timerIntervalRef = useRef(null);
 
-  // Active configuration depending on mode
+  // Zoom & Touch state variables
+  const [scale, setScale] = useState(1);
+  const touchStartDistRef = useRef(null);
+  const pressTimerRef = useRef(null);
+  const isLongPressRef = useRef(false);
+
   const activeConfig =
     gameMode === 'daily'
       ? getDailyBoardConfig(todayStr)
       : DIFFICULTY_CONFIGS[difficulty];
   const { rows, cols, mines } = activeConfig;
+  const isExpertLayout = gameMode === 'classic' && difficulty === 'expert';
 
   const getNeighbors = useCallback(
     (r, c) => {
@@ -90,7 +92,7 @@ export default function Minesweeper() {
       clearInterval(timerIntervalRef.current);
       timerIntervalRef.current = null;
     }
-  }, [setIsTimerRunning]);
+  }, []);
 
   const revealTile = useCallback(
     (r, c, currentBoard) => {
@@ -104,9 +106,7 @@ export default function Minesweeper() {
       ) {
         return;
       }
-
       currentBoard[r][c].isRevealed = true;
-
       if (currentBoard[r][c].neighborMines === 0 && !currentBoard[r][c].isMine) {
         getNeighbors(r, c).forEach(([nr, nc]) => {
           revealTile(nr, nc, currentBoard);
@@ -116,13 +116,10 @@ export default function Minesweeper() {
     [rows, cols, getNeighbors]
   );
 
-  // Initialize Board with Popped Safe Bubble
-  // Initialize Board
-// Initialize Board
   const initBoard = useCallback(() => {
     startTimeRef.current = null;
+    setScale(1); // Reset zoom on board reset
 
-    // 1. Restore daily challenge state if exists
     if (gameMode === 'daily') {
       const saved = localStorage.getItem(`minesweeper-daily-${todayStr}`);
       if (saved) {
@@ -135,7 +132,6 @@ export default function Minesweeper() {
           if (parsed.gameStatus === 'playing' && parsed.timer > 0) {
             startTimeRef.current = Date.now() - parsed.timer * 1000;
             setIsTimerRunning(true);
-            // Restart the interval for restored games
             timerIntervalRef.current = setInterval(() => {
               if (startTimeRef.current) {
                 const seconds = Math.floor((Date.now() - startTimeRef.current) / 1000);
@@ -144,9 +140,7 @@ export default function Minesweeper() {
             }, 200);
           }
           return;
-        } catch (e) {
-          // Fall back to clean generation on parse error
-        }
+        } catch (e) {}
       }
     }
 
@@ -169,10 +163,8 @@ export default function Minesweeper() {
       );
 
     if (gameMode === 'daily') {
-      // DAILY MODE: Reserve a 3x3 safe zone and pop an initial bubble
       const startR = Math.floor(rng() * rows);
       const startC = Math.floor(rng() * cols);
-
       const safeZone = new Set();
       for (let dr = -1; dr <= 1; dr++) {
         for (let dc = -1; dc <= 1; dc++) {
@@ -194,7 +186,6 @@ export default function Minesweeper() {
         }
       }
 
-      // Calculate neighbor counts
       for (let r = 0; r < rows; r++) {
         for (let c = 0; c < cols; c++) {
           if (newBoard[r][c].isMine) continue;
@@ -205,11 +196,8 @@ export default function Minesweeper() {
           newBoard[r][c].neighborMines = count;
         }
       }
-
-      // Automatically pop the initial bubble zone for daily mode (Timer remains paused)
       revealTile(startR, startC, newBoard);
     } else {
-      // CLASSIC MODE
       let placedMines = 0;
       while (placedMines < mines) {
         const r = Math.floor(rng() * rows);
@@ -235,38 +223,12 @@ export default function Minesweeper() {
     setBoard(newBoard);
     setGameStatus('playing');
     setFlagsLeft(mines);
-  }, [
-    gameMode,
-    todayStr,
-    rows,
-    cols,
-    mines,
-    getNeighbors,
-    revealTile,
-    stopTimer,
-    setTimer,
-  ]);
+  }, [gameMode, todayStr, rows, cols, mines, getNeighbors, revealTile, stopTimer]);
 
   useEffect(() => {
     initBoard();
     return () => stopTimer();
   }, [initBoard, stopTimer]);
-
-  // Persist daily challenge state
-  useEffect(() => {
-    if (gameMode === 'daily' && board.length > 0) {
-      const dailyPayload = {
-        board,
-        gameStatus,
-        flagsLeft,
-        timer,
-      };
-      localStorage.setItem(
-        `minesweeper-daily-${todayStr}`,
-        JSON.stringify(dailyPayload)
-      );
-    }
-  }, [board, gameStatus, flagsLeft, timer, gameMode, todayStr]);
 
   const startTimerIfNeeded = () => {
     if (!isTimerRunning && gameStatus === 'playing') {
@@ -306,7 +268,6 @@ export default function Minesweeper() {
     if (cell.isRevealed || cell.isFlagged) return;
 
     startTimerIfNeeded();
-
     const newBoard = board.map((row) => row.map((tile) => ({ ...tile })));
 
     if (cell.isMine) {
@@ -325,14 +286,12 @@ export default function Minesweeper() {
     checkWinCondition(newBoard);
   };
 
-  const handleContextMenu = (e, r, c) => {
-    e.preventDefault();
+  const toggleFlag = (r, c) => {
     if (gameStatus !== 'playing') return;
     const cell = board[r][c];
     if (cell.isRevealed) return;
 
     startTimerIfNeeded();
-
     const newBoard = board.map((row) => row.map((tile) => ({ ...tile })));
     const isFlagged = !cell.isFlagged;
     newBoard[r][c].isFlagged = isFlagged;
@@ -349,7 +308,6 @@ export default function Minesweeper() {
 
     const neighbors = getNeighbors(r, c);
     let flaggedCount = 0;
-
     neighbors.forEach(([nr, nc]) => {
       if (board[nr][nc].isFlagged) flaggedCount++;
     });
@@ -362,9 +320,7 @@ export default function Minesweeper() {
       neighbors.forEach(([nr, nc]) => {
         const neighborCell = newBoard[nr][nc];
         if (!neighborCell.isFlagged && !neighborCell.isRevealed) {
-          if (neighborCell.isMine) {
-            hitMine = true;
-          }
+          if (neighborCell.isMine) hitMine = true;
           revealTile(nr, nc, newBoard);
         }
       });
@@ -380,8 +336,53 @@ export default function Minesweeper() {
         stopTimer();
         return;
       }
-
       checkWinCondition(newBoard);
+    }
+  };
+
+  // Pinch-to-Zoom handlers
+  const handleTouchStartBoard = (e) => {
+    if (e.touches.length === 2) {
+      const dist = Math.hypot(
+        e.touches[0].clientX - e.touches[1].clientX,
+        e.touches[0].clientY - e.touches[1].clientY
+      );
+      touchStartDistRef.current = dist;
+    }
+  };
+
+  const handleTouchMoveBoard = (e) => {
+    if (e.touches.length === 2 && touchStartDistRef.current) {
+      e.preventDefault();
+      const currentDist = Math.hypot(
+        e.touches[0].clientX - e.touches[1].clientX,
+        e.touches[0].clientY - e.touches[1].clientY
+      );
+      const zoomFactor = currentDist / touchStartDistRef.current;
+      setScale((prev) => Math.min(Math.max(prev * zoomFactor, 1), 3.5));
+      touchStartDistRef.current = currentDist;
+    }
+  };
+
+  // Long-press Flag handlers for individual cells
+  const handleCellTouchStart = (r, c) => {
+    isLongPressRef.current = false;
+    pressTimerRef.current = setTimeout(() => {
+      isLongPressRef.current = true;
+      toggleFlag(r, c);
+      if (navigator.vibrate) navigator.vibrate(40);
+    }, 450);
+  };
+
+  const handleCellTouchEnd = (r, c) => {
+    if (pressTimerRef.current) clearTimeout(pressTimerRef.current);
+    if (!isLongPressRef.current) {
+      const cell = board[r][c];
+      if (cell.isRevealed) {
+        handleChord(r, c);
+      } else {
+        handleCellClick(r, c);
+      }
     }
   };
 
@@ -390,28 +391,10 @@ export default function Minesweeper() {
     return String(clamped).padStart(3, '0');
   };
 
-  useEffect(() => {
-    const gtagScript = document.createElement('script');
-    gtagScript.src = 'https://www.googletagmanager.com/gtag/js?id=G-9TBQNYQE6V';
-    gtagScript.async = true;
-    document.head.appendChild(gtagScript);
-
-    window.dataLayer = window.dataLayer || [];
-    function gtag() {
-      window.dataLayer.push(arguments);
-    }
-    gtag('js', new Date());
-    gtag('config', 'G-9TBQNYQE6V');
-
-    return () => {
-      document.head.removeChild(gtagScript);
-    };
-  }, []);
-
   return (
-    <div className="minesweeper-container">
+    <div className={`minesweeper-container ${isExpertLayout ? 'expert-mode-active' : ''}`}>
       <Navbar />
-      <h2 className="ms-title">MINESKEETER</h2>
+      <h2 className="ms-title">MINESWEEPER</h2>
 
       <div className="diff-toggle">
         <button
@@ -454,7 +437,6 @@ export default function Minesweeper() {
       <div className="ms-classic-window">
         <div className="ms-classic-header">
           <div className="ms-digital-display">{formatDigits(flagsLeft)}</div>
-
           <button
             className="ms-face-btn"
             onClick={() => {
@@ -466,51 +448,63 @@ export default function Minesweeper() {
           >
             {gameStatus === 'won' ? '😎' : gameStatus === 'lost' ? '💀' : '🙂'}
           </button>
-
           <div className="ms-digital-display">{formatDigits(timer)}</div>
         </div>
 
-        <div className="ms-classic-board">
-          {board.map((row, r) => (
-            <div key={r} className="ms-row">
-              {row.map((cell, c) => {
-                let content = '';
-                if (cell.isRevealed) {
-                  if (cell.isMine) content = '💣';
-                  else if (cell.neighborMines > 0) content = cell.neighborMines;
-                } else if (cell.isFlagged) {
-                  content = '🚩';
-                }
+        {/* Zoom & Pan Wrapper Container */}
+        <div 
+          className="ms-zoom-container"
+          onTouchStart={handleTouchStartBoard}
+          onTouchMove={handleTouchMoveBoard}
+        >
+          <div 
+            className="ms-classic-board"
+            style={{ transform: `scale(${scale})` }}
+          >
+            {board.map((row, r) => (
+              <div key={r} className="ms-row">
+                {row.map((cell, c) => {
+                  let content = '';
+                  if (cell.isRevealed) {
+                    if (cell.isMine) content = '💣';
+                    else if (cell.neighborMines > 0) content = cell.neighborMines;
+                  } else if (cell.isFlagged) {
+                    content = '🚩';
+                  }
 
-                return (
-                  <button
-                    key={c}
-                    className={`ms-classic-cell ${
-                      cell.isRevealed ? 'revealed' : 'unrevealed'
-                    } num-${cell.neighborMines}`}
-                    onClick={() => {
-                      if (cell.isRevealed) {
-                        handleChord(r, c);
-                      } else {
-                        handleCellClick(r, c);
-                      }
-                    }}
-                    onContextMenu={(e) => handleContextMenu(e, r, c)}
-                    onMouseDown={(e) => {
-                      if (e.button === 1) {
+                  return (
+                    <button
+                      key={c}
+                      className={`ms-classic-cell ${
+                        cell.isRevealed ? 'revealed' : 'unrevealed'
+                      } num-${cell.neighborMines}`}
+                      onClick={() => {
+                        if (cell.isRevealed) handleChord(r, c);
+                        else handleCellClick(r, c);
+                      }}
+                      onContextMenu={(e) => {
                         e.preventDefault();
-                        handleChord(r, c);
-                      }
-                    }}
-                  >
-                    {content}
-                  </button>
-                );
-              })}
-            </div>
-          ))}
+                        toggleFlag(r, c);
+                      }}
+                      onTouchStart={() => handleCellTouchStart(r, c)}
+                      onTouchEnd={() => handleCellTouchEnd(r, c)}
+                      onMouseDown={(e) => {
+                        if (e.button === 1) {
+                          e.preventDefault();
+                          handleChord(r, c);
+                        }
+                      }}
+                    >
+                      {content}
+                    </button>
+                  );
+                })}
+              </div>
+            ))}
+          </div>
         </div>
       </div>
+
       <div style={{ marginTop: '24px' }}>
         <FeedbackForm />
       </div>

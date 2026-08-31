@@ -106,7 +106,14 @@ export default function Game2048() {
     setGameWon(false);
     setWinTimeFormatted('');
 
-    // 1. Restore daily challenge state if exists (only for strict daily mode)
+    // 1. Purge old daily challenge keys from localStorage to prevent data leaks
+    Object.keys(localStorage).forEach((key) => {
+      if (key.startsWith('2048-daily-') && key !== `2048-daily-${todayStr}`) {
+        localStorage.removeItem(key);
+      }
+    });
+
+    // 2. Restore today's daily challenge state if it exists
     if (gameMode === 'daily') {
       const saved = localStorage.getItem(`2048-daily-${todayStr}`);
       if (saved) {
@@ -119,7 +126,8 @@ export default function Game2048() {
           setGameWon(parsed.gameWon || false);
           return;
         } catch (e) {
-          // Fall back to new daily generation on parse error
+          // Clear corrupted storage if JSON parse fails
+          localStorage.removeItem(`2048-daily-${todayStr}`);
         }
       }
     }
@@ -310,7 +318,7 @@ export default function Game2048() {
           }
 
           updatedTiles.push({
-            id: nextId.current++,
+            id: current.id, // Re-use the existing ID to allow CSS sliding animations
             r: targetR,
             c: targetC,
             value: newValue,

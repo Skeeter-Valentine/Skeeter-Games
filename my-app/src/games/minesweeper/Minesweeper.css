@@ -198,3 +198,25 @@
 .ms-classic-cell.num-6 { color: #bf00ff; text-shadow: 0 0 6px rgba(191, 0, 255, 0.4); }
 .ms-classic-cell.num-7 { color: #ff0055; }
 .ms-classic-cell.num-8 { color: #ffffff; }
+
+/* Zoom and pan wrapper container */
+.ms-zoom-container {
+  width: 100%;
+  overflow: hidden;
+  touch-action: pan-x pan-y;
+  position: relative;
+  display: flex;
+  justify-content: center;
+}
+
+.ms-classic-board {
+  transform-origin: top center;
+  transition: transform 0.05s ease-out;
+}
+
+/* Force landscape hint or adjustment for expert mode on mobile */
+@media screen and (max-width: 768px) and (orientation: portrait) {
+  .minesweeper-container.expert-mode-active .ms-zoom-container {
+    /* Scale down expert board slightly by default in portrait, or let pinch-to-zoom handle it */
+  }
+}
