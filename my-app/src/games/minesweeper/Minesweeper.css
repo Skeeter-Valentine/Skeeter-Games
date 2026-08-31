@@ -134,6 +134,18 @@
   border-bottom: 3px solid #30363d;
 }
 
+/* Zoom and pan wrapper container */
+.ms-zoom-container {
+  width: 100%;
+  max-width: 100vw;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  touch-action: pan-x pan-y;
+  position: relative;
+}
+
 /* Board Frame */
 .ms-classic-board {
   display: flex;
@@ -144,18 +156,24 @@
   border-left: 3px solid #0d1117;
   border-right: 3px solid #30363d;
   border-bottom: 3px solid #30363d;
+  transform-origin: top center;
+  transition: transform 0.05s ease-out;
+  width: 100%;
+  max-width: 95vw;
+  max-height: 75vh;
 }
 
 .ms-row {
   display: flex;
+  flex: 1;
 }
 
-/* Cell Styling */
+/* Cell Styling with Proportional Scaling */
 .ms-classic-cell {
-  width: 30px;
-  height: 30px;
+  flex: 1;
+  aspect-ratio: 1 / 1;
   font-family: 'Poor Richard', 'Georgia', serif;
-  font-size: 1.2rem;
+  font-size: clamp(8px, 1.5vw, 1.1rem);
   font-weight: bold;
   display: flex;
   align-items: center;
@@ -163,6 +181,7 @@
   padding: 0;
   box-sizing: border-box;
   touch-action: manipulation;
+  min-width: 0;
 }
 
 /* Unrevealed Boxy Cell */
@@ -178,8 +197,8 @@
 .ms-classic-cell.unrevealed:active {
   border-top: 1px solid #0d1117;
   border-left: 1px solid #0d1117;
-  border-right: 1px solid #30363d;
-  border-bottom: 1px solid #30363d;
+  border-right: 3px solid #30363d;
+  border-bottom: 3px solid #30363d;
 }
 
 /* Revealed Flat Cell */
@@ -199,29 +218,9 @@
 .ms-classic-cell.num-7 { color: #ff0055; }
 .ms-classic-cell.num-8 { color: #ffffff; }
 
-/* Zoom and pan wrapper container */
-.ms-zoom-container {
-  width: 100%;
-  overflow: hidden;
-  touch-action: pan-x pan-y;
-  position: relative;
-  display: flex;
-  justify-content: center;
-}
-
-.ms-classic-board {
-  transform-origin: top center;
-  transition: transform 0.05s ease-out;
-}
-
-/* Force landscape hint or adjustment for expert mode on mobile */
-@media screen and (max-width: 768px) and (orientation: portrait) {
-  .minesweeper-container.expert-mode-active .ms-zoom-container {
-    /* Scale down expert board slightly by default in portrait, or let pinch-to-zoom handle it */
-  }
-}
-
-.rotate-device-prompt {
+/* Device prompts */
+.rotate-device-prompt,
+.zoom-device-prompt {
   display: none;
   background-color: #fff3cd;
   color: #856404;
@@ -236,6 +235,21 @@
 
 @media screen and (max-width: 768px) and (orientation: portrait) {
   .minesweeper-container.expert-mode-active .rotate-device-prompt {
+    display: block;
+  }
+}
+
+@media screen and (max-width: 768px), (orientation: landscape) and (max-width: 1024px) {
+  .minesweeper-container.intermediate-mode-active .zoom-device-prompt {
+    display: block;
+  }
+  .minesweeper-container.expert-mode-active.landscape-mode .zoom-device-prompt {
+    display: block;
+  }
+}
+
+@media screen and (max-width: 1024px) and (orientation: landscape) {
+  .minesweeper-container.expert-mode-active .zoom-device-prompt {
     display: block;
   }
 }

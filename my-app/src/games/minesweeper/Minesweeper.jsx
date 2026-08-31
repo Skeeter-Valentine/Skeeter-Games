@@ -65,6 +65,7 @@ export default function Minesweeper() {
       : DIFFICULTY_CONFIGS[difficulty];
   const { rows, cols, mines } = activeConfig;
   const isExpertLayout = gameMode === 'classic' && difficulty === 'expert';
+  const isIntermediateLayout = gameMode === 'classic' && difficulty === 'intermediate';
 
   const getNeighbors = useCallback(
     (r, c) => {
@@ -115,6 +116,8 @@ export default function Minesweeper() {
   );
 
   const initBoard = useCallback(() => {
+    setTimer(0);
+    stopTimer();
     startTimeRef.current = null;
     setScale(1);
 
@@ -362,6 +365,7 @@ export default function Minesweeper() {
   };
 
   const handleCellTouchStart = (e, r, c) => {
+    if (e.touches.length > 1) return;
     e.preventDefault();
     isLongPressRef.current = false;
     pressTimerRef.current = setTimeout(() => {
@@ -371,7 +375,14 @@ export default function Minesweeper() {
     }, 450);
   };
 
-  const handleCellTouchMove = () => {
+  const handleCellTouchMove = (e) => {
+    if (e.touches.length > 1) {
+      if (pressTimerRef.current) {
+        clearTimeout(pressTimerRef.current);
+        pressTimerRef.current = null;
+      }
+      return;
+    }
     if (pressTimerRef.current) {
       clearTimeout(pressTimerRef.current);
       pressTimerRef.current = null;
@@ -379,6 +390,7 @@ export default function Minesweeper() {
   };
 
   const handleCellTouchEnd = (e, r, c) => {
+    if (e.touches.length > 1) return;
     e.preventDefault();
     if (pressTimerRef.current) {
       clearTimeout(pressTimerRef.current);
@@ -401,7 +413,7 @@ export default function Minesweeper() {
   };
 
   return (
-    <div className={`minesweeper-container ${isExpertLayout ? 'expert-mode-active' : ''}`}>
+    <div className={`minesweeper-container ${isExpertLayout ? 'expert-mode-active' : ''} ${isIntermediateLayout ? 'intermediate-mode-active' : ''}`}>
       <Navbar />
       <h2 className="ms-title">MINESWEEPER</h2>
 
@@ -448,6 +460,10 @@ export default function Minesweeper() {
           📱 Tip: Flip your phone sideways for the best Expert Minesweeper experience!
         </div>
       )}
+
+      <div className="zoom-device-prompt">
+        📱 Tip: Zoom in if necessary for better visibility on this board size!
+      </div>
 
       <div className="ms-classic-window">
         <div className="ms-classic-header">
