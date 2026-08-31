@@ -1,5 +1,3 @@
-/* src/games/minesweeper/Minesweeper.css */
-
 @font-face {
   font-family: 'Poor Richard';
   src: local('Poor Richard');
@@ -14,8 +12,6 @@
   color: #ffffff;
   padding: 20px 10px;
   user-select: none;
-  overflow-x: auto;
-  width: 100%;
   box-sizing: border-box;
 }
 
@@ -143,20 +139,18 @@
   border-bottom: 3px solid #30363d;
 }
 
-/* Zoom and pan wrapper container */
+/* Zoom and pan wrapper container (Desktop default fits content) */
 .ms-zoom-container {
-  width: 100vw;
+  width: fit-content;
   max-width: 100%;
-  overflow: auto;
+  overflow: visible;
   display: flex;
   justify-content: flex-start;
   align-items: flex-start;
-  touch-action: pan-x pan-y pinch-zoom;
   position: relative;
-  -webkit-overflow-scrolling: touch;
 }
 
-/* Board Frame - Scaled horizontally in landscape for wide grids */
+/* Board Frame (Desktop default sized neatly) */
 .ms-classic-board {
   display: flex;
   flex-direction: column;
@@ -168,16 +162,7 @@
   border-bottom: 3px solid #30363d;
   transform-origin: top left;
   transition: transform 0.05s ease-out;
-  width: min(95vw, 75vh);
-  aspect-ratio: auto;
   box-sizing: border-box;
-}
-
-@media screen and (orientation: landscape) and (max-height: 700px) {
-  .ms-classic-board {
-    width: max(100vw, 1100px);
-    height: auto;
-  }
 }
 
 .ms-row {
@@ -186,12 +171,12 @@
   width: 100%;
 }
 
-/* Cell Styling with Stable Non-Shifting Flex Layout */
+/* Cell Styling for Desktop */
 .ms-classic-cell {
-  flex: 1 1 0px;
-  aspect-ratio: 1 / 1;
+  width: 32px;
+  height: 32px;
   font-family: 'Poor Richard', 'Georgia', serif;
-  font-size: clamp(8px, 2.2vw, 1.3rem);
+  font-size: 1.1rem;
   line-height: 1;
   font-weight: bold;
   display: flex;
@@ -200,7 +185,6 @@
   padding: 0;
   box-sizing: border-box;
   touch-action: manipulation;
-  min-width: 0;
 }
 
 /* Unrevealed Boxy Cell */
@@ -220,7 +204,7 @@
   border-bottom: 3px solid #30363d;
 }
 
-/* Revealed Flat Cell - Maintaining identical 3px border to block shifts */
+/* Revealed Flat Cell */
 .ms-classic-cell.revealed {
   background-color: #0d1117;
   border: 3px solid #161a22;
@@ -252,6 +236,45 @@
   border: 1px solid #ffeeba;
   width: 100%;
   box-sizing: border-box;
+}
+
+/* ==========================================================================
+   MOBILE & RESPONSIVE OVERRIDES (Applies ONLY on small screens)
+   ========================================================================== */
+
+@media screen and (max-width: 768px) {
+  .minesweeper-container {
+    overflow-x: auto;
+    width: 100%;
+  }
+
+  .ms-zoom-container {
+    width: 100vw;
+    overflow: auto;
+    touch-action: pan-x pan-y pinch-zoom;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .ms-classic-board {
+    width: min(95vw, 75vh);
+    aspect-ratio: auto;
+  }
+
+  .ms-classic-cell {
+    flex: 1 1 0px;
+    width: auto;
+    height: auto;
+    aspect-ratio: 1 / 1;
+    font-size: clamp(8px, 2.2vw, 1.3rem);
+    min-width: 0;
+  }
+}
+
+@media screen and (orientation: landscape) and (max-height: 700px) and (max-width: 1024px) {
+  .ms-classic-board {
+    width: max(100vw, 1100px);
+    height: auto;
+  }
 }
 
 @media screen and (max-width: 768px) and (orientation: portrait) {
