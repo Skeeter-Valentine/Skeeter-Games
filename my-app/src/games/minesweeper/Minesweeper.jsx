@@ -55,7 +55,12 @@ export default function Minesweeper() {
   const timerIntervalRef = useRef(null);
 
   const [scale, setScale] = useState(1);
+  
+  // Interaction tracking refs to prevent accidental clicks/flags during panning or zooming
   const touchStartDistRef = useRef(null);
+  const touchStartPosRef = useRef({ x: 0, y: 0 });
+  const hasMovedOrZoomedRef = useRef(false);
+  
   const pressTimerRef = useRef(null);
   const isLongPressRef = useRef(false);
 
@@ -341,18 +346,26 @@ export default function Minesweeper() {
     }
   };
 
+  // Touch event handlers for zooming and panning with movement checks
   const handleTouchStartBoard = (e) => {
+    hasMovedOrZoomedRef.current = false;
     if (e.touches.length === 2) {
       const dist = Math.hypot(
         e.touches[0].clientX - e.touches[1].clientX,
         e.touches[0].clientY - e.touches[1].clientY
       );
       touchStartDistRef.current = dist;
+    } else if (e.touches.length === 1) {
+      touchStartPosRef.current = {
+        x: e.touches[0].clientX,
+        y: e.touches[0].clientY,
+      };
     }
   };
 
   const handleTouchMoveBoard = (e) => {
     if (e.touches.length === 2 && touchStartDistRef.current) {
+      hasMovedOrZoomedRef.current = true;
       e.preventDefault();
       const currentDist = Math.hypot(
         e.touches[0].clientX - e.touches[1].clientX,
@@ -361,43 +374,71 @@ export default function Minesweeper() {
       const zoomFactor = currentDist / touchStartDistRef.current;
       setScale((prev) => Math.min(Math.max(prev * zoomFactor, 1), 3.5));
       touchStartDistRef.current = currentDist;
+    } else if (e.touches.length === 1) {
+      const moveDist = Math.hypot(
+        e.touches[0].clientX - touchStartPosRef.current.x,
+        e.touches[0].clientY - touchStartPosRef.current.y
+      );
+      if (moveDist > 8) {
+        hasMovedOrZoomedRef.current = true;
+      }
     }
   };
 
   const handleCellTouchStart = (e, r, c) => {
     if (e.touches.length > 1) return;
-    e.preventDefault();
+    hasMovedOrZoomedRef.current = false;
+    touchStartPosRef.current = {
+      x: e.touches[0].clientX,
+      y: e.touches[0].clientY,
+    };
+
     isLongPressRef.current = false;
     pressTimerRef.current = setTimeout(() => {
-      isLongPressRef.current = true;
-      toggleFlag(r, c);
-      if (navigator.vibrate) navigator.vibrate(40);
+      if (!hasMovedOrZoomedRef.current) {
+        isLongPressRef.current = true;
+        toggleFlag(r, c);
+        if (navigator.vibrate) navigator.vibrate(40);
+      }
     }, 450);
   };
 
   const handleCellTouchMove = (e) => {
     if (e.touches.length > 1) {
+      hasMovedOrZoomedRef.current = true;
       if (pressTimerRef.current) {
         clearTimeout(pressTimerRef.current);
         pressTimerRef.current = null;
       }
       return;
     }
-    if (pressTimerRef.current) {
-      clearTimeout(pressTimerRef.current);
-      pressTimerRef.current = null;
+    const moveDist = Math.hypot(
+      e.touches[0].clientX - touchStartPosRef.current.x,
+      e.touches[0].clientY - touchStartPosRef.current.y
+    );
+    if (moveDist > 6) {
+      hasMovedOrZoomedRef.current = true;
+      if (pressTimerRef.current) {
+        clearTimeout(pressTimerRef.current);
+        pressTimerRef.current = null;
+      }
     }
   };
 
   const handleCellTouchEnd = (e, r, c) => {
     if (e.touches.length > 1) return;
-    e.preventDefault();
     if (pressTimerRef.current) {
       clearTimeout(pressTimerRef.current);
       pressTimerRef.current = null;
     }
 
+    // Ignore click/tap action if the user scrolled or zoomed
+    if (hasMovedOrZoomedRef.current) {
+      return;
+    }
+
     if (!isLongPressRef.current) {
+      e.preventDefault();
       const cell = board[r][c];
       if (cell.isRevealed) {
         handleChord(r, c);
@@ -490,8 +531,7 @@ export default function Minesweeper() {
           <div 
             className="ms-classic-board"
             style={{ 
-              transform: `scale(${scale})`,
-              aspectRatio: `${cols} / ${rows}`
+              transform: `scale(${scale})`
             }}
           >
             {board.map((row, r) => (
