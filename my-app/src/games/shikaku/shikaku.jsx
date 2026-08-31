@@ -329,6 +329,13 @@ export default function Shikaku() {
   };
 
   const handleStart = (e) => {
+    if (e.touches && e.touches.length >= 2) {
+      setIsDragging(false);
+      setDragStart(null);
+      setDragCurrent(null);
+      return;
+    }
+
     if (e.target.classList.contains('shikaku-placed-rect')) return;
     const clientX = e.touches ? e.touches[0].clientX : e.clientX;
     const clientY = e.touches ? e.touches[0].clientY : e.clientY;
@@ -341,6 +348,15 @@ export default function Shikaku() {
   };
 
   const handleMove = (e) => {
+    if (e.touches && e.touches.length >= 2) {
+      if (isDragging) {
+        setIsDragging(false);
+        setDragStart(null);
+        setDragCurrent(null);
+      }
+      return;
+    }
+
     if (!isDragging) return;
     const clientX = e.touches ? e.touches[0].clientX : e.clientX;
     const clientY = e.touches ? e.touches[0].clientY : e.clientY;
