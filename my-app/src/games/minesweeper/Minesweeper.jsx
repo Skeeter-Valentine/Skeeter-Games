@@ -489,7 +489,10 @@ export default function Minesweeper() {
         >
           <div 
             className="ms-classic-board"
-            style={{ transform: `scale(${scale})` }}
+            style={{ 
+              transform: `scale(${scale})`,
+              aspectRatio: `${cols} / ${rows}`
+            }}
           >
             {board.map((row, r) => (
               <div key={r} className="ms-row">
