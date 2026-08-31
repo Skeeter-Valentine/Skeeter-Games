@@ -456,7 +456,7 @@ export default function Minesweeper() {
   return (
     <div className={`minesweeper-container ${isExpertLayout ? 'expert-mode-active' : ''} ${isIntermediateLayout ? 'intermediate-mode-active' : ''}`}>
       <Navbar />
-      <h2 className="ms-title">MINESWEEPER</h2>
+      <h2 className="ms-title">MINESKEETER</h2>
 
       <div className="diff-toggle">
         <button

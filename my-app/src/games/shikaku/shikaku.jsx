@@ -3,10 +3,6 @@ import './shikaku.css';
 import Navbar from '../../components/Navbar';
 import FeedbackForm from '../../components/Feedback';
 
-/* ==========================================================================
-   1. SEEDED PSEUDO-RANDOM NUMBER GENERATOR (For Daily Puzzles)
-   ========================================================================== */
-
 function mulberry32(seed) {
   return function () {
     let t = (seed += 0x6d2b79f5);
@@ -30,10 +26,6 @@ function getDailyGridSize(dateStr) {
   const seed = getDailySeed(dateStr + '-size');
   return sizes[seed % sizes.length];
 }
-
-/* ==========================================================================
-   2. HIGH-PERFORMANCE PUZZLE GENERATOR
-   ========================================================================== */
 
 function partitionArea(r1, r2, c1, c2, rects, minArea = 2, maxAreaRatio = 0.15, rng = Math.random) {
   const height = r2 - r1 + 1;
@@ -152,10 +144,6 @@ function generateFastPuzzle(n, rng = Math.random) {
   return { clues, rects };
 }
 
-/* ==========================================================================
-   3. REACT COMPONENT
-   ========================================================================== */
-
 export default function Shikaku() {
   const todayStr = new Date().toISOString().split('T')[0];
 
@@ -207,7 +195,6 @@ export default function Shikaku() {
       clues = generateFastPuzzle(dailySize, rng).clues;
       setCluesGrid(clues);
 
-      // Restore saved daily progress if it exists
       const saved = localStorage.getItem(`shikaku-daily-state-${todayStr}`);
       if (saved) {
         try {
@@ -221,7 +208,7 @@ export default function Shikaku() {
           }
           return;
         } catch (err) {
-          // If parsing fails, fall through to clear reset
+          // Fall through on error
         }
       }
     } else {
@@ -239,7 +226,6 @@ export default function Shikaku() {
     startNewGame();
   }, [gameMode, startNewGame]);
 
-  // Persist Daily Challenge progress automatically whenever state updates
   useEffect(() => {
     if (gameMode === 'daily' && cluesGrid.length > 0) {
       const dailyState = {
@@ -369,10 +355,14 @@ export default function Shikaku() {
 
     if (dragStart && dragCurrent) {
       const bounds = getRectBounds(dragStart, dragCurrent);
-      const filtered = placedRects.filter((rect) => !rectsOverlap(rect, bounds));
-      const updated = [...filtered, bounds];
-      setPlacedRects(updated);
-      checkWinCondition(updated);
+      const area = (bounds.r2 - bounds.r1 + 1) * (bounds.c2 - bounds.c1 + 1);
+
+      if (area > 1) {
+        const filtered = placedRects.filter((rect) => !rectsOverlap(rect, bounds));
+        const updated = [...filtered, bounds];
+        setPlacedRects(updated);
+        checkWinCondition(updated);
+      }
     }
 
     setDragStart(null);

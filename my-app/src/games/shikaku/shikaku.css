@@ -91,6 +91,15 @@
   border-radius: 12px;
   border: 1px solid var(--surface-border);
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  width: fit-content;
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  display: inline-block;
+  touch-action: pan-x pinch-zoom;
+  -webkit-overflow-scrolling: touch;
+  margin-bottom: 16px;
+  box-sizing: border-box;
 }
 
 .shikaku-grid {
@@ -197,7 +206,6 @@
    MOBILE & RESPONSIVE MEDIA QUERIES
    ========================================================================== */
 
-/* Tablet & Mobile Screens (768px and down) */
 @media screen and (max-width: 768px) {
   .shikaku-container {
     padding: 12px 8px;
@@ -232,8 +240,6 @@
   .shikaku-board-wrapper {
     padding: 8px;
     border-radius: 8px;
-    max-width: 100%;
-    overflow: auto; /* Handles horizontal scrolling cleanly if needed */
   }
 
   .shikaku-controls {
@@ -245,7 +251,7 @@
 
   .shikaku-btn {
     flex: 1;
-    padding: 12px 10px; /* Bigger touch target for mobile fingers */
+    padding: 12px 10px;
     font-size: 0.95rem;
   }
 
@@ -255,7 +261,6 @@
   }
 }
 
-/* Small Mobile Phones (480px and down) */
 @media screen and (max-width: 480px) {
   .shikaku-title {
     font-size: 1.75rem;
@@ -270,4 +275,3 @@
     padding: 4px;
   }
 }
-
