@@ -49,13 +49,11 @@ export default function Minesweeper() {
   const [gameStatus, setGameStatus] = useState('playing');
   const [flagsLeft, setFlagsLeft] = useState(0);
 
-  // Timer state
   const [timer, setTimer] = useState(0);
   const [isTimerRunning, setIsTimerRunning] = useState(false);
   const startTimeRef = useRef(null);
   const timerIntervalRef = useRef(null);
 
-  // Zoom & Touch state variables
   const [scale, setScale] = useState(1);
   const touchStartDistRef = useRef(null);
   const pressTimerRef = useRef(null);
@@ -118,7 +116,7 @@ export default function Minesweeper() {
 
   const initBoard = useCallback(() => {
     startTimeRef.current = null;
-    setScale(1); // Reset zoom on board reset
+    setScale(1);
 
     if (gameMode === 'daily') {
       const saved = localStorage.getItem(`minesweeper-daily-${todayStr}`);
@@ -340,7 +338,6 @@ export default function Minesweeper() {
     }
   };
 
-  // Pinch-to-Zoom handlers
   const handleTouchStartBoard = (e) => {
     if (e.touches.length === 2) {
       const dist = Math.hypot(
@@ -364,8 +361,8 @@ export default function Minesweeper() {
     }
   };
 
-  // Long-press Flag handlers for individual cells
-  const handleCellTouchStart = (r, c) => {
+  const handleCellTouchStart = (e, r, c) => {
+    e.preventDefault();
     isLongPressRef.current = false;
     pressTimerRef.current = setTimeout(() => {
       isLongPressRef.current = true;
@@ -374,8 +371,20 @@ export default function Minesweeper() {
     }, 450);
   };
 
-  const handleCellTouchEnd = (r, c) => {
-    if (pressTimerRef.current) clearTimeout(pressTimerRef.current);
+  const handleCellTouchMove = () => {
+    if (pressTimerRef.current) {
+      clearTimeout(pressTimerRef.current);
+      pressTimerRef.current = null;
+    }
+  };
+
+  const handleCellTouchEnd = (e, r, c) => {
+    e.preventDefault();
+    if (pressTimerRef.current) {
+      clearTimeout(pressTimerRef.current);
+      pressTimerRef.current = null;
+    }
+
     if (!isLongPressRef.current) {
       const cell = board[r][c];
       if (cell.isRevealed) {
@@ -434,6 +443,12 @@ export default function Minesweeper() {
         </div>
       )}
 
+      {isExpertLayout && (
+        <div className="rotate-device-prompt">
+          📱 Tip: Flip your phone sideways for the best Expert Minesweeper experience!
+        </div>
+      )}
+
       <div className="ms-classic-window">
         <div className="ms-classic-header">
           <div className="ms-digital-display">{formatDigits(flagsLeft)}</div>
@@ -451,7 +466,6 @@ export default function Minesweeper() {
           <div className="ms-digital-display">{formatDigits(timer)}</div>
         </div>
 
-        {/* Zoom & Pan Wrapper Container */}
         <div 
           className="ms-zoom-container"
           onTouchStart={handleTouchStartBoard}
@@ -486,8 +500,9 @@ export default function Minesweeper() {
                         e.preventDefault();
                         toggleFlag(r, c);
                       }}
-                      onTouchStart={() => handleCellTouchStart(r, c)}
-                      onTouchEnd={() => handleCellTouchEnd(r, c)}
+                      onTouchStart={(e) => handleCellTouchStart(e, r, c)}
+                      onTouchMove={handleCellTouchMove}
+                      onTouchEnd={(e) => handleCellTouchEnd(e, r, c)}
                       onMouseDown={(e) => {
                         if (e.button === 1) {
                           e.preventDefault();
