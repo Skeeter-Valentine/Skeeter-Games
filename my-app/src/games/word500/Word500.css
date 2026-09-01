@@ -1,9 +1,24 @@
-/* src/games/word500/Word500.css */
+/* ==========================================================================
+   WORD500 GAME STYLES (Cleaned & Mobile-Optimized)
+   ========================================================================== */
 
 :root {
   --neon-green: #39ff14;
   --neon-pink: #ff2a85;
   --neon-yellow: #ffff00;
+  --bg-dark: #0d0f12;
+  --surface-dark: #161a22;
+  --surface-border: #30363d;
+  --text-main: #f0f6fc;
+}
+
+.word500-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background-color: var(--bg-dark);
+  color: var(--text-main);
+  padding: 20px;
 }
 
 /* Header container stack */
@@ -16,22 +31,10 @@
   margin: 0 auto 16px auto;
 }
 
-.skeedle-title {
-  color: var(--neon-pink, #ff2a85);
-  font-size: 2rem;
-  font-weight: 900;
-  letter-spacing: 2px;
-  text-transform: uppercase;
-  margin: 0 0 12px 0;
-  text-shadow: 0 0 12px rgba(255, 42, 133, 0.5);
-}
-
-/* src/games/word500/Word500.css */
-
 .skeedle-title-btn {
   background: none;
   border: none;
-  color: var(--neon-pink, #ff2a85);
+  color: var(--neon-pink);
   font-size: 2rem;
   font-weight: 900;
   letter-spacing: 2px;
@@ -53,19 +56,18 @@
   transform: scale(0.98);
 }
 
-/* Controls container placed under title */
-.sub-header-controls {
+/* Header Actions */
+.header-actions {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  width: 100%;
+  gap: 8px;
 }
 
 /* Mode Toggle Container */
 .mode-toggle {
   display: flex;
-  background-color: var(--surface-dark, #161a22);
-  border: 1px solid var(--surface-border, #30363d);
+  background-color: var(--surface-dark);
+  border: 1px solid var(--surface-border);
   border-radius: 8px;
   padding: 3px;
   gap: 2px;
@@ -89,16 +91,16 @@
 }
 
 .mode-btn.active {
-  background-color: var(--neon-pink, #ff2a85);
+  background-color: var(--neon-pink);
   color: #ffffff;
   box-shadow: 0 0 8px rgba(255, 42, 133, 0.4);
 }
 
-/* Text STATS Button with Neon Pink Text */
+/* Stats Button */
 .stats-btn {
-  background: var(--surface-dark, #161a22);
-  border: 1px solid var(--neon-pink, #ff2a85);
-  color: var(--neon-pink, #ff2a85);
+  background: var(--surface-dark);
+  border: 1px solid var(--neon-pink);
+  color: var(--neon-pink);
   padding: 6px 14px;
   border-radius: 8px;
   font-weight: bold;
@@ -119,10 +121,19 @@
   transform: translateY(0);
 }
 
+/* Practice New Game Row */
+.practice-actions {
+  display: flex;
+  justify-content: flex-end;
+  width: 100%;
+  max-width: 352px;
+  margin: 0 auto 12px auto;
+}
+
 /* Neon styled New Game button */
 .new-game-btn {
-  background-color: var(--surface-dark, #161a22);
-  border: 2px solid var(--neon-pink, #ff2a85);
+  background-color: var(--surface-dark);
+  border: 2px solid var(--neon-pink);
   color: #ffffff;
   padding: 6px 14px;
   border-radius: 6px;
@@ -143,15 +154,7 @@
   transform: translateY(0);
 }
 
-.word500-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  background-color: var(--bg-dark, #0d0f12);
-  color: var(--text-main, #f0f6fc);
-  padding: 20px;
-}
-
+/* Board Layout */
 .word500-board {
   display: flex;
   flex-direction: column;
@@ -173,9 +176,9 @@
 .word500-tile {
   width: 44px;
   height: 44px;
-  border: 2px solid var(--surface-border, #30363d);
-  background-color: var(--surface-dark, #161a22);
-  color: var(--text-main, #f0f6fc);
+  border: 2px solid var(--surface-border);
+  background-color: var(--surface-dark);
+  color: var(--text-main);
   font-size: 1.25rem;
   font-weight: bold;
   display: flex;
@@ -185,6 +188,37 @@
   border-radius: 4px;
 }
 
+.word500-tile.clickable {
+  cursor: pointer;
+  user-select: none;
+  transition: background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.word500-tile.clickable:hover {
+  border-color: #8b949e;
+}
+
+.word500-tile.note-green {
+  background-color: rgba(57, 255, 20, 0.2);
+  border-color: var(--neon-green);
+  color: var(--neon-green);
+  box-shadow: 0 0 6px rgba(57, 255, 20, 0.3);
+}
+
+.word500-tile.note-yellow {
+  background-color: rgba(255, 255, 0, 0.2);
+  border-color: var(--neon-yellow);
+  color: var(--neon-yellow);
+  box-shadow: 0 0 6px rgba(255, 255, 0, 0.3);
+}
+
+.word500-tile.note-pink {
+  background-color: rgba(255, 42, 133, 0.2);
+  border-color: var(--neon-pink);
+  color: var(--neon-pink);
+  box-shadow: 0 0 6px rgba(255, 42, 133, 0.3);
+}
+
 /* Feedback Score Boxes Container */
 .word500-score-boxes {
   display: flex;
@@ -192,12 +226,11 @@
   margin-left: 12px;
 }
 
-/* Base style matching .word500-tile */
 .score-box {
   width: 44px;
   height: 44px;
-  border: 2px solid var(--surface-border, #30363d);
-  background-color: var(--surface-dark, #161a22);
+  border: 2px solid var(--surface-border);
+  background-color: var(--surface-dark);
   color: #ffffff;
   font-size: 1.25rem;
   font-weight: bold;
@@ -209,7 +242,6 @@
   transition: all 0.2s ease;
 }
 
-/* Neon Green Box */
 .score-box.q-green.active {
   background-color: rgba(57, 255, 20, 0.15);
   border-color: var(--neon-green);
@@ -217,7 +249,6 @@
   box-shadow: 0 0 10px rgba(57, 255, 20, 0.4), inset 0 0 4px rgba(57, 255, 20, 0.2);
 }
 
-/* Neon Yellow Box */
 .score-box.q-yellow.active {
   background-color: rgba(255, 255, 0, 0.15);
   border-color: var(--neon-yellow);
@@ -225,7 +256,6 @@
   box-shadow: 0 0 10px rgba(255, 255, 0, 0.4), inset 0 0 4px rgba(255, 255, 0, 0.2);
 }
 
-/* Neon Pink Box */
 .score-box.q-pink.active {
   background-color: rgba(255, 42, 133, 0.15);
   border-color: var(--neon-pink);
@@ -233,31 +263,29 @@
   box-shadow: 0 0 10px rgba(255, 42, 133, 0.4), inset 0 0 4px rgba(255, 42, 133, 0.2);
 }
 
-/* Keyboard Container - matches full width of board */
+/* Keyboard */
 .word500-keyboard {
   width: 100%;
-  max-width: 352px; /* Matches total board width (tiles + score badges) */
+  max-width: 352px;
   display: flex;
   flex-direction: column;
   gap: 6px;
   margin: 0 auto;
 }
 
-/* Keyboard Rows - stretched to flush edges */
 .word500-keyboard-row {
   display: flex;
   width: 100%;
   gap: 4px;
 }
 
-/* Key Base Styles */
 .word500-key {
   flex: 1;
   height: 52px;
-  background-color: var(--surface-dark, #161a22); /* Same as empty tile background */
-  border: 2px solid var(--surface-border, #30363d); /* Same as empty tile border */
+  background-color: var(--surface-dark);
+  border: 2px solid var(--surface-border);
   border-radius: 4px;
-  color: #ffffff; /* White text */
+  color: #ffffff;
   font-weight: bold;
   font-size: 0.95rem;
   display: flex;
@@ -278,76 +306,18 @@
   transform: scale(0.96);
 }
 
-/* Wide keys (ENTER / BACKSPACE) */
 .word500-key.wide {
   flex: 1.5;
   font-size: 0.75rem;
 }
 
-/* Mode Toggle Container */
-.mode-toggle {
-  display: flex;
-  background-color: var(--surface-dark, #161a22);
-  border: 1px solid var(--surface-border, #30363d);
-  border-radius: 8px;
-  padding: 3px;
-  gap: 2px;
+.word500-key.used {
+  background-color: #3a3a3c;
+  color: #787c7e;
+  opacity: 0.6;
 }
 
-/* Toggle Buttons */
-.mode-btn {
-  background: transparent;
-  border: none;
-  color: #8b949e;
-  padding: 6px 14px;
-  border-radius: 6px;
-  font-weight: bold;
-  font-size: 0.8rem;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.mode-btn:hover {
-  color: #ffffff;
-}
-
-.mode-btn.active {
-  background-color: var(--neon-pink, #ff2a85);
-  color: #ffffff;
-  box-shadow: 0 0 8px rgba(255, 42, 133, 0.4);
-}
-
-/* Practice New Game Row */
-.practice-actions {
-  display: flex;
-  justify-content: flex-end;
-  width: 100%;
-  max-width: 352px;
-  margin: 0 auto 12px auto;
-}
-
-/* Header Actions */
-.header-actions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.stats-btn {
-  background: var(--surface-dark, #161a22);
-  border: 1px solid var(--surface-border, #30363d);
-  border-radius: 6px;
-  padding: 5px 10px;
-  cursor: pointer;
-  font-size: 1rem;
-  transition: background-color 0.2s ease;
-}
-
-.stats-btn:hover {
-  background-color: #21262d;
-}
-
-/* Modal Overlay */
+/* Modals */
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -361,10 +331,9 @@
   z-index: 1000;
 }
 
-/* Modal Content Box */
 .modal-content {
-  background-color: var(--surface-dark, #161a22);
-  border: 2px solid var(--neon-pink, #ff2a85);
+  background-color: var(--surface-dark);
+  border: 2px solid var(--neon-pink);
   border-radius: 12px;
   padding: 24px;
   width: 90%;
@@ -390,7 +359,6 @@
   color: #ffffff;
 }
 
-/* Stats Summary Grid */
 .stats-grid {
   display: flex;
   justify-content: space-between;
@@ -407,7 +375,7 @@
 .stat-value {
   font-size: 1.5rem;
   font-weight: bold;
-  color: var(--neon-pink, #ff2a85);
+  color: var(--neon-pink);
 }
 
 .stat-label {
@@ -417,7 +385,6 @@
   margin-top: 4px;
 }
 
-/* Guess Distribution Bars */
 .guess-distribution {
   display: flex;
   flex-direction: column;
@@ -445,7 +412,7 @@
 }
 
 .dist-bar {
-  background-color: var(--neon-pink, #ff2a85);
+  background-color: var(--neon-pink);
   color: #ffffff;
   font-size: 0.75rem;
   font-weight: bold;
@@ -455,41 +422,31 @@
   transition: width 0.3s ease;
 }
 
-/* Interactive Submitted Tiles */
-.word500-tile.clickable {
-  cursor: pointer;
-  user-select: none;
-  transition: background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
-}
+/* ==========================================================================
+   RESPONSIVE MEDIA QUERIES FOR MOBILE
+   ========================================================================== */
 
-.word500-tile.clickable:hover {
-  border-color: #8b949e;
-}
+@media screen and (max-width: 480px) {
+  .word500-container {
+    padding: 8px;
+    justify-content: flex-start;
+  }
 
-/* Note Tag Color Overrides */
-.word500-tile.note-green {
-  background-color: rgba(57, 255, 20, 0.2);
-  border-color: var(--neon-green, #39ff14);
-  color: var(--neon-green, #39ff14);
-  box-shadow: 0 0 6px rgba(57, 255, 20, 0.3);
-}
+  .skeedle-header,
+  .practice-actions,
+  .word500-keyboard {
+    max-width: 100%;
+  }
 
-.word500-tile.note-yellow {
-  background-color: rgba(255, 255, 0, 0.2);
-  border-color: var(--neon-yellow, #ffff00);
-  color: var(--neon-yellow, #ffff00);
-  box-shadow: 0 0 6px rgba(255, 255, 0, 0.3);
-}
+  .word500-tile,
+  .score-box {
+    width: 36px;
+    height: 36px;
+    font-size: 1rem;
+  }
 
-.word500-tile.note-pink {
-  background-color: rgba(255, 42, 133, 0.2);
-  border-color: var(--neon-pink, #ff2a85);
-  color: var(--neon-pink, #ff2a85);
-  box-shadow: 0 0 6px rgba(255, 42, 133, 0.3);
-}
-
-.word500-key.used {
-  background-color: #3a3a3c;
-  color: #787c7e;
-  opacity: 0.6;
+  .word500-key {
+    height: 44px;
+    font-size: 0.85rem;
+  }
 }
