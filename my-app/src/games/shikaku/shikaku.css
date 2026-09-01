@@ -108,6 +108,7 @@
   position: relative;
   touch-action: manipulation;
   background-color: var(--bg-dark);
+  touch-action: none; /* Prevents accidental scrolling on mobile */
 }
 
 .shikaku-cell {
