@@ -1,5 +1,5 @@
 // src/games/word500/Word500.jsx
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import Board, { getWord500Feedback } from './components/Board';
 import Keyboard from './components/Keyboard';
 import StatsModal from './components/StatsModal';
@@ -31,6 +31,9 @@ export default function Word500() {
   // Stats state
   const [stats, setStats] = useState(DEFAULT_STATS);
   const [isStatsOpen, setIsStatsOpen] = useState(false);
+
+  // Hidden input ref for mobile virtual keyboard trigger
+  const hiddenInputRef = useRef(null);
 
   const todayStr = new Date().toISOString().split('T')[0];
 
@@ -101,25 +104,30 @@ export default function Word500() {
   }, [todayStr]);
 
   const handleTileClick = (rowIndex, tileIndex) => {
-  const key = `${rowIndex}-${tileIndex}`;
-  const currentColor = tileNotes[key] || 'none';
-  
+    const key = `${rowIndex}-${tileIndex}`;
+    const currentColor = tileNotes[key] || 'none';
+    
+    const colorCycle = {
+      none: 'green',
+      green: 'yellow',
+      yellow: 'pink',
+      pink: 'none'
+    };
 
-  const colorCycle = {
-    none: 'green',
-    green: 'yellow',
-    yellow: 'pink',
-    pink: 'none'
+    setTileNotes((prev) => ({
+      ...prev,
+      [key]: colorCycle[currentColor]
+    }));
   };
 
-  setTileNotes((prev) => ({
-    ...prev,
-    [key]: colorCycle[currentColor]
-  }));
-};
+  const handleResetNotes = () => {
+    setTileNotes({});
+  };
 
-const handleResetNotes = () => {
-  setTileNotes({});
+  const handleBoardClick = () => {
+    if (hiddenInputRef.current) {
+      hiddenInputRef.current.focus();
+    }
   };
 
   useEffect(() => {
@@ -192,49 +200,75 @@ const handleResetNotes = () => {
   }, [handleKeyPress]);
 
   useEffect(() => {
-      // 1. Create and inject the external gtag script
-      const gtagScript = document.createElement('script');
-      gtagScript.src = 'https://www.googletagmanager.com/gtag/js?id=G-9TBQNYQE6V';
-      gtagScript.async = true;
-      document.head.appendChild(gtagScript);
-  
-      // 2. Initialize dataLayer and gtag config
-      window.dataLayer = window.dataLayer || [];
-      function gtag() {
-        window.dataLayer.push(arguments);
-      }
-      gtag('js', new Date());
-      gtag('config', 'G-9TBQNYQE6V');
-  
-      // Cleanup script on unmount
-      return () => {
-        document.head.removeChild(gtagScript);
-      };
-    }, []);
+    const gtagScript = document.createElement('script');
+    gtagScript.src = 'https://www.googletagmanager.com/gtag/js?id=G-9TBQNYQE6V';
+    gtagScript.async = true;
+    document.head.appendChild(gtagScript);
 
-    const guessedLetters = Array.from(
-      new Set(guesses.join('').toUpperCase().split(''))
-    );
+    window.dataLayer = window.dataLayer || [];
+    function gtag() {
+      window.dataLayer.push(arguments);
+    }
+    gtag('js', new Date());
+    gtag('config', 'G-9TBQNYQE6V');
 
-    const confirmedPinkLetters = new Set();
-      guesses.forEach((g) => {
-        const { pink } = getWord500Feedback(g, targetWord);
-        if (pink === 5) {
-          g.toUpperCase().split('').forEach((letter) => confirmedPinkLetters.add(letter));
-        }
-      });
+    return () => {
+      document.head.removeChild(gtagScript);
+    };
+  }, []);
+
+  const guessedLetters = Array.from(
+    new Set(guesses.join('').toUpperCase().split(''))
+  );
+
+  const confirmedPinkLetters = new Set();
+  guesses.forEach((g) => {
+    const { pink } = getWord500Feedback(g, targetWord);
+    if (pink === 5) {
+      g.toUpperCase().split('').forEach((letter) => confirmedPinkLetters.add(letter));
+    }
+  });
 
   return (
     <div className="word500-container">
       <Navbar />
+      
+      {/* Hidden input to trigger mobile virtual keyboard */}
+      <input
+        ref={hiddenInputRef}
+        type="text"
+        style={{
+          position: 'absolute',
+          opacity: 0,
+          pointerEvents: 'none',
+          height: 0,
+          width: 0,
+          top: 0,
+          left: 0
+        }}
+        onChange={(e) => {
+          const value = e.target.value;
+          if (value.length > 0) {
+            const lastChar = value[value.length - 1];
+            handleKeyPress(lastChar);
+            e.target.value = '';
+          }
+        }}
+        onKeyDown={(e) => {
+          if (e.key === 'Backspace' || e.key === 'Enter') {
+            handleKeyPress(e.key);
+          }
+        }}
+      />
+
       <div className="skeedle-header">
         <button 
-        className="skeedle-title-btn" 
-        onClick={handleResetNotes}
-        title="Click to reset tile notes"
-      >
-        Skeedle500
-      </button>
+          className="skeedle-title-btn" 
+          onClick={handleResetNotes}
+          title="Click to reset tile notes"
+        >
+          Skeedle500
+        </button>
 
         <div className="header-actions">
           <button 
@@ -272,15 +306,17 @@ const handleResetNotes = () => {
 
       {message && <div className="word500-toast">{message}</div>}
 
-      <Board
-        guesses={guesses}
-        currentGuess={currentGuess}
-        maxAttempts={MAX_ATTEMPTS}
-        targetWord={targetWord}
-        tileNotes={tileNotes}
-        onTileClick={handleTileClick}
-        confirmedPinkLetters={confirmedPinkLetters}
-      />
+      <div onClick={handleBoardClick} style={{ cursor: 'pointer' }}>
+        <Board
+          guesses={guesses}
+          currentGuess={currentGuess}
+          maxAttempts={MAX_ATTEMPTS}
+          targetWord={targetWord}
+          tileNotes={tileNotes}
+          onTileClick={handleTileClick}
+          confirmedPinkLetters={confirmedPinkLetters}
+        />
+      </div>
 
       <Keyboard onKeyPress={handleKeyPress} guessedLetters={guessedLetters} />
 
@@ -289,6 +325,7 @@ const handleResetNotes = () => {
         onClose={() => setIsStatsOpen(false)}
         stats={stats}
       />
+      
       <div style={{ marginTop: '24px' }}>
         <FeedbackForm />
       </div>
