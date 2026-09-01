@@ -48,7 +48,7 @@ export default function Word500() {
   const updateStatsOnGameEnd = (isWin, attemptCount) => {
     setStats((prev) => {
       const isNewDay = prev.lastPlayedDate !== todayStr;
-      if (!isNewDay) return prev; // Avoid duplicate recording for the same day
+      if (!isNewDay) return prev;
 
       const newPlayed = prev.played + 1;
       const newWins = isWin ? prev.wins + 1 : prev.wins;
@@ -189,10 +189,17 @@ export default function Word500() {
     [currentGuess, gameOver, guesses, targetWord, gameMode, todayStr]
   );
 
+  // Desktop physical keyboard listener
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.ctrlKey || e.metaKey || e.altKey) return;
-      handleKeyPress(e.key);
+      
+      // Ignore key events if the hidden input is focused to prevent duplication with mobile input
+      if (document.activeElement === hiddenInputRef.current) return;
+
+      if (e.key === 'Backspace' || e.key === 'Enter' || /^[a-zA-Z]$/.test(e.key)) {
+        handleKeyPress(e.key);
+      }
     };
 
     window.addEventListener('keydown', handleKeyDown);
@@ -233,10 +240,12 @@ export default function Word500() {
     <div className="word500-container">
       <Navbar />
       
-      {/* Hidden input to trigger mobile virtual keyboard */}
+      {/* Hidden input to trigger mobile virtual keyboard cleanly */}
       <input
         ref={hiddenInputRef}
         type="text"
+        autoComplete="off"
+        autoCapitalize="off"
         style={{
           position: 'absolute',
           opacity: 0,
@@ -250,13 +259,17 @@ export default function Word500() {
           const value = e.target.value;
           if (value.length > 0) {
             const lastChar = value[value.length - 1];
-            handleKeyPress(lastChar);
+            if (/^[a-zA-Z]$/.test(lastChar)) {
+              handleKeyPress(lastChar);
+            }
             e.target.value = '';
           }
         }}
         onKeyDown={(e) => {
           if (e.key === 'Backspace' || e.key === 'Enter') {
             handleKeyPress(e.key);
+            e.preventDefault();
+            e.target.value = '';
           }
         }}
       />
