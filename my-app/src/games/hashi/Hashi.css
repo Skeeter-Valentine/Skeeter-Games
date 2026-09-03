@@ -1,0 +1,74 @@
+body {
+    font-family: system-ui, -apple-system, sans-serif;
+    background-color: #0d0f12;
+    color: #f0f6fc;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    margin: 0;
+    user-select: none;
+}
+
+.hashi-container {
+    background: #161a22;
+    padding: 20px;
+    border-radius: 12px;
+    border: 1px solid #30363d;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+    text-align: center;
+}
+
+.hashi-container h2 {
+    margin-bottom: 5px;
+    color: #39ff14;
+    text-shadow: 0 0 10px rgba(57, 255, 20, 0.4);
+}
+
+.hashi-container p {
+    margin-top: 0;
+    color: #8b949e;
+    font-size: 14px;
+    max-width: 450px;
+}
+
+.hashi-canvas {
+    background: #0d0f12;
+    cursor: pointer;
+    border: 2px solid #30363d;
+    border-radius: 8px;
+    touch-action: none;
+}
+
+.hashi-controls {
+    margin-top: 15px;
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+}
+
+.hashi-btn {
+    background: #21262d;
+    color: #f0f6fc;
+    border: 1px solid #30363d;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.hashi-btn:hover {
+    border-color: #39ff14;
+    color: #39ff14;
+    box-shadow: 0 0 10px rgba(57, 255, 20, 0.4);
+}
+
+.hashi-message {
+    margin-top: 12px;
+    font-weight: bold;
+    height: 20px;
+    color: #39ff14;
+    text-shadow: 0 0 10px rgba(57, 255, 20, 0.4);
+}
