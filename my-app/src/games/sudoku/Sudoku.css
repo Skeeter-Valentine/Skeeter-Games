@@ -317,30 +317,42 @@ kbd{
 
 @media (max-width: 520px) {
   .sudoku-app-wrapper {
-    padding: 8px;
+    padding: 4px;
+    width: 100vw;
+    overflow-x: hidden;
   }
   
   .app {
     width: 100%;
-    gap: 12px;
+    max-width: 100vw;
+    margin: 0;
+    gap: 8px;
   }
 
   .game-card, .side-card {
-    padding: 12px;
+    padding: 8px;
+    border-radius: 12px;
+    width: 100%;
   }
 
-  /* Force the number pad to stay in a single neat row with a strict shrink constraint */
+  .sudoku-board {
+    width: 100%;
+    max-width: calc(100vw - 24px);
+    aspect-ratio: 1;
+    margin: 0 auto;
+  }
+
   .number-pad {
     flex-wrap: nowrap;
-    gap: 4px;
+    gap: 3px;
     overflow-x: auto;
+    width: 100%;
   }
 
   .num {
-    flex: 0 1 auto;
+    flex: 1;
     min-width: 0;
-    width: 100%;
     aspect-ratio: 1;
-    font-size: 16px;
+    font-size: 15px;
   }
 }
