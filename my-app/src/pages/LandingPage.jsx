@@ -9,6 +9,7 @@ import skeedle500Img from '../assets/skeedle500.png';
 import game2048Img from '../assets/2048.png';
 import shikakuImg from '../assets/shikaku.png';
 import pipesImg from '../assets/pipes.png';
+import hashiImg from '../assets/hashkeet.png';
 import { useEffect } from 'react';
 
 const GAMES = [
@@ -18,7 +19,8 @@ const GAMES = [
   { id: '2048', title: '2048', path: '/2048', image: game2048Img },
   { id: 'shikaku', title: 'Shikaku', path: '/shikaku', image: shikakuImg },
   // { id: 'sudoku', title: 'Skeedle+', path: '/sudoku', image: skeedlePlusImg },
-  { id: 'pipes', title: 'Skeeter Piper (net)', path: '/pipes', image: pipesImg }
+  { id: 'pipes', title: 'Skeeter Piper (net)', path: '/pipes', image: pipesImg },
+  { id: 'hashi', title: 'Hashi', path: '/hashi', image: hashiImg }
 ];
 
 

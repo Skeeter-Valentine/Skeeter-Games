@@ -1,13 +1,24 @@
+// src/games/hashi/Hashi.jsx
 import React, { useState, useEffect, useRef } from 'react';
+import StatsModal from './components/StatsModal';
+import Navbar from '../../components/Navbar';
 import './Hashi.css';
 
-// --- Python-Style Hashi Generator Classes ---
+function mulberry32(seed) {
+    return function() {
+        seed |= 0; seed = seed + 0x6D2B79F5 | 0;
+        let t = Math.imul(seed ^ seed >>> 15, 1 | seed);
+        t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+        return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    }
+}
+
 class Node {
     constructor(x, y) {
         this.x = x;
         this.y = y;
-        this.n_type = 0; // 0 = empty, 1 = island
-        this.i_count = 0; // total bridge count attached
+        this.n_type = 0; 
+        this.i_count = 0; 
     }
 
     makeIsland(bridges) {
@@ -17,14 +28,15 @@ class Node {
 }
 
 class PythonStyleHashiGenerator {
-    constructor(width = 6, height = 6) {
+    constructor(width = 6, height = 6, randomFunc = Math.random) {
         this.width = width;
         this.height = height;
         this.step_per_cycle = width * 10;
+        this.random = randomFunc;
     }
 
     directionToVector(dir) {
-        const vectors = [[-1, 0], [0, -1], [1, 0], [0, 1]]; // 0:left, 1:up, 2:right, 3:down
+        const vectors = [[-1, 0], [0, -1], [1, 0], [0, 1]];
         return vectors[dir];
     }
 
@@ -40,12 +52,12 @@ class PythonStyleHashiGenerator {
         if (y < this.height - 2 && grid[x][y+1].n_type === 0 && grid[x][y+2].n_type === 0) possibleDirections.push(3);
         
         if (possibleDirections.length === 0) return -1;
-        return possibleDirections[Math.floor(Math.random() * possibleDirections.length)];
+        return possibleDirections[Math.floor(this.random() * possibleDirections.length)];
     }
 
     getRandomBridgeThickness(grid, x, y) {
         if (8 - grid[x][y].i_count > 1) {
-            return Math.random() < 0.5 ? 1 : 2;
+            return this.random() < 0.5 ? 1 : 2;
         }
         return 1;
     }
@@ -63,7 +75,7 @@ class PythonStyleHashiGenerator {
             checkX += dirVector[0];
             checkY += dirVector[1];
         }
-        return Math.floor(Math.random() * maxLength) + 1;
+        return Math.floor(this.random() * maxLength) + 1;
     }
 
     generate() {
@@ -72,8 +84,8 @@ class PythonStyleHashiGenerator {
         );
 
         let islands = [];
-        let startX = Math.floor(Math.random() * this.width);
-        let startY = Math.floor(Math.random() * this.height);
+        let startX = Math.floor(this.random() * this.width);
+        let startY = Math.floor(this.random() * this.height);
         
         let firstNode = grid[startX][startY];
         firstNode.makeIsland(0);
@@ -82,7 +94,7 @@ class PythonStyleHashiGenerator {
         for (let step = 0; step < this.step_per_cycle; step++) {
             if (islands.length === 0) break;
 
-            let currentNode = islands[Math.floor(Math.random() * islands.length)];
+            let currentNode = islands[Math.floor(this.random() * islands.length)];
             let direction = this.getRandomDirection(grid, currentNode.x, currentNode.y);
 
             if (direction === -1) {
@@ -130,7 +142,6 @@ class PythonStyleHashiGenerator {
     }
 }
 
-// --- Helper Math Functions ---
 function distanceToSegment(px, py, x1, y1, x2, y2) {
     let l2 = (x2 - x1)**2 + (y2 - y1)**2;
     if (l2 === 0) return Math.hypot(px - x1, py - y1);
@@ -147,27 +158,107 @@ function doSegmentsCross(i1, i2, j1, j2) {
     if (pIsHoriz === qIsHoriz) return false;
 
     let horiz = pIsHoriz ? { r: i1.r, c1: Math.min(i1.c, i2.c), c2: Math.max(i1.c, i2.c) } 
-                         : { r: j1.r, c1: Math.min(j1.c, j2.c), c2: Math.max(j1.c, j2.c) };
+                        : { r: j1.r, c1: Math.min(j1.c, j2.c), c2: Math.max(j1.c, j2.c) };
     let vert  = !pIsHoriz ? { c: i1.c, r1: Math.min(i1.r, i2.r), r2: Math.max(i1.r, i2.r) } 
-                         : { c: j1.c, r1: Math.min(j1.r, j2.r), r2: Math.max(j1.r, j2.r) };
+                        : { c: j1.c, r1: Math.min(j1.r, j2.r), r2: Math.max(j1.r, j2.r) };
 
     return (vert.c > horiz.c1 && vert.c < horiz.c2 && horiz.r > vert.r1 && horiz.r < vert.r2);
 }
 
-// --- React Component ---
+const DEFAULT_STATS = {
+    played: 0,
+    wins: 0,
+    currentStreak: 0,
+    maxStreak: 0,
+    lastPlayedDate: null
+};
+
 export default function Hashi() {
     const canvasRef = useRef(null);
     const [message, setMessage] = useState('');
     const [gridSize, setGridSize] = useState(6);
     const [gameState, setGameState] = useState({ islands: [], bridges: [] });
+    const [isDailyMode, setIsDailyMode] = useState(false);
+    
+    const [seconds, setSeconds] = useState(0);
+    const [isActive, setIsActive] = useState(false);
+    const [isStatsOpen, setIsStatsOpen] = useState(false);
+    const [stats, setStats] = useState(DEFAULT_STATS);
 
     const canvasSize = 400;
     const offset = 35;
     const cellSize = (canvasSize - offset * 2) / (gridSize - 1);
 
-    const startNewGame = () => {
+    const todayStr = new Date().toISOString().split('T')[0];
+
+    useEffect(() => {
+        const savedStats = localStorage.getItem('hashi_stats');
+        if (savedStats) {
+            setStats(JSON.parse(savedStats));
+        }
+    }, []);
+
+    const updateStatsOnGameEnd = (isWin) => {
+        setStats((prev) => {
+            const isNewDay = prev.lastPlayedDate !== todayStr;
+            if (!isNewDay && isDailyMode) return prev;
+
+            const newPlayed = prev.played + 1;
+            const newWins = isWin ? prev.wins + 1 : prev.wins;
+            const newCurrentStreak = isWin ? prev.currentStreak + 1 : 0;
+            const newMaxStreak = Math.max(prev.maxStreak, newCurrentStreak);
+
+            const updated = {
+                played: newPlayed,
+                wins: newWins,
+                currentStreak: newCurrentStreak,
+                maxStreak: newMaxStreak,
+                lastPlayedDate: todayStr
+            };
+
+            localStorage.setItem('hashi_stats', JSON.stringify(updated));
+            return updated;
+        });
+    };
+
+    const formatTime = (totalSeconds) => {
+        const mins = Math.floor(totalSeconds / 60);
+        const secs = totalSeconds % 60;
+        return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    };
+
+    useEffect(() => {
+        let interval = null;
+        if (isActive) {
+            interval = setInterval(() => {
+                setSeconds(prev => prev + 1);
+            }, 1000);
+        } else {
+            clearInterval(interval);
+        }
+        return () => clearInterval(interval);
+    }, [isActive]);
+
+    const startNewGame = (daily = false) => {
         setMessage('');
-        const generator = new PythonStyleHashiGenerator(gridSize, gridSize);
+        setIsDailyMode(daily);
+        setSeconds(0);
+        setIsActive(true);
+        setIsStatsOpen(false);
+
+        let rng = Math.random;
+        let targetSize = gridSize;
+
+        if (daily) {
+            const seedNum = parseInt(todayStr.replace(/-/g, ''), 10);
+            rng = mulberry32(seedNum);
+
+            const sizes = [5, 6, 7, 8];
+            targetSize = sizes[Math.floor(rng() * sizes.length)];
+            setGridSize(targetSize);
+        }
+
+        const generator = new PythonStyleHashiGenerator(targetSize, targetSize, rng);
         const rawIslands = generator.generate();
         
         const generatedIslands = rawIslands.map((isl, idx) => ({
@@ -178,16 +269,29 @@ export default function Hashi() {
         }));
 
         if (generatedIslands.length < 3) {
-            startNewGame();
+            startNewGame(daily);
             return;
+        }
+
+        if (daily) {
+            const savedSolved = localStorage.getItem(`hashi_solved_${todayStr}`);
+            if (savedSolved === 'true') {
+                setMessage('🎉 Daily Puzzle Already Completed Today!');
+            }
         }
 
         setGameState({ islands: generatedIslands, bridges: [] });
     };
 
     useEffect(() => {
-        startNewGame();
+        if (!isDailyMode) {
+            startNewGame(false);
+        }
     }, [gridSize]);
+
+    useEffect(() => {
+        startNewGame(true);
+    }, []);
 
     useEffect(() => {
         const canvas = canvasRef.current;
@@ -195,7 +299,6 @@ export default function Hashi() {
         const ctx = canvas.getContext('2d');
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        // Grid Background Lines
         ctx.strokeStyle = '#21262d';
         ctx.lineWidth = 1;
         for (let i = 0; i < gridSize; i++) {
@@ -211,7 +314,6 @@ export default function Hashi() {
             ctx.stroke();
         }
 
-        // Bridges
         gameState.bridges.forEach(b => {
             let i1 = gameState.islands.find(i => i.id === b.from);
             let i2 = gameState.islands.find(i => i.id === b.to);
@@ -245,7 +347,6 @@ export default function Hashi() {
             }
         });
 
-        // Islands
         gameState.islands.forEach(island => {
             let x = offset + island.c * cellSize;
             let y = offset + island.r * cellSize;
@@ -281,10 +382,16 @@ export default function Hashi() {
     }, [gameState, gridSize]);
 
     const handleCanvasClick = (e) => {
+        if (!isActive) return;
+
         const canvas = canvasRef.current;
         const rect = canvas.getBoundingClientRect();
-        const px = e.clientX - rect.left;
-        const py = e.clientY - rect.top;
+        
+        const scaleX = canvas.width / rect.width;
+        const scaleY = canvas.height / rect.height;
+
+        const px = (e.clientX - rect.left) * scaleX;
+        const py = (e.clientY - rect.top) * scaleY;
 
         let clickedPair = null;
         let minDistance = Infinity;
@@ -315,7 +422,7 @@ export default function Hashi() {
                 let y2 = offset + i2.r * cellSize;
 
                 let dist = distanceToSegment(px, py, x1, y1, x2, y2);
-                if (dist < 15 && dist < minDistance) {
+                if (dist < 22 && dist < minDistance) {
                     minDistance = dist;
                     clickedPair = [i1, i2];
                 }
@@ -364,7 +471,13 @@ export default function Hashi() {
             });
 
             if (allMet && islands.length > 0) {
+                setIsActive(false);
                 setMessage('🎉 Puzzle Solved Successfully!');
+                updateStatsOnGameEnd(true);
+                setIsStatsOpen(true);
+                if (isDailyMode) {
+                    localStorage.setItem(`hashi_solved_${todayStr}`, 'true');
+                }
             } else {
                 setMessage('');
             }
@@ -372,39 +485,81 @@ export default function Hashi() {
     };
 
     return (
-        <div className="hashi-container">
-            <h2>React Hashi Puzzle</h2>
-            <p>Click between aligned islands to build bridges. Lines cannot cross!</p>
-            
-            <div className="hashi-controls" style={{ marginBottom: '15px' }}>
-                <label style={{ marginRight: '10px', color: '#f0f6fc', fontWeight: 'bold' }}>Board Size:</label>
-                <select 
-                    value={gridSize} 
-                    onChange={(e) => setGridSize(Number(e.target.value))}
-                    className="hashi-select"
-                    style={{ padding: '5px 10px', borderRadius: '4px', background: '#21262d', color: '#f0f6fc', border: '1px solid #30363d' }}
-                >
-                    <option value={5}>5 x 5 (Small)</option>
-                    <option value={6}>6 x 6 (Medium)</option>
-                    <option value={7}>7 x 7 (Large)</option>
-                    <option value={8}>8 x 8 (Expert)</option>
-                </select>
-            </div>
+        <>
+            <Navbar />
+            <div className="hashi-container">
+                <div className="skeedle-header">
+                    <h2>Hashkeet {isDailyMode && <span style={{ fontSize: '14px', color: '#58a6ff' }}>(Daily)</span>}</h2>
+                    <button className="stats-btn hashi-btn" onClick={() => setIsStatsOpen(true)} style={{ padding: '4px 10px' }}>
+                        STATS
+                    </button>
+                </div>
+                
+                <div className="hashi-status-bar">
+                    <span>Connect islands</span>
+                    <span style={{ fontWeight: 'bold', color: '#39ff14' }}>⏱️ {formatTime(seconds)}</span>
+                </div>
 
-            <canvas 
-                ref={canvasRef} 
-                width={canvasSize} 
-                height={canvasSize} 
-                onPointerDown={handleCanvasClick}
-                className="hashi-canvas"
-            />
-            
-            <div className="hashi-controls">
-                <button onClick={() => setGameState(prev => ({ ...prev, bridges: [] }))} className="hashi-btn">Reset Board</button>
-                <button onClick={startNewGame} className="hashi-btn">New Puzzle</button>
+                <div className="hashi-controls" style={{ marginBottom: '10px' }}>
+                    <button 
+                        onClick={() => startNewGame(true)} 
+                        className="hashi-btn" 
+                        style={{ background: isDailyMode ? '#1f6feb' : '#000000', borderColor: isDailyMode ? '#58a6ff' : '#30363d' }}
+                    >
+                        Daily
+                    </button>
+                    <button 
+                        onClick={() => startNewGame(false)} 
+                        className="hashi-btn" 
+                        style={{ background: !isDailyMode ? '#ff69b4' : '#000000', borderColor: !isDailyMode ? '#ffb6c1' : '#30363d' }}
+                    >
+                        Random
+                    </button>
+                    <button onClick={() => { setGameState(prev => ({ ...prev, bridges: [] })); setSeconds(0); setIsActive(true); }} className="hashi-btn">Reset</button>
+                </div>
+
+                {!isDailyMode && (
+                    <div className="hashi-controls" style={{ marginBottom: '15px' }}>
+                        <label style={{ color: '#f0f6fc', fontWeight: 'bold', fontSize: '14px' }}>Board Size:</label>
+                        <select 
+                            value={gridSize} 
+                            onChange={(e) => {
+                                setIsDailyMode(false);
+                                setGridSize(Number(e.target.value));
+                            }}
+                            className="hashi-select"
+                        >
+                            <option value={5}>5 x 5</option>
+                            <option value={6}>6 x 6</option>
+                            <option value={7}>7 x 7</option>
+                            <option value={8}>8 x 8</option>
+                        </select>
+                    </div>
+                )}
+
+                <div className="hashi-directions">
+                    <strong>How to Play:</strong> Click between two islands to draw a bridge. Click again to make it a double bridge, or a third time to remove it. Total bridges connected to each island must match its number. Bridges cannot cross each other.
+                </div>
+
+                <div className="hashi-canvas-wrapper">
+                    <canvas 
+                        ref={canvasRef} 
+                        width={canvasSize} 
+                        height={canvasSize} 
+                        onPointerDown={handleCanvasClick}
+                        className="hashi-canvas"
+                    />
+
+                    <StatsModal
+                        isOpen={isStatsOpen}
+                        onClose={() => setIsStatsOpen(false)}
+                        stats={stats}
+                        time={!isActive ? formatTime(seconds) : null}
+                    />
+                </div>
+                
+                <div className="hashi-message">{message}</div>
             </div>
-            
-            <div className="hashi-message">{message}</div>
-        </div>
+        </>
     );
 }
