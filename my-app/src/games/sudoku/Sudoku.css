@@ -314,3 +314,33 @@ kbd{
   background: #0d1219;
   border-color: #212a36;
 }
+
+@media (max-width: 520px) {
+  .sudoku-app-wrapper {
+    padding: 8px;
+  }
+  
+  .app {
+    width: 100%;
+    gap: 12px;
+  }
+
+  .game-card, .side-card {
+    padding: 12px;
+  }
+
+  /* Force the number pad to stay in a single neat row with a strict shrink constraint */
+  .number-pad {
+    flex-wrap: nowrap;
+    gap: 4px;
+    overflow-x: auto;
+  }
+
+  .num {
+    flex: 0 1 auto;
+    min-width: 0;
+    width: 100%;
+    aspect-ratio: 1;
+    font-size: 16px;
+  }
+}
