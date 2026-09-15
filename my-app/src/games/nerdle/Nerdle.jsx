@@ -1,66 +1,258 @@
+// src/games/nerdle/Nerdle.jsx
 import React, { useState, useEffect } from 'react';
+import './Nerdle.css';
+import Navbar from '../../components/Navbar';
 
 const EQUATION_LENGTH = 10;
 const MAX_ATTEMPTS = 6;
 
-// Predefined list of valid 10-character equations
-const EQUATION_LIST = [
-  '12+34-10=36',
-  '100/5+10=30',
-  '45*2-10=80',
-  '15+25*2=65',
-  '90-30/3=80',
-  '12*8-16=80',
-  '50+50/2=75',
-  '10*10-1=99',
-  '24/3+12=20',
-  '30*3+10=100',
+const KEYBOARD_ROWS = [
+  ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0'],
+  ['+', '-', '*', '/', '=', 'x²', 'x³', '(', ')'],
+  ['ENTER', 'DELETE'],
 ];
 
-export default function MaxiNerdle() {
+const evaluate = (expr) => {
+  try {
+    const jsExpr = expr.replace(/²/g, '**2').replace(/³/g, '**3');
+    return Function(`'use strict'; return (${jsExpr})`)();
+  } catch {
+    return null;
+  }
+};
+
+const hasValidParentheses = (expr) => {
+  let i = 0;
+  let foundNeededParentheses = false;
+
+  while (i < expr.length) {
+    if (expr[i] === '(') {
+      let depth = 1;
+      let j = i + 1;
+      while (j < expr.length && depth > 0) {
+        if (expr[j] === '(') depth++;
+        if (expr[j] === ')') depth--;
+        j++;
+      }
+
+      const leftPart = expr.split('=')[0];
+      if (i === 0 && j === leftPart.length) return false;
+      foundNeededParentheses = true;
+      i = j;
+    } else {
+      i++;
+    }
+  }
+
+  if (foundNeededParentheses) {
+    try {
+      const withoutParens = expr.replace(/[()]/g, '');
+      const valWith = evaluate(expr.split('=')[0]);
+      const valWithout = evaluate(withoutParens.split('=')[0]);
+      if (valWith === valWithout) return false;
+    } catch {
+      return false;
+    }
+  }
+
+  return true;
+};
+
+// Simple seeded pseudo-random number generator for Daily Mode
+const createSeededRNG = (seed) => {
+  let s = seed;
+  return () => {
+    s = Math.sin(s) * 10000;
+    return s - Math.floor(s);
+  };
+};
+
+const getDailySeedNumber = () => {
+  const dateStr = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+  let hash = 0;
+  for (let i = 0; i < dateStr.length; i++) {
+    hash = (hash << 5) - hash + dateStr.charCodeAt(i);
+    hash |= 0;
+  }
+  return Math.abs(hash);
+};
+
+const recentSignatures = [];
+let countWithoutEarlyDiv = 0;
+let countWithoutEarlySub = 0;
+
+const getStructureSignature = (expr) => {
+  return expr.replace(/[0-9²³]/g, 'N');
+};
+
+const generateEquation = (isDaily = false) => {
+  let rng = Math.random;
+  if (isDaily) {
+    rng = createSeededRNG(getDailySeedNumber());
+  }
+
+  const standardTemplates = [
+    (r) => {
+      const n1 = Math.floor(r() * 9) + 1;
+      const n2 = Math.floor(r() * 9) + 1;
+      const n3 = Math.floor(r() * 9) + 1;
+      const leftExpr = `${n1}*${n2}+${n3}`;
+      return { leftExpr, leftVal: evaluate(leftExpr) };
+    },
+    (r) => {
+      const n1 = Math.floor(r() * 8) + 2;
+      const n2 = Math.floor(r() * 8) + 2;
+      const n3 = Math.floor(r() * 10) + 1;
+      const leftExpr = `${n1}*${n2}-${n3}`;
+      return { leftExpr, leftVal: evaluate(leftExpr) };
+    }
+  ];
+
+  const earlySubTemplates = [
+    (r) => {
+      const n1 = Math.floor(r() * 30) + 15;
+      const n2 = Math.floor(r() * 10) + 1;
+      const n3 = Math.floor(r() * 10) + 1;
+      const leftExpr = `${n1}-${n2}+${n3}`;
+      return { leftExpr, leftVal: evaluate(leftExpr) };
+    },
+    (r) => {
+      const n1 = Math.floor(r() * 20) + 10;
+      const n2 = Math.floor(r() * 5) + 1;
+      const n3 = Math.floor(r() * 4) + 2;
+      const leftExpr = `${n1}-${n2}*${n3}`;
+      return { leftExpr, leftVal: evaluate(leftExpr) };
+    }
+  ];
+
+  const earlyDivTemplates = [
+    (r) => {
+      const n3 = Math.floor(r() * 6) + 2;
+      const multiplier = Math.floor(r() * 8) + 2;
+      const n1 = n3 * multiplier;
+      const n2 = Math.floor(r() * 10) + 1;
+      const leftExpr = `${n1}/${n3}+${n2}`;
+      return { leftExpr, leftVal: evaluate(leftExpr) };
+    },
+    (r) => {
+      const n3 = Math.floor(r() * 5) + 2;
+      const multiplier = Math.floor(r() * 5) + 2;
+      const n1 = n3 * multiplier;
+      const n2 = Math.floor(r() * 4) + 2;
+      const leftExpr = `${n1}/${n3}*${n2}`;
+      return { leftExpr, leftVal: evaluate(leftExpr) };
+    }
+  ];
+
+  const parenTemplates = [
+    (r) => {
+      const n1 = Math.floor(r() * 8) + 1;
+      const n2 = Math.floor(r() * 8) + 1;
+      const pow = r() > 0.5 ? '²' : '³';
+      const leftExpr = `(${n1}+${n2})${pow}`;
+      return { leftExpr, leftVal: evaluate(leftExpr) };
+    },
+    (r) => {
+      const n1 = Math.floor(r() * 4) + 1;
+      const n2 = Math.floor(r() * 4) + 1;
+      const n3 = Math.floor(r() * 5) + 2;
+      const leftExpr = `(${n1}+${n2})*${n3}`;
+      return { leftExpr, leftVal: evaluate(leftExpr) };
+    }
+  ];
+
+  for (let attempts = 0; attempts < 1500; attempts++) {
+    let templatePool = standardTemplates;
+
+    if (countWithoutEarlySub >= 6) {
+      templatePool = earlySubTemplates;
+    } else if (countWithoutEarlyDiv >= 6) {
+      templatePool = earlyDivTemplates;
+    } else {
+      const roll = rng();
+      if (roll < 0.25) templatePool = earlySubTemplates;
+      else if (roll < 0.50) templatePool = earlyDivTemplates;
+      else if (roll < 0.75) templatePool = parenTemplates;
+      else templatePool = standardTemplates;
+    }
+
+    const randomTemplate = templatePool[Math.floor(rng() * templatePool.length)];
+    const { leftExpr, leftVal } = randomTemplate(rng);
+
+    if (leftVal !== null && Number.isInteger(leftVal) && leftVal >= 0 && leftVal <= 999) {
+      const candidate = `${leftExpr}=${leftVal}`;
+      
+      if (candidate.length === EQUATION_LENGTH && hasValidParentheses(candidate)) {
+        const signature = getStructureSignature(candidate);
+
+        if (!recentSignatures.includes(signature)) {
+          recentSignatures.push(signature);
+          if (recentSignatures.length > 3) recentSignatures.shift();
+
+          const firstFive = candidate.substring(0, 5);
+          if (firstFive.includes('/')) countWithoutEarlyDiv = 0;
+          else countWithoutEarlyDiv++;
+
+          if (firstFive.includes('-')) countWithoutEarlySub = 0;
+          else countWithoutEarlySub++;
+
+          return candidate;
+        }
+      }
+    }
+  }
+
+  return '5*5+25=50';
+};
+
+export default function Nerdle() {
+  const [isDailyMode, setIsDailyMode] = useState(true);
   const [targetEquation, setTargetEquation] = useState('');
   const [guesses, setGuesses] = useState([]);
-  const [currentGuess, setCurrentGuess] = useState('');
-  const [gameStatus, setGameStatus] = useState('IN_PROGRESS'); // IN_PROGRESS, WON, LOST
+  const [currentGuess, setCurrentGuess] = useState(Array(EQUATION_LENGTH).fill(''));
+  const [activeCellIndex, setActiveCellIndex] = useState(0);
+  const [gameStatus, setGameStatus] = useState('IN_PROGRESS');
   const [message, setMessage] = useState('');
 
-  const startNewGame = () => {
-    const randomEq = EQUATION_LIST[Math.floor(Math.random() * EQUATION_LIST.length)];
-    setTargetEquation(randomEq);
+  const startNewGame = (daily = isDailyMode) => {
+    const targetEq = generateEquation(daily);
+    setTargetEquation(targetEq);
     setGuesses([]);
-    setCurrentGuess('');
+    setCurrentGuess(Array(EQUATION_LENGTH).fill(''));
+    setActiveCellIndex(0);
     setGameStatus('IN_PROGRESS');
-    setMessage('');
   };
 
   useEffect(() => {
-    startNewGame();
+    startNewGame(true);
   }, []);
 
-  // Evaluate guess character by character (Green, Purple, Gray)
+  const switchMode = (daily) => {
+    if (isDailyMode === daily) return;
+    setIsDailyMode(daily);
+    startNewGame(daily);
+  };
+
   const evaluateGuess = (guess, target) => {
-    const colors = Array(EQUATION_LENGTH).fill('#3a3a3c'); // Default Dark Gray
+    const colors = Array(EQUATION_LENGTH).fill('default');
     const targetArr = target.split('');
     const guessArr = guess.split('');
-
     const targetVisited = Array(EQUATION_LENGTH).fill(false);
     const guessVisited = Array(EQUATION_LENGTH).fill(false);
 
-    // First pass: Exact matches (Green)
     for (let i = 0; i < EQUATION_LENGTH; i++) {
       if (guessArr[i] === targetArr[i]) {
-        colors[i] = '#398874'; // Green
+        colors[i] = 'green';
         targetVisited[i] = true;
         guessVisited[i] = true;
       }
     }
 
-    // Second pass: Misplaced matches (Purple)
     for (let i = 0; i < EQUATION_LENGTH; i++) {
       if (!guessVisited[i]) {
         for (let j = 0; j < EQUATION_LENGTH; j++) {
           if (!targetVisited[j] && guessArr[i] === targetArr[j]) {
-            colors[i] = '#820458'; // Purple
+            colors[i] = 'yellow';
             targetVisited[j] = true;
             break;
           }
@@ -71,296 +263,218 @@ export default function MaxiNerdle() {
     return colors;
   };
 
-  // Basic math validation to check if equal sign exists and left side equals right side
   const isValidEquation = (str) => {
     if (!str.includes('=')) return false;
+    if (!hasValidParentheses(str)) return false;
+
     const parts = str.split('=');
     if (parts.length !== 2 || !parts[0] || !parts[1]) return false;
 
     try {
-      // Evaluate left side and right side safely
-      const leftVal = Function(`'use strict'; return (${parts[0]})`)();
-      const rightVal = Function(`'use strict'; return (${parts[1]})`)();
-      return leftVal === rightVal;
+      const jsLeft = parts[0].replace(/²/g, '**2').replace(/³/g, '**3');
+      const jsRight = parts[1].replace(/²/g, '**2').replace(/³/g, '**3');
+      return Function(`'use strict'; return (${jsLeft})`)() === Function(`'use strict'; return (${jsRight})`)();
     } catch {
       return false;
     }
   };
 
-  const handleInput = (char) => {
+  const handleInput = (key) => {
     if (gameStatus !== 'IN_PROGRESS') return;
 
-    if (char === 'ENTER') {
+    if (key === 'ENTER') {
       submitGuess();
-    } else if (char === 'DELETE' || char === 'BACKSPACE') {
-      setCurrentGuess((prev) => prev.slice(0, -1));
-    } else if (currentGuess.length < EQUATION_LENGTH) {
-      if (/^[0-9+\-*/=]$/.test(char)) {
-        setCurrentGuess((prev) => prev + char);
+    } else if (key === 'DELETE' || key === 'BACKSPACE') {
+      const newGuess = [...currentGuess];
+      if (newGuess[activeCellIndex]) {
+        newGuess[activeCellIndex] = '';
+      } else if (activeCellIndex > 0) {
+        setActiveCellIndex(activeCellIndex - 1);
+        newGuess[activeCellIndex - 1] = '';
+      }
+      setCurrentGuess(newGuess);
+    } else {
+      let charToInsert = key;
+      if (key === 'x²') charToInsert = '²';
+      if (key === 'x³') charToInsert = '³';
+
+      if (/^[0-9+\-*/.=()²³]$/.test(charToInsert)) {
+        const newGuess = [...currentGuess];
+        newGuess[activeCellIndex] = charToInsert;
+        setCurrentGuess(newGuess);
+
+        if (activeCellIndex < EQUATION_LENGTH - 1) {
+          setActiveCellIndex(activeCellIndex + 1);
+        }
       }
     }
   };
 
   const submitGuess = () => {
-    if (currentGuess.length !== EQUATION_LENGTH) {
-      showMessage('Guess must be 10 characters long!');
+    const guessString = currentGuess.join('');
+    if (guessString.length !== EQUATION_LENGTH || currentGuess.some((c) => c === '')) {
+      setMessage('Guess must be 10 characters long!');
+      setTimeout(() => setMessage(''), 3000);
       return;
     }
 
-    if (!isValidEquation(currentGuess)) {
-      showMessage('That does not compute!');
+    if (!isValidEquation(guessString)) {
+      setMessage('Invalid equation or redundant parentheses!');
+      setTimeout(() => setMessage(''), 3000);
       return;
     }
 
-    const colors = evaluateGuess(currentGuess, targetEquation);
-    const newGuesses = [...guesses, { guess: currentGuess, colors }];
+    const colors = evaluateGuess(guessString, targetEquation);
+    const newGuesses = [...guesses, { guess: guessString, colors }];
     setGuesses(newGuesses);
-    setCurrentGuess('');
+    setCurrentGuess(Array(EQUATION_LENGTH).fill(''));
+    setActiveCellIndex(0);
 
-    if (currentGuess === targetEquation) {
+    if (guessString === targetEquation) {
       setGameStatus('WON');
-      showMessage('🎉 Great job! You solved the Maxi Nerdle!');
+      setMessage('🎉 Great job! You solved Skeedle+!');
     } else if (newGuesses.length >= MAX_ATTEMPTS) {
       setGameStatus('LOST');
-      showMessage(`Game Over! The target was: ${targetEquation}`);
+      setMessage(`Game Over! The target was: ${targetEquation}`);
     }
   };
 
-  const showMessage = (msg) => {
-    setMessage(msg);
-    setTimeout(() => setMessage(''), 3000);
-  };
-
-  // Keyboard Event Listeners
   useEffect(() => {
     const handleKeyDown = (e) => {
       const key = e.key.toUpperCase();
-      if (key === 'ENTER') {
-        handleInput('ENTER');
-      } else if (key === 'BACKSPACE') {
-        handleInput('DELETE');
-      } else {
-        handleInput(key);
-      }
+      if (key === 'ENTER') handleInput('ENTER');
+      else if (key === 'BACKSPACE') handleInput('DELETE');
+      else if (key === 'ARROWLEFT') setActiveCellIndex((prev) => Math.max(0, prev - 1));
+      else if (key === 'ARROWRIGHT') setActiveCellIndex((prev) => Math.min(EQUATION_LENGTH - 1, prev + 1));
+      else if (key === '2' && e.shiftKey) handleInput('x²');
+      else if (key === '3' && e.shiftKey) handleInput('x³');
+      else handleInput(key);
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [currentGuess, gameStatus, targetEquation]);
+  }, [currentGuess, activeCellIndex, gameStatus, targetEquation]);
 
-  // Keyboard button status colors
   const getKeyColor = (key) => {
-    let color = '#818384';
+    let targetChar = key;
+    if (key === 'x²') targetChar = '²';
+    if (key === 'x³') targetChar = '³';
+
+    let colorState = '';
     guesses.forEach(({ guess, colors }) => {
       guess.split('').forEach((char, idx) => {
-        if (char === key) {
-          if (colors[idx] === '#398874') color = '#398874';
-          else if (colors[idx] === '#820458' && color !== '#398874') color = '#820458';
-          else if (colors[idx] === '#3a3a3c' && color === '#818384') color = '#3a3a3c';
+        if (char === targetChar) {
+          if (colors[idx] === 'green') colorState = 'green';
+          else if (colors[idx] === 'yellow' && colorState !== 'green') colorState = 'yellow';
+          else if (colors[idx] === 'default' && !colorState) colorState = 'used';
         }
       });
     });
-    return color;
+    return colorState;
   };
 
-  const keyboardKeys = [
-    ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0'],
-    ['+', '-', '*', '/', '=', 'ENTER', 'DELETE'],
-  ];
-
-  // Inline CSS Styles
-  const styles = {
-    container: {
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      minHeight: '100vh',
-      backgroundColor: '#121213',
-      color: '#ffffff',
-      fontFamily: 'Arial, sans-serif',
-      padding: '20px 10px',
-      boxSizing: 'border-box',
-    },
-    header: {
-      fontSize: '28px',
-      fontWeight: 'bold',
-      letterSpacing: '2px',
-      marginBottom: '10px',
-      borderBottom: '1px solid #3a3a3c',
-      paddingBottom: '10px',
-      width: '100%',
-      maxWidth: '600px',
-      textAlign: 'center',
-    },
-    message: {
-      minHeight: '24px',
-      fontSize: '16px',
-      fontWeight: 'bold',
-      color: '#00d2d3',
-      marginBottom: '15px',
-      textAlign: 'center',
-    },
-    board: {
-      display: 'flex',
-      flexDirection: 'column',
-      gap: '6px',
-      marginBottom: '20px',
-    },
-    row: {
-      display: 'flex',
-      gap: '4px',
-      justifyContent: 'center',
-    },
-    tile: (bgColor, hasBorder) => ({
-      width: '42px',
-      height: '42px',
-      border: hasBorder ? '2px solid #565758' : 'none',
-      backgroundColor: bgColor || '#121213',
-      color: '#ffffff',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      fontSize: '20px',
-      fontWeight: 'bold',
-      borderRadius: '4px',
-    }),
-    resetBtn: {
-      backgroundColor: '#398874',
-      color: '#fff',
-      border: 'none',
-      padding: '10px 20px',
-      fontSize: '16px',
-      fontWeight: 'bold',
-      borderRadius: '4px',
-      cursor: 'pointer',
-      marginBottom: '15px',
-    },
-    keyboard: {
-      display: 'flex',
-      flexDirection: 'column',
-      gap: '8px',
-      width: '100%',
-      maxWidth: '600px',
-    },
-    kbRow: {
-      display: 'flex',
-      justifyContent: 'center',
-      gap: '5px',
-    },
-    keyBtn: (bgColor, isWide) => ({
-      backgroundColor: bgColor,
-      color: '#ffffff',
-      border: 'none',
-      borderRadius: '4px',
-      padding: '12px 6px',
-      fontWeight: 'bold',
-      cursor: 'pointer',
-      fontSize: '14px',
-      flex: isWide ? 1.5 : 1,
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
-    }),
-  };
-
-  useEffect(() => {
-      // 1. Create and inject the external gtag script
-      const gtagScript = document.createElement('script');
-      gtagScript.src = 'https://www.googletagmanager.com/gtag/js?id=G-9TBQNYQE6V';
-      gtagScript.async = true;
-      document.head.appendChild(gtagScript);
-  
-      // 2. Initialize dataLayer and gtag config
-      window.dataLayer = window.dataLayer || [];
-      function gtag() {
-        window.dataLayer.push(arguments);
-      }
-      gtag('js', new Date());
-      gtag('config', 'G-9TBQNYQE6V');
-  
-      // Cleanup script on unmount
-      return () => {
-        document.head.removeChild(gtagScript);
-      };
-    }, []);
+  const getModeBtnStyle = (isActive) => ({
+    padding: '6px 12px',
+    borderRadius: '6px',
+    fontSize: '0.85rem',
+    fontWeight: 'bold',
+    cursor: 'pointer',
+    border: '2px solid var(--neon-pink)',
+    backgroundColor: isActive ? 'var(--neon-pink)' : 'transparent',
+    color: isActive ? '#121212' : 'var(--neon-pink)',
+    transition: 'all 0.2s ease',
+  });
 
   return (
-    <div style={styles.container}>
-      <div style={styles.header}>MAXI NERDLE</div>
+    <>
+      <Navbar />
+      <div className="word500-container">
+        <div className="skeedle-header">
+          <h1 className="skeedle-title-btn" style={{ cursor: 'default' }}>SKEEDLE+</h1>
+          <div className="header-actions" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+            <button style={getModeBtnStyle(isDailyMode)} onClick={() => switchMode(true)}>
+              Daily
+            </button>
+            <button style={getModeBtnStyle(!isDailyMode)} onClick={() => switchMode(false)}>
+              Practice
+            </button>
+            {!isDailyMode && gameStatus !== 'IN_PROGRESS' && (
+              <button className="new-game-btn" onClick={() => startNewGame(false)}>
+                Play Again
+              </button>
+            )}
+          </div>
+        </div>
 
-      <div style={styles.message}>{message}</div>
+        <div style={{ minHeight: '24px', fontSize: '0.9rem', fontWeight: 'bold', color: 'var(--neon-yellow)', marginBottom: '12px', textAlign: 'center' }}>
+          {message}
+        </div>
 
-      {gameStatus !== 'IN_PROGRESS' && (
-        <button style={styles.resetBtn} onClick={startNewGame}>
-          Play Again
-        </button>
-      )}
+        {/* Grid */}
+        <div className="word500-board">
+          {Array.from({ length: MAX_ATTEMPTS }).map((_, rIdx) => {
+            const guessObj = guesses[rIdx];
+            const isCurrentRow = rIdx === guesses.length && gameStatus === 'IN_PROGRESS';
 
-      {/* Grid */}
-      <div style={styles.board}>
-        {Array.from({ length: MAX_ATTEMPTS }).map((_, rIdx) => {
-          const guessObj = guesses[rIdx];
-          const isCurrentRow = rIdx === guesses.length && gameStatus === 'IN_PROGRESS';
+            let chars = Array(EQUATION_LENGTH).fill('');
+            if (guessObj) chars = guessObj.guess.split('');
+            else if (isCurrentRow) chars = currentGuess;
 
-          let chars = Array(EQUATION_LENGTH).fill('');
-          if (guessObj) {
-            chars = guessObj.guess.split('');
-          } else if (isCurrentRow) {
-            chars = currentGuess
-              .padEnd(EQUATION_LENGTH, ' ')
-              .split('')
-              .map((c) => (c === ' ' ? '' : c));
-          }
+            return (
+              <div key={rIdx} className="word500-row">
+                <div className="word500-tiles">
+                  {chars.map((char, cIdx) => {
+                    let tileClass = 'word500-tile';
+                    const isCellActive = isCurrentRow && cIdx === activeCellIndex;
 
-          return (
-            <div key={rIdx} style={styles.row}>
-              {chars.map((char, cIdx) => {
-                let bgColor = '#121213';
-                let hasBorder = true;
+                    if (guessObj) {
+                      const colorType = guessObj.colors[cIdx];
+                      if (colorType === 'green') tileClass += ' note-green';
+                      else if (colorType === 'yellow') tileClass += ' note-yellow';
+                      else tileClass += ' note-grey';
+                    } else if (isCellActive) {
+                      tileClass += ' clickable';
+                    }
 
-                if (guessObj) {
-                  bgColor = guessObj.colors[cIdx];
-                  hasBorder = false;
-                } else if (char) {
-                  hasBorder = true;
-                }
+                    return (
+                      <div
+                        key={cIdx}
+                        className={tileClass}
+                        onClick={() => isCurrentRow && setActiveCellIndex(cIdx)}
+                        style={isCellActive ? { borderColor: 'var(--neon-pink)', boxShadow: '0 0 8px rgba(255, 42, 133, 0.4)' } : {}}
+                      >
+                        {char}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Keyboard */}
+        <div className="word500-keyboard">
+          {KEYBOARD_ROWS.map((row, rIdx) => (
+            <div key={rIdx} className="word500-keyboard-row">
+              {row.map((key) => {
+                const isWide = key === 'ENTER' || key === 'DELETE';
+                const state = getKeyColor(key);
+                let keyClass = `word500-key ${isWide ? 'wide' : ''}`;
+                if (state === 'green') keyClass += ' note-green';
+                else if (state === 'yellow') keyClass += ' note-yellow';
+                else if (state === 'used') keyClass += ' used';
 
                 return (
-                  <div key={cIdx} style={styles.tile(bgColor, hasBorder)}>
-                    {char}
-                  </div>
+                  <button key={key} className={keyClass} onClick={() => handleInput(key)}>
+                    {key}
+                  </button>
                 );
               })}
             </div>
-          );
-        })}
+          ))}
+        </div>
       </div>
-
-      {/* Keyboard */}
-      <div style={styles.keyboard}>
-        {keyboardRows.map((row, rIdx) => (
-          <div key={rIdx} style={styles.kbRow}>
-            {row.map((key) => {
-              const isWide = key === 'ENTER' || key === 'DELETE';
-              const keyBg = getKeyColor(key);
-              return (
-                <button
-                  key={key}
-                  style={styles.keyBtn(keyBg, isWide)}
-                  onClick={() => handleInput(key)}
-                >
-                  {key}
-                </button>
-              );
-            })}
-          </div>
-        ))}
-      </div>
-    </div>
+    </>
   );
 }
-
-const keyboardRows = [
-  ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0'],
-  ['+', '-', '*', '/', '=', 'ENTER', 'DELETE'],
-];

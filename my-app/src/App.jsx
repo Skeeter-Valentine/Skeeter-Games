@@ -10,6 +10,7 @@ import Game2048 from './games/2048/Game2048';
 import Shikaku from './games/shikaku/shikaku';
 import Pipes from './games/pipes/pipes';
 import Hashi from './games/hashi/Hashi';
+import Nerdle from './games/nerdle/Nerdle';
 
 export default function App() {
   return (
@@ -24,6 +25,7 @@ export default function App() {
         <Route path="/shikaku" element={<Shikaku />} />
         <Route path="/pipes" element={<Pipes />} />
         <Route path="/hashi" element={<Hashi />} />
+        <Route path="/nerdle" element={<Nerdle />} />
         <Route path="*" element={<div>404 - Game Not Found</div>} />
       </Routes>
     </BrowserRouter>
