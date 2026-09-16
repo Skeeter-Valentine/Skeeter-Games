@@ -11,6 +11,7 @@ import Shikaku from './games/shikaku/shikaku';
 import Pipes from './games/pipes/pipes';
 import Hashi from './games/hashi/Hashi';
 import Nerdle from './games/nerdle/Nerdle';
+import Nonograms from './games/nonograms/Nonograms';
 
 export default function App() {
   return (
@@ -26,6 +27,7 @@ export default function App() {
         <Route path="/pipes" element={<Pipes />} />
         <Route path="/hashi" element={<Hashi />} />
         <Route path="/nerdle" element={<Nerdle />} />
+        <Route path="/nonograms" element={<Nonograms />} />
         <Route path="*" element={<div>404 - Game Not Found</div>} />
       </Routes>
     </BrowserRouter>

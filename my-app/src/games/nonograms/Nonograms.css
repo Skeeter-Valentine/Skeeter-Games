@@ -1,0 +1,148 @@
+/* src/games/nonograms/NonogramGame.css */
+:root {
+  --bg-color: #121212;
+  --card-bg: #1e1e1e;
+  --text-color: #e0e0e0;
+  --neon-pink: #ff2a85;
+  --neon-yellow: #f3e600;
+  --border-color: #444;
+}
+
+.nonogram-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px;
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  min-height: calc(100vh - 60px);
+}
+
+.nonogram-title {
+  color: var(--neon-pink);
+  margin-bottom: 5px;
+  font-size: 1.8rem;
+}
+
+.nonogram-subtitle {
+  color: #888;
+  font-size: 0.9rem;
+  margin-bottom: 20px;
+}
+
+.toolbar {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.tool-btn, .reset-btn {
+  background: transparent;
+  border: 2px solid var(--neon-pink);
+  color: var(--neon-pink);
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.tool-btn.active {
+  background: var(--neon-pink);
+  color: var(--bg-color);
+}
+
+.reset-btn {
+  border-color: var(--neon-yellow);
+  color: var(--neon-yellow);
+}
+
+.reset-btn:hover {
+  background: var(--neon-yellow);
+  color: var(--bg-color);
+}
+
+.victory-message {
+  background: var(--neon-yellow);
+  color: #121212;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-weight: bold;
+  margin-bottom: 20px;
+}
+
+.puzzle-container {
+  background: var(--card-bg);
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+}
+
+.grid-layout {
+  display: grid;
+  grid-template-columns: 60px repeat(var(--grid-cols), 45px);
+  gap: 3px;
+}
+
+.clue-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  font-weight: bold;
+  background: #252525;
+  border-radius: 4px;
+}
+
+.col-clue {
+  flex-direction: column;
+  justify-content: flex-end;
+  padding-bottom: 4px;
+  gap: 2px;
+  color: var(--neon-pink);
+}
+
+.row-clue {
+  justify-content: flex-end;
+  padding-right: 8px;
+  letter-spacing: 1px;
+  color: var(--neon-yellow);
+}
+
+.game-cell {
+  width: 45px;
+  height: 45px;
+  background: #e6f2ff; /* Light blue hue instead of #ffffff */
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.1s;
+}
+
+.game-cell:hover {
+  background: #cce4ff; /* Slightly darker light blue on hover */
+}
+
+.game-cell.filled {
+  background: var(--neon-pink);
+  border-color: var(--neon-pink);
+}
+
+.game-cell.crossed {
+  background: #2a2a2a;
+  color: #ff4d4d;
+  font-size: 1.1rem;
+}
+
+/* --- Added 5x5 Highlighter Green Dividers --- */
+.game-cell.thick-right {
+  border-right: 3px solid #00ff66 !important;
+}
+
+.game-cell.thick-bottom {
+  border-bottom: 3px solid #00ff66 !important;
+}
