@@ -94,7 +94,7 @@
   border-radius: 12px;
   box-shadow: 0 4px 20px rgba(0,0,0,0.5);
   max-width: 100%;
-  overflow-x: auto; /* Clean horizontal scroll container for larger boards on mobile */
+  overflow-x: auto;
   -webkit-overflow-scrolling: touch;
 }
 
@@ -112,18 +112,20 @@
   font-weight: bold;
   background: #252525;
   border-radius: 4px;
-  height: 40px;
 }
 
 .col-clue {
   flex-direction: column;
   justify-content: flex-end;
-  padding-bottom: 4px;
+  padding: 6px 2px;
   gap: 2px;
   color: var(--neon-pink);
+  height: auto;
+  min-height: 40px;
 }
 
 .row-clue {
+  height: 40px;
   justify-content: flex-end;
   padding-right: 8px;
   letter-spacing: 1px;
@@ -173,24 +175,38 @@
 
 /* Mobile Adjustments for smaller screens */
 @media (max-width: 480px) {
+  .nonogram-wrapper {
+    padding: 10px 5px;
+  }
+
+  .puzzle-container {
+    padding: 8px 6px; /* Reduced padding so the grid uses maximum screen space */
+  }
+
   .grid-layout {
-    grid-template-columns: 45px repeat(var(--grid-cols), 32px);
+    grid-template-columns: 40px repeat(var(--grid-cols), 28px); /* Reduced cell size to 28px for a tight 10x10 fit */
     gap: 2px;
   }
 
   .clue-cell {
-    height: 32px;
-    font-size: 0.65rem;
+    font-size: 0.6rem;
+  }
+
+  .col-clue {
+    min-height: 28px;
+    padding: 3px 1px;
   }
 
   .row-clue {
-    width: 45px;
+    height: 28px;
+    width: 40px;
     padding-right: 4px;
+    font-size: 0.65rem;
   }
 
   .game-cell {
-    width: 32px;
-    height: 32px;
-    font-size: 0.8rem;
+    width: 28px;
+    height: 28px;
+    font-size: 0.75rem;
   }
 }
