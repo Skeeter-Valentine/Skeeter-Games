@@ -16,24 +16,40 @@
   background-color: var(--bg-color);
   color: var(--text-color);
   min-height: calc(100vh - 60px);
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 .nonogram-title {
   color: var(--neon-pink);
   margin-bottom: 5px;
   font-size: 1.8rem;
+  text-align: center;
 }
 
 .nonogram-subtitle {
   color: #888;
   font-size: 0.9rem;
-  margin-bottom: 20px;
+  margin-bottom: 15px;
+  text-align: center;
 }
 
 .toolbar {
   display: flex;
   gap: 10px;
-  margin-bottom: 20px;
+  margin-bottom: 15px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.tool-select {
+  background: var(--card-bg);
+  border: 2px solid var(--neon-pink);
+  color: var(--text-color);
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-weight: bold;
+  cursor: pointer;
 }
 
 .tool-btn, .reset-btn {
@@ -69,6 +85,7 @@
   border-radius: 6px;
   font-weight: bold;
   margin-bottom: 20px;
+  text-align: center;
 }
 
 .puzzle-container {
@@ -76,11 +93,14 @@
   padding: 20px;
   border-radius: 12px;
   box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+  max-width: 100%;
+  overflow-x: auto; /* Clean horizontal scroll container for larger boards on mobile */
+  -webkit-overflow-scrolling: touch;
 }
 
 .grid-layout {
   display: grid;
-  grid-template-columns: 60px repeat(var(--grid-cols), 45px);
+  grid-template-columns: 60px repeat(var(--grid-cols), 40px);
   gap: 3px;
 }
 
@@ -88,10 +108,11 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   font-weight: bold;
   background: #252525;
   border-radius: 4px;
+  height: 40px;
 }
 
 .col-clue {
@@ -107,12 +128,14 @@
   padding-right: 8px;
   letter-spacing: 1px;
   color: var(--neon-yellow);
+  white-space: nowrap;
+  width: 60px;
 }
 
 .game-cell {
-  width: 45px;
-  height: 45px;
-  background: #e6f2ff; /* Light blue hue instead of #ffffff */
+  width: 40px;
+  height: 40px;
+  background: #e6f2ff;
   border: 1px solid var(--border-color);
   border-radius: 4px;
   cursor: pointer;
@@ -121,10 +144,12 @@
   align-items: center;
   justify-content: center;
   transition: background 0.1s;
+  touch-action: manipulation;
+  font-size: 1rem;
 }
 
 .game-cell:hover {
-  background: #cce4ff; /* Slightly darker light blue on hover */
+  background: #cce4ff;
 }
 
 .game-cell.filled {
@@ -135,14 +160,37 @@
 .game-cell.crossed {
   background: #2a2a2a;
   color: #ff4d4d;
-  font-size: 1.1rem;
 }
 
-/* --- Added 5x5 Highlighter Green Dividers --- */
+/* 5x5 Highlighter Green Dividers */
 .game-cell.thick-right {
   border-right: 3px solid #00ff66 !important;
 }
 
 .game-cell.thick-bottom {
   border-bottom: 3px solid #00ff66 !important;
+}
+
+/* Mobile Adjustments for smaller screens */
+@media (max-width: 480px) {
+  .grid-layout {
+    grid-template-columns: 45px repeat(var(--grid-cols), 32px);
+    gap: 2px;
+  }
+
+  .clue-cell {
+    height: 32px;
+    font-size: 0.65rem;
+  }
+
+  .row-clue {
+    width: 45px;
+    padding-right: 4px;
+  }
+
+  .game-cell {
+    width: 32px;
+    height: 32px;
+    font-size: 0.8rem;
+  }
 }
