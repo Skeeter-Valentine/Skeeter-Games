@@ -421,9 +421,9 @@ export default function Nerdle() {
                     Play Again
                   </button>
                 )}
-                <button style={{ ...getModeBtnStyle(false), borderColor: 'var(--neon-yellow)', color: 'var(--neon-yellow)' }} onClick={handleTest10Days}>
+                {/* <button style={{ ...getModeBtnStyle(false), borderColor: 'var(--neon-yellow)', color: 'var(--neon-yellow)' }} onClick={handleTest10Days}>
                   Test 10 Days
-                </button>
+                </button> */}
               </>
             )}
           </div>
