@@ -67,8 +67,8 @@ const createSeededRNG = (seed) => {
   };
 };
 
-const getDailySeedNumber = () => {
-  const dateStr = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+const getDailySeedNumber = (dateString = null) => {
+  const dateStr = dateString || new Date().toISOString().split('T')[0]; // YYYY-MM-DD
   let hash = 0;
   for (let i = 0; i < dateStr.length; i++) {
     hash = (hash << 5) - hash + dateStr.charCodeAt(i);
@@ -85,10 +85,10 @@ const getStructureSignature = (expr) => {
   return expr.replace(/[0-9²³]/g, 'N');
 };
 
-const generateEquation = (isDaily = false) => {
+const generateEquation = (isDaily = false, customDateStr = null) => {
   let rng = Math.random;
   if (isDaily) {
-    rng = createSeededRNG(getDailySeedNumber());
+    rng = createSeededRNG(getDailySeedNumber(customDateStr));
   }
 
   const standardTemplates = [
@@ -231,6 +231,22 @@ export default function Nerdle() {
     if (isDailyMode === daily) return;
     setIsDailyMode(daily);
     startNewGame(daily);
+  };
+
+  // Helper function to test 10 consecutive daily game generations in console
+  const handleTest10Days = () => {
+    console.log("=== Testing 10 Consecutive Daily Equations ===");
+    const today = new Date();
+    for (let i = 0; i < 10; i++) {
+      const testDate = new Date(today);
+      testDate.setDate(today.getDate() + i);
+      const dateStr = testDate.toISOString().split('T')[0];
+      const eq = generateEquation(true, dateStr);
+      console.log(`${dateStr}: ${eq}`);
+    }
+    console.log("==============================================");
+    setMessage('Logged 10 daily equations to console!');
+    setTimeout(() => setMessage(''), 3000);
   };
 
   const evaluateGuess = (guess, target) => {
@@ -391,17 +407,24 @@ export default function Nerdle() {
       <div className="word500-container">
         <div className="skeedle-header">
           <h1 className="skeedle-title-btn" style={{ cursor: 'default' }}>SKEEDLE+</h1>
-          <div className="header-actions" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+          <div className="header-actions" style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
             <button style={getModeBtnStyle(isDailyMode)} onClick={() => switchMode(true)}>
               Daily
             </button>
             <button style={getModeBtnStyle(!isDailyMode)} onClick={() => switchMode(false)}>
               Practice
             </button>
-            {!isDailyMode && gameStatus !== 'IN_PROGRESS' && (
-              <button className="new-game-btn" onClick={() => startNewGame(false)}>
-                Play Again
-              </button>
+            {!isDailyMode && (
+              <>
+                {gameStatus !== 'IN_PROGRESS' && (
+                  <button className="new-game-btn" onClick={() => startNewGame(false)}>
+                    Play Again
+                  </button>
+                )}
+                <button style={{ ...getModeBtnStyle(false), borderColor: 'var(--neon-yellow)', color: 'var(--neon-yellow)' }} onClick={handleTest10Days}>
+                  Test 10 Days
+                </button>
+              </>
             )}
           </div>
         </div>

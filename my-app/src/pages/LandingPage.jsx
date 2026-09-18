@@ -1,35 +1,33 @@
-import React from 'react';
+// src/components/LandingPage.jsx
+import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import './LandingPage.css';
 import logoImg from '../assets/logoFog.png';
 import mineskeeterImg from '../assets/mineskeeter.png';
 import ske4dleImg from '../assets/ske4dle.png';
 import skeedle500Img from '../assets/skeedle500.png';
-// import skeedlePlusImg from '../assets/skeedle+.png';
 import game2048Img from '../assets/2048.png';
 import shikakuImg from '../assets/shikaku.png';
 import pipesImg from '../assets/pipes.png';
 import hashiImg from '../assets/hashkeet.png';
 import sudokuImg from '../assets/skeedoku.png';
 import nerdleImg from '../assets/nerdle.png';
-import { useEffect } from 'react';
+import nonogramsImg from '../assets/skeedograms.png';
 
 const GAMES = [
-  { id: 'minesweeper', title: 'Mineskeeter', path: '/minesweeper', image: mineskeeterImg },
+   { id: 'nonograms', title: 'Skeedograms', path: '/nonograms', image: nonogramsImg, isNew: true },
+  { id: 'nerdle', title: 'Nerdle', path: '/nerdle', image: nerdleImg, isNew: true },
+  { id: 'pipes', title: 'Skeeter Piper (net)', path: '/pipes', image: pipesImg },
+  { id: 'shikaku', title: 'Shikaku', path: '/shikaku', image: shikakuImg },
   { id: 'quordle', title: 'Ske4dle', path: '/quordle', image: ske4dleImg },
   { id: 'word500', title: 'Skeedle500', path: '/word500', image: skeedle500Img },
+  { id: 'minesweeper', title: 'Mineskeeter', path: '/minesweeper', image: mineskeeterImg },
   { id: '2048', title: '2048', path: '/2048', image: game2048Img },
-  { id: 'shikaku', title: 'Shikaku', path: '/shikaku', image: shikakuImg },
-  // { id: 'sudoku', title: 'Skeedle+', path: '/sudoku', image: skeedlePlusImg },
-  { id: 'pipes', title: 'Skeeter Piper (net)', path: '/pipes', image: pipesImg },
   { id: 'hashi', title: 'Hashi', path: '/hashi', image: hashiImg },
   { id: 'sudoku', title: 'Skeedoku', path: '/sudoku', image: sudokuImg },
-  { id: 'nerdle', title: 'Nerdle', path: '/nerdle', image: nerdleImg }
-];
-
+  ];
 
 export default function LandingPage() {
-
   useEffect(() => {
     // 1. Create and inject the external gtag script
     const gtagScript = document.createElement('script');
@@ -72,6 +70,7 @@ export default function LandingPage() {
         <div className="landing-grid">
           {GAMES.map((game) => (
             <Link key={game.id} to={game.path} className="landing-card" aria-label={game.title}>
+              {game.isNew && <span className="new-badge">NEW</span>}
               <img 
                 src={game.image} 
                 alt={game.title} 

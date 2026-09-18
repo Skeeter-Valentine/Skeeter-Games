@@ -1,9 +1,17 @@
+/* src/components/LandingPage.css */
+html, body {
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
 .landing-container {
   min-height: 100vh;
   background-color: var(--bg-primary);
   color: var(--text-main);
   display: flex;
   flex-direction: column;
+  overflow-y: visible;
 }
 
 .landing-header {
@@ -58,6 +66,7 @@
   margin: 0 auto;
   padding: 2.5rem 1.5rem;
   width: 100%;
+  box-sizing: border-box;
 }
 
 .landing-grid {
@@ -72,6 +81,7 @@
   overflow: hidden;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
   aspect-ratio: 1 / 1;
+  position: relative;
 }
 
 .landing-card:hover {
@@ -86,28 +96,34 @@
   display: block;
 }
 
-/* Ensure the body and container allow natural vertical scrolling */
-html, body {
-  overflow-x: hidden;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
+/* Diagonal Corner Wrapper Ribbon */
+.new-badge {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 90px;
+  height: 90px;
+  overflow: hidden;
+  z-index: 2;
+  pointer-events: none;
 }
 
-.landing-container {
-  min-height: 100vh;
-  background-color: var(--bg-primary);
-  color: var(--text-main);
-  display: flex;
-  flex-direction: column;
-  overflow-y: visible; /* Prevents container from clipping scrollable content */
-}
-
-.landing-main {
-  max-width: 1000px;
-  margin: 0 auto;
-  padding: 2.5rem 1.5rem;
-  width: 100%;
-  box-sizing: border-box;
+.new-badge::before {
+  content: "NEW";
+  position: absolute;
+  top: 18px;
+  right: -24px;
+  width: 110px;
+  padding: 5px 0;
+  background-color: var(--neon-pink);
+  color: #121212;
+  font-size: 0.65rem;
+  font-weight: 900;
+  letter-spacing: 1.5px;
+  text-align: center;
+  transform: rotate(45deg);
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.4);
+  border-bottom: 2px solid rgba(0, 0, 0, 0.2);
 }
 
 /* Mobile Responsive Adjustments */

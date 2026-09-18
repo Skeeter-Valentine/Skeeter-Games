@@ -640,8 +640,8 @@ export default function Game2048() {
 /*
 window.injectTile(0,0,131072)
 window.injectTile(0,1,32768)
-window.injectTile(0,2,1024)
-window.injectTile(0,3,128)
-window.setCustomScore(2407276)
-window.setCustomUndos(597)
+window.injectTile(0,2,16384)
+window.injectTile(0,3,2048)
+window.setCustomScore(2627276)
+window.setCustomUndos(675)
 */
