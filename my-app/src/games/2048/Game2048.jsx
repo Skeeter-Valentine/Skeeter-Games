@@ -63,12 +63,13 @@ export default function Game2048({ onWin }) {
     setTheme((prev) => (prev === 'skeeter' ? 'classic' : 'skeeter'));
   };
 
-  const createTile = useCallback((r, c, value = 2) => ({
+  const createTile = useCallback((r, c, value = 2, distance = 0) => ({
     id: nextId.current++,
     r,
     c,
     value,
     isMerged: false,
+    distance,
   }), []);
 
   const formatTime = (seconds) => {
@@ -119,14 +120,18 @@ export default function Game2048({ onWin }) {
       if (saved) {
         try {
           const parsed = JSON.parse(saved);
-          setTiles(parsed.tiles);
-          setScore(parsed.score);
+          setTiles(parsed.tiles || []);
+          setScore(parsed.score || 0);
           setHistory(parsed.history || []);
           setUndoCount(parsed.undoCount || 0);
           setGameWon(parsed.gameWon || false);
+          
+          if (parsed.tiles && parsed.tiles.length > 0) {
+            const maxId = Math.max(...parsed.tiles.map(t => t.id || 0));
+            nextId.current = maxId + 1;
+          }
           return;
         } catch (e) {
-          // Clear corrupted storage if JSON parse fails
           localStorage.removeItem(`2048-daily-${todayStr}`);
         }
       }
@@ -135,6 +140,7 @@ export default function Game2048({ onWin }) {
     setScore(0);
     setHistory([]);
     setUndoCount(0);
+    nextId.current = 1;
 
     if (gameMode === 'daily' || gameMode === 'unlimited') {
       const currentSeed =
@@ -143,8 +149,6 @@ export default function Game2048({ onWin }) {
           : getDailySeed(unlimitedSeed.toString() + '-unlimited-2048');
 
       const rng = mulberry32(currentSeed);
-
-      // Total tiles for puzzle layout: between 8 and 10
       const totalTilesCount = 8 + Math.floor(rng() * 3);
 
       const allPositions = [];
@@ -154,7 +158,6 @@ export default function Game2048({ onWin }) {
         }
       }
 
-      // Shuffle positions using the PRNG
       for (let i = allPositions.length - 1; i > 0; i--) {
         const j = Math.floor(rng() * (i + 1));
         [allPositions[i], allPositions[j]] = [allPositions[j], allPositions[i]];
@@ -165,16 +168,12 @@ export default function Game2048({ onWin }) {
       const lowTierValues = [2, 4, 8, 16];
 
       const assignedValues = [];
-
-      // 1. Guarantee at least 1 high-tier tile
       assignedValues.push(highTierValues[Math.floor(rng() * highTierValues.length)]);
 
-      // 2. Guarantee at least 3 mid-tier tiles
       for (let i = 0; i < 3; i++) {
         assignedValues.push(midTierValues[Math.floor(rng() * midTierValues.length)]);
       }
 
-      // 3. Fill remaining positions
       while (assignedValues.length < totalTilesCount) {
         const roll = rng();
         if (roll < 0.6) {
@@ -184,7 +183,6 @@ export default function Game2048({ onWin }) {
         }
       }
 
-      // Shuffle values
       for (let i = assignedValues.length - 1; i > 0; i--) {
         const j = Math.floor(rng() * (i + 1));
         [assignedValues[i], assignedValues[j]] = [assignedValues[j], assignedValues[i]];
@@ -196,18 +194,17 @@ export default function Game2048({ onWin }) {
       for (let i = 0; i < assignedValues.length; i++) {
         const pos = allPositions[i];
         const val = assignedValues[i];
-        initialTiles.push(createTile(pos.r, pos.c, val));
+        initialTiles.push(createTile(pos.r, pos.c, val, 0));
         initialScore += val;
       }
 
       setTiles(initialTiles);
       setScore(initialScore);
     } else {
-      // Classic Mode Generation (2 random tiles)
       const firstR = Math.floor(Math.random() * 4);
       const firstC = Math.floor(Math.random() * 4);
       const firstVal = Math.random() < 0.9 ? 2 : 4;
-      const first = createTile(firstR, firstC, firstVal);
+      const first = createTile(firstR, firstC, firstVal, 0);
 
       let secondR, secondC;
       do {
@@ -216,7 +213,7 @@ export default function Game2048({ onWin }) {
       } while (secondR === firstR && secondC === firstC);
 
       const secondVal = Math.random() < 0.9 ? 2 : 4;
-      const second = createTile(secondR, secondC, secondVal);
+      const second = createTile(secondR, secondC, secondVal, 0);
 
       setTiles([first, second]);
     }
@@ -226,7 +223,6 @@ export default function Game2048({ onWin }) {
     initGame();
   }, [initGame]);
 
-  // Persist daily challenge state
   useEffect(() => {
     if (gameMode === 'daily' && tiles.length > 0) {
       const dailyPayload = {
@@ -317,12 +313,15 @@ export default function Game2048({ onWin }) {
             moved = true;
           }
 
+          const distance = Math.abs(current.r - targetR) + Math.abs(current.c - targetC);
+
           updatedTiles.push({
-            id: current.id, // Re-use the existing ID to allow CSS sliding animations
+            id: current.id,
             r: targetR,
             c: targetC,
             value: newValue,
             isMerged: true,
+            distance: Math.max(1, distance),
           });
 
           k += 2;
@@ -331,11 +330,14 @@ export default function Game2048({ onWin }) {
             moved = true;
           }
 
+          const distance = Math.abs(current.r - targetR) + Math.abs(current.c - targetC);
+
           updatedTiles.push({
             ...current,
             r: targetR,
             c: targetC,
             isMerged: false,
+            distance: Math.max(1, distance),
           });
 
           k += 1;
@@ -347,7 +349,7 @@ export default function Game2048({ onWin }) {
 
     if (!moved) return;
 
-    startTimer(); // Start the timer on the first valid move
+    startTimer();
 
     const occupied = new Set(updatedTiles.map((t) => `${t.r}-${t.c}`));
     const emptySpots = [];
@@ -366,6 +368,7 @@ export default function Game2048({ onWin }) {
         c: spot.c,
         value: spawnedVal,
         isMerged: false,
+        distance: 1,
       });
     }
 
@@ -379,9 +382,8 @@ export default function Game2048({ onWin }) {
     setHistory((prev) => [...prev, { tiles, score }]);
     setScore((prev) => prev + addedScore);
     setTiles(updatedTiles);
-  }, [tiles, score, isTestMode, gameWon, startTimer, stopTimer, elapsedTime]);
+  }, [tiles, score, isTestMode, gameWon, startTimer, stopTimer, elapsedTime, onWin]);
 
-  // Touch Event Handlers for Mobile Swiping
   const handleTouchStart = (e) => {
     const touch = e.touches[0];
     touchStartRef.current = { x: touch.clientX, y: touch.clientY };
@@ -421,29 +423,10 @@ export default function Game2048({ onWin }) {
   }, [move]);
 
   useEffect(() => {
-    const gtagScript = document.createElement('script');
-    gtagScript.src = 'https://www.googletagmanager.com/gtag/js?id=G-9TBQNYQE6V';
-    gtagScript.async = true;
-    document.head.appendChild(gtagScript);
-
-    window.dataLayer = window.dataLayer || [];
-    function gtag() {
-      window.dataLayer.push(arguments);
-    }
-    gtag('js', new Date());
-    gtag('config', 'G-9TBQNYQE6V');
-
-    return () => {
-      document.head.removeChild(gtagScript);
-    };
-  }, []);
-
-  // Console injection helpers
-  useEffect(() => {
     window.injectTile = (r, c, value) => {
       setTiles((prevTiles) => [
         ...prevTiles.filter((t) => !(t.r === r && t.c === c)),
-        { id: nextId.current++, r, c, value, isMerged: false },
+        { id: nextId.current++, r, c, value, isMerged: false, distance: 1 },
       ]);
     };
 
@@ -622,6 +605,7 @@ export default function Game2048({ onWin }) {
                   style={{
                     '--r': tile.r,
                     '--c': tile.c,
+                    '--distance': tile.distance || 1,
                   }}
                 >
                   {(tile.value === 131072 || tile.value === 131000) && theme === 'skeeter'
