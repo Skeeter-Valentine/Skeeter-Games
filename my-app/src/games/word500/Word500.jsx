@@ -19,7 +19,7 @@ const DEFAULT_STATS = {
   lastPlayedDate: null
 };
 
-export default function Word500() {
+export default function Word500({ onWin }) {
   const [gameMode, setGameMode] = useState('daily');
   const [targetWord, setTargetWord] = useState('');
   const [guesses, setGuesses] = useState([]);
@@ -162,6 +162,10 @@ export default function Word500() {
         const isWin = currentGuess === targetWord;
         const isLoss = updatedGuesses.length >= MAX_ATTEMPTS;
 
+        if (isWin) {
+          onWin?.();
+        }
+
         if (isWin || isLoss) {
           setGameOver(true);
           setMessage(isWin ? 'Great job!' : `Game Over! The word was ${targetWord}`);
@@ -186,7 +190,7 @@ export default function Word500() {
         setMessage('');
       }
     },
-    [currentGuess, gameOver, guesses, targetWord, gameMode, todayStr]
+    [currentGuess, gameOver, guesses, targetWord, gameMode, todayStr, onWin]
   );
 
   // Desktop physical keyboard listener

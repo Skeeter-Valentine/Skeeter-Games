@@ -144,7 +144,7 @@ function generateFastPuzzle(n, rng = Math.random) {
   return { clues, rects };
 }
 
-export default function Shikaku() {
+export default function Shikaku({ onWin }) {
   const todayStr = new Date().toISOString().split('T')[0];
 
   const [gameMode, setGameMode] = useState('daily');
@@ -322,6 +322,7 @@ export default function Shikaku() {
       setStatus(`🎉 ${modeText} Solved in ${formatTime(seconds)}!`);
       setIsWin(true);
       setIsTimerActive(false);
+      onWin?.();
     } else {
       setStatus('');
       setIsWin(false);

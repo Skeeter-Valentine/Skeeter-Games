@@ -13,7 +13,7 @@ import FeedbackForm from '../../components/Feedback';
 const WORD_LENGTH = 5;
 const MAX_ATTEMPTS = 9;
 
-export default function Quordle() {
+export default function Quordle({ onWin }) {
   // Mode state: 'daily' (default) or 'practice'
   const [gameMode, setGameMode] = useState('daily');
 
@@ -157,6 +157,9 @@ export default function Quordle() {
 
     if (solvedCount === 4 || newGuesses.length >= MAX_ATTEMPTS) {
       setGameOver(true);
+      if (solvedCount === 4) {
+        onWin?.();
+      }
     }
   };
 
@@ -221,7 +224,7 @@ export default function Quordle() {
       gtagScript.src = 'https://www.googletagmanager.com/gtag/js?id=G-9TBQNYQE6V';
       gtagScript.async = true;
       document.head.appendChild(gtagScript);
-  
+ 
       // 2. Initialize dataLayer and gtag config
       window.dataLayer = window.dataLayer || [];
       function gtag() {
@@ -229,7 +232,7 @@ export default function Quordle() {
       }
       gtag('js', new Date());
       gtag('config', 'G-9TBQNYQE6V');
-  
+ 
       // Cleanup script on unmount
       return () => {
         document.head.removeChild(gtagScript);

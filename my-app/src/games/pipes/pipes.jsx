@@ -61,7 +61,7 @@ function countBits(n) {
   return count;
 }
 
-export default function Pipes() {
+export default function Pipes({ onWin }) {
   const todayStr = new Date().toISOString().split('T')[0];
 
   const [gameMode, setGameMode] = useState('daily');
@@ -273,11 +273,12 @@ export default function Pipes() {
     }
 
     const won = allPowered && noMismatches;
-    setIsWon(won);
-    if (won) {
+    if (won && !isWon) {
+      setIsWon(true);
       setIsTimerActive(false);
+      onWin?.();
     }
-  }, []);
+  }, [isWon, onWin]);
 
   // Sync daily state changes back to localStorage
   const saveDailyState = useCallback((grid, locked, wonState, currentTime) => {

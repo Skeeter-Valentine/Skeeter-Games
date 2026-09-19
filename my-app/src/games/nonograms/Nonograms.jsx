@@ -67,7 +67,7 @@ const generateClues = (grid) => {
   return { rowClues, colClues };
 };
 
-export default function Nonograms() {
+export default function Nonograms({ onWin }) {
   const [gameMode, setGameMode] = useState('daily'); // Start on daily mode by default
   const [selectedSize, setSelectedSize] = useState('5x5');
 
@@ -192,7 +192,10 @@ export default function Nonograms() {
       }
       if (!won) break;
     }
-    if (won) setIsWon(true);
+    if (won && !isWon) {
+      setIsWon(true);
+      onWin?.();
+    }
   };
 
   const resetBoard = () => {

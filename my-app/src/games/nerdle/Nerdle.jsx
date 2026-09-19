@@ -205,7 +205,7 @@ const generateEquation = (isDaily = false, customDateStr = null) => {
   return '5*5+25=50';
 };
 
-export default function Nerdle() {
+export default function Nerdle({ onWin }) {
   const [isDailyMode, setIsDailyMode] = useState(true);
   const [targetEquation, setTargetEquation] = useState('');
   const [guesses, setGuesses] = useState([]);
@@ -231,22 +231,6 @@ export default function Nerdle() {
     if (isDailyMode === daily) return;
     setIsDailyMode(daily);
     startNewGame(daily);
-  };
-
-  // Helper function to test 10 consecutive daily game generations in console
-  const handleTest10Days = () => {
-    console.log("=== Testing 10 Consecutive Daily Equations ===");
-    const today = new Date();
-    for (let i = 0; i < 10; i++) {
-      const testDate = new Date(today);
-      testDate.setDate(today.getDate() + i);
-      const dateStr = testDate.toISOString().split('T')[0];
-      const eq = generateEquation(true, dateStr);
-      console.log(`${dateStr}: ${eq}`);
-    }
-    console.log("==============================================");
-    setMessage('Logged 10 daily equations to console!');
-    setTimeout(() => setMessage(''), 3000);
   };
 
   const evaluateGuess = (guess, target) => {
@@ -349,6 +333,7 @@ export default function Nerdle() {
     if (guessString === targetEquation) {
       setGameStatus('WON');
       setMessage('🎉 Great job! You solved Skeedle+!');
+      onWin?.();
     } else if (newGuesses.length >= MAX_ATTEMPTS) {
       setGameStatus('LOST');
       setMessage(`Game Over! The target was: ${targetEquation}`);
@@ -421,9 +406,6 @@ export default function Nerdle() {
                     Play Again
                   </button>
                 )}
-                {/* <button style={{ ...getModeBtnStyle(false), borderColor: 'var(--neon-yellow)', color: 'var(--neon-yellow)' }} onClick={handleTest10Days}>
-                  Test 10 Days
-                </button> */}
               </>
             )}
           </div>

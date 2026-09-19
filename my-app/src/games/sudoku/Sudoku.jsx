@@ -22,7 +22,7 @@ function mulberry32(seed) {
   };
 }
 
-export default function Skeedoku() {
+export default function Skeedoku({ onWin }) {
   const [configKey, setConfigKey] = useState('daily');
   const cfg = CONFIGS[configKey];
   const size = cfg.size;
@@ -247,6 +247,7 @@ export default function Skeedoku() {
 
   const handleGameComplete = () => {
     setCompleted(true);
+    onWin?.();
     if (configKey === 'daily') {
       const newPlayed = stats.played + 1;
       const newStreak = stats.streak + 1;

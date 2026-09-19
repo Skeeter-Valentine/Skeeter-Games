@@ -28,7 +28,7 @@ function getDailySeed(dateStr) {
   return Math.abs(hash);
 }
 
-export default function Game2048() {
+export default function Game2048({ onWin }) {
   const todayStr = new Date().toISOString().split('T')[0];
   const nextId = useRef(1);
 
@@ -373,6 +373,7 @@ export default function Game2048() {
       setGameWon(true);
       stopTimer();
       setWinTimeFormatted(formatTime(elapsedTime));
+      onWin();
     }
 
     setHistory((prev) => [...prev, { tiles, score }]);
@@ -639,9 +640,9 @@ export default function Game2048() {
 
 /*
 window.injectTile(0,0,131072)
-window.injectTile(0,1,32768)
-window.injectTile(0,2,16384)
-window.injectTile(0,3,2048)
-window.setCustomScore(2627276)
-window.setCustomUndos(675)
+window.injectTile(0,1,65536)
+window.injectTile(0,2,256)
+window.injectTile(0,3,16)
+window.setCustomScore(2917276)
+window.setCustomUndos(799)
 */

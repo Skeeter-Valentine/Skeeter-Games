@@ -40,7 +40,7 @@ function getDailyBoardConfig(dateStr) {
   return configs[seed % configs.length];
 }
 
-export default function Minesweeper() {
+export default function Minesweeper({ onWin }) {
   const todayStr = new Date().toISOString().split('T')[0];
 
   const [gameMode, setGameMode] = useState('daily');
@@ -263,6 +263,7 @@ export default function Minesweeper() {
       setGameStatus('won');
       setBoard(currentBoard);
       stopTimer();
+      onWin?.();
     } else {
       setBoard(currentBoard);
     }

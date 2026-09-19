@@ -173,7 +173,7 @@ const DEFAULT_STATS = {
     lastPlayedDate: null
 };
 
-export default function Hashi() {
+export default function Hashi({ onWin }) {
     const canvasRef = useRef(null);
     const [message, setMessage] = useState('');
     const [gridSize, setGridSize] = useState(6);
@@ -478,6 +478,8 @@ export default function Hashi() {
                 if (isDailyMode) {
                     localStorage.setItem(`hashi_solved_${todayStr}`, 'true');
                 }
+                // Notify the gauntlet that this game has been successfully won!
+                onWin?.();
             } else {
                 setMessage('');
             }
