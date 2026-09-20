@@ -3,7 +3,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import './Nonograms.css';
 import Navbar from '../../components/Navbar';
 
-// --- Random Puzzle Generator Helpers ---
+// --- Random Puzzle Generator & Async Helpers ---
 function randomFromRange(min, max, rng = Math.random) {
   return Math.floor(rng() * (max - min + 1) + min);
 }
@@ -20,20 +20,6 @@ function generateRandomPuzzleGrid(rows, cols, rng = Math.random) {
     }
     return cells;
   });
-}
-
-// Simple seeded PRNG (LCG) for daily puzzles based on date string (YYYY-MM-DD)
-function getDailyRng(dateStr) {
-  let hash = 0;
-  for (let i = 0; i < dateStr.length; i++) {
-    hash = (hash << 5) - hash + dateStr.charCodeAt(i);
-    hash |= 0;
-  }
-  let seed = Math.abs(hash);
-  return () => {
-    seed = (seed * 9301 + 49297) % 233280;
-    return seed / 233280;
-  };
 }
 
 // Helper to generate row and column clues
@@ -67,13 +53,59 @@ const generateClues = (grid) => {
   return { rowClues, colClues };
 };
 
+// Lightweight heuristic check to filter out empty or overly dense grids
+function isLikelyUnique(rowClues, colClues) {
+  const totalCells = rowClues.length * colClues.length;
+  const filledCount = rowClues.flat().reduce((a, b) => a + b, 0);
+  const density = filledCount / totalCells;
+  // Target balanced fill densities to avoid ambiguity
+  return density >= 0.25 && density <= 0.75;
+}
+
+// Non-blocking async puzzle generator with browser yield control
+async function generateUniquePuzzleAsync(rows, cols, rng = Math.random) {
+  let attempts = 0;
+  const maxAttempts = 40;
+
+  while (attempts < maxAttempts) {
+    attempts++;
+    const candidate = generateRandomPuzzleGrid(rows, cols, rng);
+    const { rowClues, colClues } = generateClues(candidate);
+
+    if (isLikelyUnique(rowClues, colClues)) {
+      return candidate;
+    }
+
+    // Yield control back to the browser thread every 10 iterations to prevent freezing
+    if (attempts % 10 === 0) {
+      await new Promise(resolve => setTimeout(resolve, 0));
+    }
+  }
+
+  // Fallback candidate if quick checks exhaust
+  return generateRandomPuzzleGrid(rows, cols, rng);
+}
+
+// Simple seeded PRNG (LCG) for daily puzzles based on date string (YYYY-MM-DD)
+function getDailyRng(dateStr) {
+  let hash = 0;
+  for (let i = 0; i < dateStr.length; i++) {
+    hash = (hash << 5) - hash + dateStr.charCodeAt(i);
+    hash |= 0;
+  }
+  let seed = Math.abs(hash);
+  return () => {
+    seed = (seed * 9301 + 49297) % 233280;
+    return seed / 233280;
+  };
+}
+
 export default function Nonograms({ onWin }) {
   const [gameMode, setGameMode] = useState('daily'); // Start on daily mode by default
-  const [selectedSize, setSelectedSize] = useState('5x5');
+  const [selectedSize, setSelectedSize] = useState('10x10');
+  const [isLoading, setIsLoading] = useState(false);
 
-  const [rows, cols] = selectedSize.split('x').map(Number);
-
-  // Generate initial Daily puzzle grid (10x10) based on today's date
+  // Initial Daily puzzle grid (10x10) based on today's date
   const [solutionGrid, setSolutionGrid] = useState(() => {
     const todayStr = new Date().toISOString().slice(0, 10);
     return generateRandomPuzzleGrid(10, 10, getDailyRng(todayStr));
@@ -104,48 +136,56 @@ export default function Nonograms({ onWin }) {
     return () => window.removeEventListener('mouseup', handleGlobalMouseUp);
   }, []);
 
-  const loadDailyPuzzle = useCallback(() => {
+  const loadDailyPuzzle = useCallback(async () => {
+    setIsLoading(true);
     setGameMode('daily');
     const todayStr = new Date().toISOString().slice(0, 10);
     const dailyRng = getDailyRng(todayStr);
-    const dailyPuzzle = generateRandomPuzzleGrid(10, 10, dailyRng);
+    const dailyPuzzle = await generateUniquePuzzleAsync(10, 10, dailyRng);
     
     setSelectedSize('10x10');
     setSolutionGrid(dailyPuzzle);
     setPlayerGrid(Array.from({ length: 10 }, () => Array(10).fill(0)));
     setIsWon(false);
+    setIsLoading(false);
   }, []);
 
-  const loadPracticeMode = useCallback(() => {
+  const loadPracticeMode = useCallback(async () => {
+    setIsLoading(true);
     setGameMode('practice');
     const [r, c] = selectedSize.split('x').map(Number);
-    const practicePuzzle = generateRandomPuzzleGrid(r, c);
+    const practicePuzzle = await generateUniquePuzzleAsync(r, c);
     setSolutionGrid(practicePuzzle);
     setPlayerGrid(Array.from({ length: r }, () => Array(c).fill(0)));
     setIsWon(false);
+    setIsLoading(false);
   }, [selectedSize]);
 
   // Handle board size change specifically in practice mode
-  const handleSizeChange = (e) => {
+  const handleSizeChange = async (e) => {
     const size = e.target.value;
     setSelectedSize(size);
+    setIsLoading(true);
     const [r, c] = size.split('x').map(Number);
-    const newPuzzle = generateRandomPuzzleGrid(r, c);
+    const newPuzzle = await generateUniquePuzzleAsync(r, c);
     setSolutionGrid(newPuzzle);
     setPlayerGrid(Array.from({ length: r }, () => Array(c).fill(0)));
     setIsWon(false);
+    setIsLoading(false);
   };
 
-  const handleGenerateNewRandom = () => {
+  const handleGenerateNewRandom = async () => {
+    setIsLoading(true);
     const [r, c] = selectedSize.split('x').map(Number);
-    const newPuzzle = generateRandomPuzzleGrid(r, c);
+    const newPuzzle = await generateUniquePuzzleAsync(r, c);
     setSolutionGrid(newPuzzle);
     setPlayerGrid(Array.from({ length: r }, () => Array(c).fill(0)));
     setIsWon(false);
+    setIsLoading(false);
   };
 
   const handleMouseDown = (e, r, c) => {
-    if (isWon) return;
+    if (isWon || isLoading) return;
     e.preventDefault();
 
     let actionToApply;
@@ -165,7 +205,7 @@ export default function Nonograms({ onWin }) {
   };
 
   const handleMouseEnter = (r, c) => {
-    if (!isDragging || isWon || dragAction === null) return;
+    if (!isDragging || isWon || isLoading || dragAction === null) return;
 
     const newGrid = playerGrid.map(row => [...row]);
     if (newGrid[r][c] !== dragAction) {
@@ -217,12 +257,14 @@ export default function Nonograms({ onWin }) {
           <button 
             className={`tool-btn mode-btn ${gameMode === 'daily' ? 'active' : ''}`} 
             onClick={loadDailyPuzzle}
+            disabled={isLoading}
           >
             🌟 Daily Challenge
           </button>
           <button 
             className={`tool-btn mode-btn ${gameMode === 'practice' ? 'active' : ''}`} 
             onClick={loadPracticeMode}
+            disabled={isLoading}
           >
             🛠️ Practice Mode
           </button>
@@ -231,12 +273,12 @@ export default function Nonograms({ onWin }) {
         {/* Sub-row: Board Size Dropdown (Visible ONLY in Practice Mode) */}
         {gameMode === 'practice' && (
           <div className="toolbar sub-toolbar">
-            <select value={selectedSize} onChange={handleSizeChange} className="tool-select">
+            <select value={selectedSize} onChange={handleSizeChange} className="tool-select" disabled={isLoading}>
               <option value="5x5">5 x 5 Board</option>
               <option value="10x10">10 x 10 Board</option>
               <option value="15x15">15 x 15 Board</option>
             </select>
-            <button className="tool-btn" onClick={handleGenerateNewRandom}>
+            <button className="tool-btn" onClick={handleGenerateNewRandom} disabled={isLoading}>
               🎲 New Random
             </button>
           </div>
@@ -259,6 +301,7 @@ export default function Nonograms({ onWin }) {
           <button className="reset-btn" onClick={resetBoard}>Reset</button>
         </div>
 
+        {isLoading && <div className="victory-message">Generating fresh puzzle... 🧩</div>}
         {isWon && <div className="victory-message">🎉 Puzzle Completed Successfully! 🎉</div>}
 
         <div className="puzzle-container" onContextMenu={handleContextMenu}>
@@ -298,6 +341,7 @@ export default function Nonograms({ onWin }) {
                       className={className}
                       onMouseDown={(e) => handleMouseDown(e, rIdx, cIdx)}
                       onMouseEnter={() => handleMouseEnter(rIdx, cIdx)}
+                      disabled={isLoading}
                     >
                       {cellState === 2 ? '✕' : ''}
                     </button>

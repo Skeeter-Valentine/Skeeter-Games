@@ -3,16 +3,16 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import './LandingPage.css';
 import logoImg from '../assets/logoFog.png';
-import mineskeeterImg from '../assets/mineskeeter.png';
-import ske4dleImg from '../assets/ske4dle.png';
-import skeedle500Img from '../assets/skeedle500.png';
-import game2048Img from '../assets/2048.png';
-import shikakuImg from '../assets/shikaku.png';
-import pipesImg from '../assets/pipes.png';
-import hashiImg from '../assets/hashkeet.png';
-import sudokuImg from '../assets/skeedoku.png';
-import nerdleImg from '../assets/nerdle.png';
-import nonogramsImg from '../assets/skeedograms.png';
+import mineskeeterImg from '../assets/mineskeeter2.png';
+import ske4dleImg from '../assets/ske4dle2.png';
+import skeedle500Img from '../assets/skeedle5002.png';
+import game2048Img from '../assets/20482.png';
+import shikakuImg from '../assets/shikaku2.png';
+import pipesImg from '../assets/pipes2.png';
+import hashiImg from '../assets/hashkeet2.png';
+import sudokuImg from '../assets/skeedoku2.png';
+import nerdleImg from '../assets/skeedle+2.png';
+import nonogramsImg from '../assets/skeedograms2.png';
 
 // Import Skeeter Gauntlet and your game components
 import SkeeterGauntlet from '../components/SkeeterGauntlet';
