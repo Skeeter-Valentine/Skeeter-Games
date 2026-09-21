@@ -21,7 +21,7 @@ const evaluate = (expr) => {
   }
 };
 
-const hasValidParentheses = (expr) => {
+const hasValidParentheses = (expr, strictCheck = true) => {
   let i = 0;
   let foundNeededParentheses = false;
 
@@ -44,7 +44,8 @@ const hasValidParentheses = (expr) => {
     }
   }
 
-  if (foundNeededParentheses) {
+  // Only enforce the "no redundant parentheses" rule if strictCheck is true (for target generation)
+  if (strictCheck && foundNeededParentheses) {
     try {
       const withoutParens = expr.replace(/[()]/g, '');
       const valWith = evaluate(expr.split('=')[0]);
@@ -182,7 +183,8 @@ const generateEquation = (isDaily = false, customDateStr = null) => {
     if (leftVal !== null && Number.isInteger(leftVal) && leftVal >= 0 && leftVal <= 999) {
       const candidate = `${leftExpr}=${leftVal}`;
       
-      if (!candidate.startsWith('(') && candidate.length === EQUATION_LENGTH && hasValidParentheses(candidate)) {
+      // Strict check during generation: No starting with '(' and no redundant parentheses
+      if (!candidate.startsWith('(') && candidate.length === EQUATION_LENGTH && hasValidParentheses(candidate, true)) {
         const signature = getStructureSignature(candidate);
 
         if (!recentSignatures.includes(signature)) {
@@ -233,7 +235,6 @@ export default function Nerdle({ onWin }) {
     startNewGame(daily);
   };
 
-  // Debug function to log 10 generated equations to the console
   const handleLogEquations = () => {
     console.log("--- 10 Generated Nerdle Equations ---");
     for (let i = 0; i < 10; i++) {
@@ -273,7 +274,8 @@ export default function Nerdle({ onWin }) {
 
   const isValidEquation = (str) => {
     if (!str.includes('=')) return false;
-    if (!hasValidParentheses(str)) return false;
+    // Lenient check for user guesses: allow parentheses that don't alter the equation
+    if (!hasValidParentheses(str, false)) return false;
 
     const parts = str.split('=');
     if (parts.length !== 2 || !parts[0] || !parts[1]) return false;
@@ -327,7 +329,7 @@ export default function Nerdle({ onWin }) {
     }
 
     if (!isValidEquation(guessString)) {
-      setMessage('Invalid equation or redundant parentheses!');
+      setMessage('Invalid equation or mismatched syntax!');
       setTimeout(() => setMessage(''), 3000);
       return;
     }
