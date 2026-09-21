@@ -30,7 +30,7 @@ export default function App() {
         <Route path="/hashi" element={<Hashi />} />
         <Route path="/nerdle" element={<Nerdle />} />
         <Route path="/nonograms" element={<Nonograms />} />
-        <Route path="/nurikabe" element={<Nurikabe />} />
+        {/* <Route path="/nurikabe" element={<Nurikabe />} /> */}
         <Route path="/skeedle-marathon" element={<SkeedleMarathon />} />
         <Route path="*" element={<div>404 - Game Not Found</div>} />
       </Routes>
