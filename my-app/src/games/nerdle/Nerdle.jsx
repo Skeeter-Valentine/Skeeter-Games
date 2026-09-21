@@ -146,17 +146,17 @@ const generateEquation = (isDaily = false, customDateStr = null) => {
 
   const parenTemplates = [
     (r) => {
-      const n1 = Math.floor(r() * 8) + 1;
-      const n2 = Math.floor(r() * 8) + 1;
-      const pow = r() > 0.5 ? '²' : '³';
-      const leftExpr = `(${n1}+${n2})${pow}`;
+      const n1 = Math.floor(r() * 5) + 2;
+      const n2 = Math.floor(r() * 4) + 1;
+      const n3 = Math.floor(r() * 4) + 1;
+      const leftExpr = `${n1}*(${n2}+${n3})`;
       return { leftExpr, leftVal: evaluate(leftExpr) };
     },
     (r) => {
-      const n1 = Math.floor(r() * 4) + 1;
+      const n1 = Math.floor(r() * 15) + 5;
       const n2 = Math.floor(r() * 4) + 1;
-      const n3 = Math.floor(r() * 5) + 2;
-      const leftExpr = `(${n1}+${n2})*${n3}`;
+      const n3 = Math.floor(r() * 4) + 1;
+      const leftExpr = `${n1}-(${n2}+${n3})`;
       return { leftExpr, leftVal: evaluate(leftExpr) };
     }
   ];
@@ -182,7 +182,7 @@ const generateEquation = (isDaily = false, customDateStr = null) => {
     if (leftVal !== null && Number.isInteger(leftVal) && leftVal >= 0 && leftVal <= 999) {
       const candidate = `${leftExpr}=${leftVal}`;
       
-      if (candidate.length === EQUATION_LENGTH && hasValidParentheses(candidate)) {
+      if (!candidate.startsWith('(') && candidate.length === EQUATION_LENGTH && hasValidParentheses(candidate)) {
         const signature = getStructureSignature(candidate);
 
         if (!recentSignatures.includes(signature)) {
@@ -231,6 +231,14 @@ export default function Nerdle({ onWin }) {
     if (isDailyMode === daily) return;
     setIsDailyMode(daily);
     startNewGame(daily);
+  };
+
+  // Debug function to log 10 generated equations to the console
+  const handleLogEquations = () => {
+    console.log("--- 10 Generated Nerdle Equations ---");
+    for (let i = 0; i < 10; i++) {
+      console.log(`[${i + 1}]`, generateEquation(false));
+    }
   };
 
   const evaluateGuess = (guess, target) => {
@@ -401,6 +409,9 @@ export default function Nerdle({ onWin }) {
             </button>
             {!isDailyMode && (
               <>
+                {/* <button style={getModeBtnStyle(false)} onClick={handleLogEquations}>
+                  Log 10 Eqs
+                </button> */}
                 {gameStatus !== 'IN_PROGRESS' && (
                   <button className="new-game-btn" onClick={() => startNewGame(false)}>
                     Play Again

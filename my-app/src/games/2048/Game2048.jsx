@@ -376,7 +376,7 @@ export default function Game2048({ onWin }) {
       setGameWon(true);
       stopTimer();
       setWinTimeFormatted(formatTime(elapsedTime));
-      onWin();
+      onWin?.(); // Safely call onWin if provided
     }
 
     setHistory((prev) => [...prev, { tiles, score }]);
@@ -535,7 +535,7 @@ export default function Game2048({ onWin }) {
                   checked={theme === 'classic'}
                   onChange={handleThemeToggle}
                 />
-                <span className="slider round"></span>
+                <span className="slider"></span>
               </label>
               <span className="theme-label">Classic</span>
             </div>
@@ -543,12 +543,12 @@ export default function Game2048({ onWin }) {
         </div>
 
         {(gameMode === 'daily' || gameMode === 'unlimited') && !gameWon && (
-          <div 
-            className="game2048-banner" 
-            style={{ 
-              textAlign: 'center', 
-              marginBottom: '12px', 
-              fontSize: '1.15rem', 
+          <div
+            className="game2048-banner"
+            style={{
+              textAlign: 'center',
+              marginBottom: '12px',
+              fontSize: '1.15rem',
               fontWeight: 'bold',
               backgroundColor: 'rgba(238, 228, 218, 0.5)',
               padding: '12px 16px',
@@ -561,12 +561,12 @@ export default function Game2048({ onWin }) {
         )}
 
         {gameWon && (
-          <div 
-            className="game2048-banner win-banner" 
-            style={{ 
-              textAlign: 'center', 
-              marginBottom: '12px', 
-              fontSize: '1.15rem', 
+          <div
+            className="game2048-banner win-banner"
+            style={{
+              textAlign: 'center',
+              marginBottom: '12px',
+              fontSize: '1.15rem',
               fontWeight: 'bold',
               backgroundColor: 'rgba(237, 194, 46, 0.25)',
               padding: '12px 16px',
@@ -625,8 +625,8 @@ export default function Game2048({ onWin }) {
 /*
 window.injectTile(0,0,131072)
 window.injectTile(0,1,65536)
-window.injectTile(0,2,256)
-window.injectTile(0,3,16)
-window.setCustomScore(2917276)
-window.setCustomUndos(799)
+window.injectTile(0,2,16384)
+window.injectTile(0,3,8192)
+window.setCustomScore(3217276)
+window.setCustomUndos(967)
 */

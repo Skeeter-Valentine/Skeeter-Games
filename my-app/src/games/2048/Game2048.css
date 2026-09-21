@@ -58,13 +58,6 @@
   gap: 8px;
 }
 
-.theme-switch-container {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 0;
-}
-
 .game2048-reset-btn {
   background: linear-gradient(135deg, #ff2a85 0%, #ff00aa 100%);
   color: #fff;
@@ -309,63 +302,6 @@
 .theme-classic .tile-1024 { background: #edc53f; color: #f9f6f2; box-shadow: 0 0 30px 10px rgba(243, 215, 116, 0.47619); }
 .theme-classic .tile-2048 { background: #edc22e; color: #f9f6f2; box-shadow: 0 0 30px 10px rgba(243, 215, 116, 0.55556); }
 
-.theme-switch-container {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 12px;
-}
-
-.theme-label {
-  font-size: 0.9rem;
-  font-weight: bold;
-}
-
-.switch {
-  position: relative;
-  display: inline-block;
-  width: 50px;
-  height: 26px;
-}
-
-.switch input {
-  opacity: 0;
-  width: 0;
-  height: 0;
-}
-
-.slider {
-  position: absolute;
-  cursor: pointer;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: #007bff;
-  transition: 0.3s;
-  border-radius: 26px;
-}
-
-.slider:before {
-  position: absolute;
-  content: "";
-  height: 20px;
-  width: 20px;
-  left: 3px;
-  bottom: 3px;
-  background-color: white;
-  transition: 0.3s;
-  border-radius: 50%;
-}
-
-input:checked + .slider {
-  background-color: #bbada0;
-}
-
-input:checked + .slider:before {
-  transform: translateX(24px);
-}
-
 .diff-toggle {
   display: flex;
   justify-content: center;
@@ -415,6 +351,7 @@ input:checked + .slider:before {
   box-shadow: none;
 }
 
+/* --- Responsive Media Query --- */
 @media (max-width: 600px) {
   .game2048-main {
     padding: 1rem 0.5rem;
@@ -437,23 +374,65 @@ input:checked + .slider:before {
     padding: 0.5rem 0.75rem;
     font-size: 0.85rem;
   }
-  .theme-switch-container {
-    gap: 6px;
-  }
-  .theme-label {
-    font-size: 0.8rem;
-  }
-  .switch {
-    width: 40px;
-    height: 22px;
-  }
-  .slider:before {
-    height: 16px;
-    width: 16px;
-    left: 3px;
-    bottom: 3px;
-  }
-  input:checked + .slider:before {
-    transform: translateX(18px);
-  }
+}
+
+ /* --- Completely Isolated Theme Switch Fix --- */
+.theme-switch-container {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 0;
+}
+
+.theme-switch-container .theme-label {
+  font-size: 0.9rem;
+  font-weight: bold;
+}
+
+.theme-switch-container .switch {
+  position: relative;
+  display: inline-block;
+  width: 50px;
+  height: 26px;
+  overflow: hidden;
+  border-radius: 26px;
+}
+
+.theme-switch-container .switch input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+.theme-switch-container .slider {
+  position: absolute;
+  cursor: pointer;
+  inset: 0;
+  background-color: #007bff;
+  transition: background-color 0.25s ease-in-out;
+  border-radius: 26px;
+}
+
+/* Ensure ONLY ONE pseudo-element creates the knob */
+.theme-switch-container .slider::before {
+  position: absolute;
+  content: "";
+  height: 20px;
+  width: 20px;
+  left: 3px;
+  bottom: 3px;
+  background-color: #ffffff;
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: 50%;
+  will-change: transform;
+}
+
+.theme-switch-container input:checked + .slider {
+  background-color: #bbada0;
+}
+
+.theme-switch-container input:checked + .slider::before {
+  transform: translateX(24px);
 }
