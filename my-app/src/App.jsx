@@ -12,7 +12,7 @@ import Pipes from './games/pipes/pipes';
 import Hashi from './games/hashi/Hashi';
 import Nerdle from './games/nerdle/Nerdle';
 import Nonograms from './games/nonograms/Nonograms';
-import Nurikabe from './games/nurikabe/Nurikabe';
+import Nurikabe from './games/nurikabe/nurikabe';
 import SkeedleMarathon from './games/skeedle-marathon/SkeedleMarathon';
 
 export default function App() {
