@@ -13,6 +13,7 @@ import hashiImg from '../assets/hashkeet2.png';
 import sudokuImg from '../assets/skeedoku2.png';
 import nerdleImg from '../assets/skeedle+2.png';
 import nonogramsImg from '../assets/skeedograms2.png';
+import skeedlemarathonImg from '../assets/skeedlemarathon.png';
 
 // Import Skeeter Gauntlet and your game components
 import SkeeterGauntlet from '../components/SkeeterGauntlet';
@@ -27,6 +28,7 @@ import Nerdle from '../games/nerdle/Nerdle';
 import Nonograms from '../games/nonograms/Nonograms';
 
 const GAMES = [
+  { id: 'skeedlemarathon', title: 'Skeedlemarathon', path: '/skeedle-marathon', image: skeedlemarathonImg, isNew: true, excludeFromGauntlet: true },
   { id: 'nonograms', title: 'Skeedograms', path: '/nonograms', image: nonogramsImg, isNew: true, component: Nonograms },
   { id: 'nerdle', title: 'Nerdle', path: '/nerdle', image: nerdleImg, isNew: true, component: Nerdle },
   { id: 'pipes', title: 'Skeeter Piper (net)', path: '/pipes', image: pipesImg, component: Pipes },

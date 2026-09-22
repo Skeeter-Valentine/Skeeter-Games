@@ -625,8 +625,8 @@ export default function Game2048({ onWin }) {
 /*
 window.injectTile(0,0,131072)
 window.injectTile(0,1,65536)
-window.injectTile(0,2,16384)
-window.injectTile(0,3,8192)
-window.setCustomScore(3217276)
-window.setCustomUndos(967)
+window.injectTile(0,2,32768)
+window.injectTile(0,3,16384)
+window.setCustomScore(3566076)
+window.setCustomUndos(1244)
 */

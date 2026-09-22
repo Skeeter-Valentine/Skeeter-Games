@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import "./SkeedleMarathon.css";
 import words from "../../constants/words.json";
+import Navbar from '../../components/Navbar';
 
 const BOARD_COUNT = 26;
 const MAX_GUESSES = 31;
@@ -39,6 +40,36 @@ function shuffle(array) {
   return copy;
 }
 
+function getDaySeed() {
+  const dateStr = new Date().toISOString().slice(0, 10); // "YYYY-MM-DD"
+  let hash = 0;
+  for (let i = 0; i < dateStr.length; i++) {
+    hash = (hash << 5) - hash + dateStr.charCodeAt(i);
+    hash |= 0;
+  }
+  return Math.abs(hash);
+}
+
+function seededShuffle(array, seed) {
+  const copy = [...array];
+  let currentSeed = seed;
+
+  for (let i = copy.length - 1; i > 0; i -= 1) {
+    currentSeed = (currentSeed * 9301 + 49297) % 233280;
+    const rnd = currentSeed / 233280;
+    const j = Math.floor(rnd * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+
+  return copy;
+}
+
+function formatTime(totalSeconds) {
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return `${minutes}:${seconds < 10 ? "0" : ""}${seconds}`;
+}
+
 // Duplicate-letter-safe Wordle scoring.
 function scoreGuess(guess, answer) {
   const result = Array(WORD_LENGTH).fill("absent");
@@ -66,25 +97,23 @@ function scoreGuess(guess, answer) {
   return result;
 }
 
-function buildKeyboardStatuses(guesses, answers, solvedBoards) {
+function buildKeyboardStatusesForBoard(guesses, answer) {
   const statuses = {};
 
-  guesses.forEach((guess, guessIndex) => {
-    answers.forEach((answer, boardIndex) => {
-      // Ignore feedback after this particular board had already been solved.
-      const priorGuesses = guesses.slice(0, guessIndex);
-      if (priorGuesses.includes(answer)) return;
+  guesses.forEach((guess) => {
+    if (guesses.indexOf(answer) !== -1 && guesses.indexOf(guess) > guesses.indexOf(answer)) {
+      return;
+    }
 
-      const scores = scoreGuess(guess, answer);
+    const scores = scoreGuess(guess, answer);
 
-      scores.forEach((status, index) => {
-        const letter = guess[index];
-        const previous = statuses[letter];
+    scores.forEach((status, index) => {
+      const letter = guess[index];
+      const previous = statuses[letter];
 
-        if (!previous || STATUS_RANK[status] > STATUS_RANK[previous]) {
-          statuses[letter] = status;
-        }
-      });
+      if (!previous || STATUS_RANK[status] > STATUS_RANK[previous]) {
+        statuses[letter] = status;
+      }
     });
   });
 
@@ -93,10 +122,15 @@ function buildKeyboardStatuses(guesses, answers, solvedBoards) {
 
 export default function SkeedleMarathon() {
   const gameRef = useRef(null);
+  const boardRefs = useRef({});
   const [gameId, setGameId] = useState(0);
+  const [gameMode, setGameMode] = useState("daily"); // Starts on daily mode by default
   const [guesses, setGuesses] = useState([]);
   const [currentGuess, setCurrentGuess] = useState("");
   const [message, setMessage] = useState("");
+  const [activeBoardIndex, setActiveBoardIndex] = useState(0);
+  const [hiddenBoards, setHiddenBoards] = useState(new Set());
+  const [secondsElapsed, setSecondsElapsed] = useState(0);
 
   const answers = useMemo(() => {
     if (ANSWERS.length < BOARD_COUNT) {
@@ -105,27 +139,91 @@ export default function SkeedleMarathon() {
       );
     }
 
-    return shuffle(ANSWERS).slice(0, BOARD_COUNT);
-  }, [gameId]);
+    if (gameMode === "daily") {
+      const seed = getDaySeed();
+      return seededShuffle(ANSWERS, seed).slice(0, BOARD_COUNT);
+    } else {
+      return shuffle(ANSWERS).slice(0, BOARD_COUNT);
+    }
+  }, [gameId, gameMode]);
 
   const solvedBoards = useMemo(
     () => answers.map((answer) => guesses.includes(answer)),
     [answers, guesses]
   );
 
+  // Automatically track newly solved boards and hide them
+  useEffect(() => {
+    solvedBoards.forEach((solved, index) => {
+      if (solved && !hiddenBoards.has(index)) {
+        setHiddenBoards((prev) => new Set(prev).add(index));
+      }
+    });
+  }, [solvedBoards]);
+
   const solvedCount = solvedBoards.filter(Boolean).length;
   const gameWon = answers.length === BOARD_COUNT && solvedCount === BOARD_COUNT;
   const gameLost = guesses.length >= MAX_GUESSES && !gameWon;
   const gameOver = gameWon || gameLost;
 
+  // Run game timer (starts only after the first guess is entered)
+  useEffect(() => {
+    if (gameOver || guesses.length === 0) return;
+
+    const timer = setInterval(() => {
+      setSecondsElapsed((prev) => prev + 1);
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [gameOver, guesses.length]);
+
+  // Ensure activeBoardIndex points to an unsolved board if possible
+  useEffect(() => {
+    if (!solvedBoards[activeBoardIndex]) return;
+    const firstUnsolved = solvedBoards.findIndex((solved) => !solved);
+    if (firstUnsolved !== -1) {
+      setActiveBoardIndex(firstUnsolved);
+    }
+  }, [solvedBoards, activeBoardIndex]);
+
+  // Automatically scroll the active board so its bottom is visible above the keyboard shell
+  useEffect(() => {
+    const activeCard = boardRefs.current[activeBoardIndex];
+    if (activeCard) {
+      const cardRect = activeCard.getBoundingClientRect();
+      const keyboardShell = document.querySelector(".marathon-keyboard-shell");
+      const keyboardHeight = keyboardShell ? keyboardShell.offsetHeight : 200;
+      
+      const targetScrollY = window.scrollY + cardRect.bottom - window.innerHeight + keyboardHeight + 20;
+
+      window.scrollTo({
+        top: targetScrollY,
+        behavior: "smooth",
+      });
+    }
+  }, [activeBoardIndex]);
+
+  const activeAnswer = answers[activeBoardIndex] || "";
+
   const keyboardStatuses = useMemo(
-    () => buildKeyboardStatuses(guesses, answers, solvedBoards),
-    [guesses, answers, solvedBoards]
+    () => buildKeyboardStatusesForBoard(guesses, activeAnswer),
+    [guesses, activeAnswer]
   );
 
   useEffect(() => {
     gameRef.current?.focus();
   }, []);
+
+  function navigateBoards(direction) {
+    let nextIndex = activeBoardIndex;
+    for (let i = 0; i < BOARD_COUNT; i++) {
+      nextIndex = (nextIndex + direction + BOARD_COUNT) % BOARD_COUNT;
+      if (!solvedBoards[nextIndex]) {
+        setActiveBoardIndex(nextIndex);
+        break;
+      }
+    }
+  }
 
   function submitGuess() {
     if (gameOver) return;
@@ -145,9 +243,24 @@ export default function SkeedleMarathon() {
       return;
     }
 
-    setGuesses((previous) => [...previous, currentGuess]);
+    const nextGuesses = [...guesses, currentGuess];
+    setGuesses(nextGuesses);
     setCurrentGuess("");
     setMessage("");
+
+    // If the currently active board was solved by this guess, move to the next unsolved board to the right
+    const currentActiveAnswer = answers[activeBoardIndex];
+    if (nextGuesses.includes(currentActiveAnswer)) {
+      let nextIndex = activeBoardIndex;
+      for (let i = 1; i <= BOARD_COUNT; i++) {
+        const idx = (activeBoardIndex + i) % BOARD_COUNT;
+        if (!nextGuesses.includes(answers[idx])) {
+          nextIndex = idx;
+          break;
+        }
+      }
+      setActiveBoardIndex(nextIndex);
+    }
   }
 
   function handleKey(key) {
@@ -185,6 +298,18 @@ export default function SkeedleMarathon() {
       return;
     }
 
+    if (event.key === "ArrowRight") {
+      event.preventDefault();
+      navigateBoards(1);
+      return;
+    }
+
+    if (event.key === "ArrowLeft") {
+      event.preventDefault();
+      navigateBoards(-1);
+      return;
+    }
+
     const key = event.key.toUpperCase();
 
     if (/^[A-Z]$/.test(key)) {
@@ -196,6 +321,9 @@ export default function SkeedleMarathon() {
     setGuesses([]);
     setCurrentGuess("");
     setMessage("");
+    setActiveBoardIndex(0);
+    setHiddenBoards(new Set());
+    setSecondsElapsed(0);
     setGameId((previous) => previous + 1);
 
     requestAnimationFrame(() => {
@@ -217,180 +345,257 @@ export default function SkeedleMarathon() {
     );
   }
 
+  // Determine if any letter positions are already locked in as correct on the active board
+  const lockedLetters = useMemo(() => {
+    const locked = Array(WORD_LENGTH).fill("");
+    guesses.forEach((guess) => {
+      const scores = scoreGuess(guess, activeAnswer);
+      scores.forEach((status, idx) => {
+        if (status === "correct") {
+          locked[idx] = guess[idx];
+        }
+      });
+    });
+    return locked;
+  }, [guesses, activeAnswer]);
+
   return (
-    <main
-      className="skeedle-marathon"
-      ref={gameRef}
-      tabIndex={0}
-      onKeyDown={handlePhysicalKeyboard}
-    >
-      <header className="marathon-header">
-        <div className="marathon-header__inner">
-          <h1 className="marathon-title">
-            <span>SKEEDLE</span> MARATHON
-          </h1>
+    <>
+      <Navbar />
+      <main
+        className="skeedle-marathon"
+        ref={gameRef}
+        tabIndex={0}
+        onKeyDown={handlePhysicalKeyboard}
+      >
+        <header className="marathon-header">
+          <div className="marathon-header__inner">
+            <h1 className="marathon-title">
+              <span>SKEEDLE</span> MARATHON
+            </h1>
 
-          <div className="marathon-stats">
-            <div>
-              SOLVED{" "}
-              <strong>
-                {solvedCount}/{BOARD_COUNT}
-              </strong>
+            <div className="marathon-mode-selector">
+              <button
+                type="button"
+                className={`mode-btn ${gameMode === "daily" ? "is-active" : ""}`}
+                onClick={() => {
+                  setGameMode("daily");
+                  resetGame();
+                }}
+              >
+                Daily
+              </button>
+              <button
+                type="button"
+                className={`mode-btn ${gameMode === "practice" ? "is-active" : ""}`}
+                onClick={() => {
+                  setGameMode("practice");
+                  resetGame();
+                }}
+              >
+                Practice
+              </button>
             </div>
 
-            <div>
-              GUESSES{" "}
-              <strong>
-                {guesses.length}/{MAX_GUESSES}
-              </strong>
-            </div>
-
-            <div>
-              LEFT <strong>{MAX_GUESSES - guesses.length}</strong>
-            </div>
-          </div>
-        </div>
-
-        <div className="marathon-message" aria-live="polite">
-          {message}
-        </div>
-      </header>
-
-      <section className="marathon-boards">
-        {answers.map((answer, boardIndex) => {
-          const solved = solvedBoards[boardIndex];
-
-          return (
-            <article
-              className={`marathon-board-card ${solved ? "is-solved" : ""}`}
-              key={`${gameId}-${boardIndex}`}
-            >
-              <div className="marathon-board-heading">
-                <span>BOARD {boardIndex + 1}</span>
-                {solved && <span className="solved-label">✓ SOLVED</span>}
+            <div className="marathon-stats">
+              <div>
+                SOLVED{" "}
+                <strong>
+                  {solvedCount}/{BOARD_COUNT}
+                </strong>
               </div>
 
-              <div className="marathon-board-scroll">
-                <div className="marathon-board">
-                  {guesses.map((guess, guessIndex) => {
-                    const wasAlreadySolved = guesses
-                      .slice(0, guessIndex)
-                      .includes(answer);
+              <div>
+                GUESSES{" "}
+                <strong>
+                  {guesses.length}/{MAX_GUESSES}
+                </strong>
+              </div>
 
-                    if (wasAlreadySolved) return null;
+              <div>
+                TIME{" "}
+                <strong>
+                  {formatTime(secondsElapsed)}
+                </strong>
+              </div>
 
-                    const scores = scoreGuess(guess, answer);
+              <div>
+                LEFT <strong>{MAX_GUESSES - guesses.length}</strong>
+              </div>
+            </div>
+          </div>
+
+          <div className="marathon-message" aria-live="polite">
+            {message}
+          </div>
+        </header>
+
+        <section className="marathon-boards">
+          {answers.map((answer, boardIndex) => {
+            const solved = solvedBoards[boardIndex];
+
+            if (hiddenBoards.has(boardIndex)) {
+              return null;
+            }
+
+            const isActive = boardIndex === activeBoardIndex && !solved && !gameOver;
+
+            return (
+              <article
+                className={`marathon-board-card ${solved ? "is-solved" : ""} ${
+                  isActive ? "is-active-board" : ""
+                }`}
+                key={`${gameId}-${boardIndex}`}
+                ref={(el) => {
+                  if (el) boardRefs.current[boardIndex] = el;
+                  else delete boardRefs.current[boardIndex];
+                }}
+                onClick={() => {
+                  if (!solved && !gameOver) {
+                    setActiveBoardIndex(boardIndex);
+                  }
+                }}
+                style={{ cursor: !solved && !gameOver ? "pointer" : "default" }}
+              >
+                <div className="marathon-board-heading">
+                  <span>
+                    BOARD {boardIndex + 1} {isActive ? " (ACTIVE)" : ""}
+                  </span>
+                  {solved && <span className="solved-label">✓ SOLVED</span>}
+                </div>
+
+                <div className="marathon-board-scroll">
+                  <div className="marathon-board">
+                    {guesses.map((guess, guessIndex) => {
+                      const wasAlreadySolved = guesses
+                        .slice(0, guessIndex)
+                        .includes(answer);
+
+                      if (wasAlreadySolved) return null;
+
+                      const scores = scoreGuess(guess, answer);
+
+                      return (
+                        <div
+                          className="marathon-row"
+                          key={`${guess}-${guessIndex}`}
+                        >
+                          {guess.split("").map((letter, letterIndex) => (
+                            <div
+                              className={`marathon-tile ${scores[letterIndex]}`}
+                              key={`${letter}-${letterIndex}`}
+                            >
+                              {letter}
+                            </div>
+                          ))}
+                        </div>
+                      );
+                    })}
+
+                    {isActive && !gameOver && (
+                      <div className="marathon-row current-row">
+                        {Array.from({ length: WORD_LENGTH }).map((_, index) => {
+                          const typedChar = currentGuess[index];
+                          const lockedChar = lockedLetters[index];
+                          const displayChar = typedChar || lockedChar;
+                          const isLocked = !typedChar && lockedChar;
+
+                          return (
+                            <div
+                              className={`marathon-tile current ${
+                                displayChar ? "has-letter" : ""
+                              } ${isLocked ? "ghost" : ""}`}
+                              key={index}
+                            >
+                              {displayChar}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </article>
+            );
+          })}
+        </section>
+
+        {!gameOver && (
+          <div className="marathon-keyboard-shell">
+            <div className="current-guess">
+              Active Board #{activeBoardIndex + 1}: {currentGuess}
+            </div>
+
+            <div className="marathon-keyboard">
+              {KEYBOARD_ROWS.map((row, rowIndex) => (
+                <div className="keyboard-row" key={rowIndex}>
+                  {row.map((key) => {
+                    const status =
+                      key.length === 1 ? keyboardStatuses[key] || "" : "";
+                    const label = key === "BACKSPACE" ? "⌫" : key;
 
                     return (
-                      <div
-                        className="marathon-row"
-                        key={`${guess}-${guessIndex}`}
+                      <button
+                        type="button"
+                        className={`keyboard-key ${
+                          key.length > 1 ? "keyboard-key--wide" : ""
+                        } ${status}`}
+                        key={key}
+                        onClick={() => handleKey(key)}
+                        aria-label={key === "BACKSPACE" ? "Backspace" : key}
                       >
-                        {guess.split("").map((letter, letterIndex) => (
-                          <div
-                            className={`marathon-tile ${scores[letterIndex]}`}
-                            key={`${letter}-${letterIndex}`}
-                          >
-                            {letter}
-                          </div>
-                        ))}
-                      </div>
+                        {label}
+                      </button>
                     );
                   })}
-
-                  {!solved && !gameOver && (
-                    <div className="marathon-row current-row">
-                      {Array.from({ length: WORD_LENGTH }).map((_, index) => (
-                        <div
-                          className={`marathon-tile current ${
-                            currentGuess[index] ? "has-letter" : ""
-                          }`}
-                          key={index}
-                        >
-                          {currentGuess[index] || ""}
-                        </div>
-                      ))}
-                    </div>
-                  )}
                 </div>
-              </div>
-            </article>
-          );
-        })}
-      </section>
-
-      {!gameOver && (
-        <div className="marathon-keyboard-shell">
-          <div className="current-guess">{currentGuess}</div>
-
-          <div className="marathon-keyboard">
-            {KEYBOARD_ROWS.map((row, rowIndex) => (
-              <div className="keyboard-row" key={rowIndex}>
-                {row.map((key) => {
-                  const status =
-                    key.length === 1 ? keyboardStatuses[key] || "" : "";
-                  const label = key === "BACKSPACE" ? "⌫" : key;
-
-                  return (
-                    <button
-                      type="button"
-                      className={`keyboard-key ${
-                        key.length > 1 ? "keyboard-key--wide" : ""
-                      } ${status}`}
-                      key={key}
-                      onClick={() => handleKey(key)}
-                      aria-label={key === "BACKSPACE" ? "Backspace" : key}
-                    >
-                      {label}
-                    </button>
-                  );
-                })}
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {gameOver && (
-        <div className="marathon-overlay">
-          <section className="marathon-modal">
-            <h2>{gameWon ? "MARATHON COMPLETE!" : "MARATHON OVER"}</h2>
+        {gameOver && (
+          <div className="marathon-overlay">
+            <section className="marathon-modal">
+              <h2>{gameWon ? "MARATHON COMPLETE!" : "MARATHON OVER"}</h2>
 
-            <p>
-              You solved <strong>{solvedCount}</strong> of{" "}
-              <strong>{BOARD_COUNT}</strong> boards in{" "}
-              <strong>{guesses.length}</strong> guesses.
-            </p>
+              <p>
+                You solved <strong>{solvedCount}</strong> of{" "}
+                <strong>{BOARD_COUNT}</strong> boards in{" "}
+                <strong>{guesses.length}</strong> guesses and{" "}
+                <strong>{formatTime(secondsElapsed)}</strong>!
+              </p>
 
-            {!gameWon && (
-              <>
-                <p className="answer-heading">The answers were:</p>
+              {!gameWon && (
+                <>
+                  <p className="answer-heading">The answers were:</p>
 
-                <div className="answer-list">
-                  {answers.map((answer, index) => (
-                    <span
-                      className={`answer-chip ${
-                        solvedBoards[index] ? "was-solved" : ""
-                      }`}
-                      key={`${answer}-${index}`}
-                    >
-                      {index + 1}. {answer}
-                    </span>
-                  ))}
-                </div>
-              </>
-            )}
+                  <div className="answer-list">
+                    {answers.map((answer, index) => (
+                      <span
+                        className={`answer-chip ${
+                          solvedBoards[index] ? "was-solved" : ""
+                        }`}
+                        key={`${answer}-${index}`}
+                      >
+                        {index + 1}. {answer}
+                      </span>
+                    ))}
+                  </div>
+                </>
+              )}
 
-            <button
-              type="button"
-              className="new-marathon-button"
-              onClick={resetGame}
-            >
-              NEW MARATHON
-            </button>
-          </section>
-        </div>
-      )}
-    </main>
+              <button
+                type="button"
+                className="new-marathon-button"
+                onClick={resetGame}
+              >
+                NEW MARATHON
+              </button>
+            </section>
+          </div>
+        )}
+      </main>
+    </>
   );
 }
