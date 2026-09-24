@@ -12,8 +12,10 @@ import Pipes from './games/pipes/pipes';
 import Hashi from './games/hashi/Hashi';
 import Nerdle from './games/nerdle/Nerdle';
 import Nonograms from './games/nonograms/Nonograms';
+import Map from './games/map/Map';
 // import Nurikabe from './games/nurikabe/Nurikabe';
 import SkeedleMarathon from './games/skeedle-marathon/SkeedleMarathon';
+
 
 export default function App() {
   return (
@@ -31,6 +33,7 @@ export default function App() {
         <Route path="/nerdle" element={<Nerdle />} />
         <Route path="/nonograms" element={<Nonograms />} />
         {/* <Route path="/nurikabe" element={<Nurikabe />} /> */}
+        <Route path="/map" element={<Map />} />
         <Route path="/skeedle-marathon" element={<SkeedleMarathon />} />
         <Route path="*" element={<div>404 - Game Not Found</div>} />
       </Routes>
