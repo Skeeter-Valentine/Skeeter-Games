@@ -8,133 +8,7 @@ import Navbar from '../../components/Navbar';
 
 
 
-// --- Random Puzzle Generator Helpers ---
-
-function randomFromRange(min, max, rng = Math.random) {
-
-  return Math.floor(rng() * (max - min + 1) + min);
-
-}
-
-
-
-function generateRandomPuzzleGrid(rows, cols, rng = Math.random) {
-
-  return Array.from({ length: rows }, () => {
-
-    let cells = [];
-
-    let num = randomFromRange(1, cols, rng);
-
-    let value = randomFromRange(0, 1, rng);
-
-    while (cells.length < cols) {
-
-      cells.push(...new Array(Math.min(num, cols - cells.length)).fill(value));
-
-      value = 1 - value;
-
-      num = randomFromRange(1, cols - cells.length, rng);
-
-    }
-
-    return cells;
-
-  });
-
-}
-
-
-
-// Simple seeded PRNG (LCG) for daily puzzles based on date string (YYYY-MM-DD)
-
-function getDailyRng(dateStr) {
-
-  let hash = 0;
-
-  for (let i = 0; i < dateStr.length; i++) {
-
-    hash = (hash << 5) - hash + dateStr.charCodeAt(i);
-
-    hash |= 0;
-
-  }
-
-  let seed = Math.abs(hash);
-
-  return () => {
-
-    seed = (seed * 9301 + 49297) % 233280;
-
-    return seed / 233280;
-
-  };
-
-}
-
-
-
-// Helper to generate row and column clues
-
-const generateClues = (grid) => {
-
-  const height = grid.length;
-
-  const width = grid[0].length;
-
-
-
-  const rowClues = grid.map(row => {
-
-    const clues = [];
-
-    let count = 0;
-
-    for (let cell of row) {
-
-      if (cell === 1) count++;
-
-      else if (count > 0) { clues.push(count); count = 0; }
-
-    }
-
-    if (count > 0) clues.push(count);
-
-    return clues.length ? clues : [0];
-
-  });
-
-
-
-  const colClues = [];
-
-  for (let c = 0; c < width; c++) {
-
-    const clues = [];
-
-    let count = 0;
-
-    for (let r = 0; r < height; r++) {
-
-      if (grid[r][c] === 1) count++;
-
-      else if (count > 0) { clues.push(count); count = 0; }
-
-    }
-
-    if (count > 0) clues.push(count);
-
-    colClues.push(clues.length ? clues : [0]);
-
-  }
-
-
-
-  return { rowClues, colClues };
-
-};
-
-
+import { generateUniquePuzzleGrid, generateClues, getDailyRng } from './puzzle';
 
 export default function Nonograms({ onWin }) {
 
@@ -144,7 +18,7 @@ export default function Nonograms({ onWin }) {
 
 
 
-  const [rows, cols] = selectedSize.split('x').map(Number);
+
 
 
 
@@ -154,7 +28,7 @@ export default function Nonograms({ onWin }) {
 
     const todayStr = new Date().toISOString().slice(0, 10);
 
-    return generateRandomPuzzleGrid(10, 10, getDailyRng(todayStr));
+    return generateUniquePuzzleGrid(10, 10, getDailyRng(todayStr));
 
   });
 
@@ -218,7 +92,7 @@ export default function Nonograms({ onWin }) {
 
     const dailyRng = getDailyRng(todayStr);
 
-    const dailyPuzzle = generateRandomPuzzleGrid(10, 10, dailyRng);
+    const dailyPuzzle = generateUniquePuzzleGrid(10, 10, dailyRng);
 
    
 
@@ -240,7 +114,7 @@ export default function Nonograms({ onWin }) {
 
     const [r, c] = selectedSize.split('x').map(Number);
 
-    const practicePuzzle = generateRandomPuzzleGrid(r, c);
+    const practicePuzzle = generateUniquePuzzleGrid(r, c);
 
     setSolutionGrid(practicePuzzle);
 
@@ -262,7 +136,7 @@ export default function Nonograms({ onWin }) {
 
     const [r, c] = size.split('x').map(Number);
 
-    const newPuzzle = generateRandomPuzzleGrid(r, c);
+    const newPuzzle = generateUniquePuzzleGrid(r, c);
 
     setSolutionGrid(newPuzzle);
 
@@ -278,7 +152,7 @@ export default function Nonograms({ onWin }) {
 
     const [r, c] = selectedSize.split('x').map(Number);
 
-    const newPuzzle = generateRandomPuzzleGrid(r, c);
+    const newPuzzle = generateUniquePuzzleGrid(r, c);
 
     setSolutionGrid(newPuzzle);
 

@@ -2,8 +2,8 @@ import React, { useMemo, useRef, useState } from 'react';
 import './Map.css';
 
 // Original implementation of Simon Tatham's Map rules. No external dependencies.
-const COLORS = ['#ed9279', '#edc965', '#83b9a0', '#859fcc'];
-const NAMES = ['Coral', 'Gold', 'Sage', 'Blue'];
+const COLORS = ['var(--neon-green, #39ff14)', 'var(--neon-pink, #ff2a85)', 'var(--neon-yellow, #ffff00)', 'var(--neon-blue, #00d9ff)'];
+const NAMES = ['Green', 'Pink', 'Yellow', 'Blue'];
 const WIDTH = 720, HEIGHT = 500;
 
 function random(seed) {
@@ -306,14 +306,14 @@ export default function Map({ initialSeed = 17429, initialSize = 'Medium' }) {
               {puzzle.polygons.map((poly, i) => {
                 const fixed = puzzle.clues[i] >= 0, color = board.colors[i], [x, y] = puzzle.centers[i];
                 return <g key={i} data-region={i} onPointerDown={e => startDrag(e, i)}
-                  className={`skeedomap-region ${fixed ? 'is-fixed' : ''} ${color >= 0 ? 'is-draggable' : ''} ${dragPreview?.target === i ? 'is-drop-target' : ''} ${conflicts.has(i) ? 'has-conflict' : ''}`} role="button" tabIndex={0}
+                  className={`skeedomap-region ${fixed ? 'is-fixed' : ''} ${color >= 0 ? 'is-draggable' : 'is-empty'} ${dragPreview?.target === i ? 'is-drop-target' : ''} ${dragPreview?.target === i && !dragPreview.note ? 'is-fill-preview' : ''} ${conflicts.has(i) ? 'has-conflict' : ''}`} role="button" tabIndex={0}
                   aria-disabled={fixed} aria-label={`Region ${i + 1}, ${color < 0 ? 'uncolored' : NAMES[color]}${fixed ? ', fixed clue' : ''}${conflicts.has(i) ? ', conflicting neighbor' : ''}${board.notes[i] ? ', notes: ' + NAMES.filter((_, c) => board.notes[i] & 1 << c).join(', ') : ''}`}
                   onClick={() => paint(i)} onContextMenu={e => { e.preventDefault(); paint(i, true); }}
                   onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); paint(i); } }}>
-                  <polygon points={poly.map(p => p.join(',')).join(' ')} fill={dragPreview?.target === i && !dragPreview.note ? COLORS[dragPreview.color] : color < 0 ? '#f6f4ee' : COLORS[color]} />
+                  <polygon points={poly.map(p => p.join(',')).join(' ')} fill={dragPreview?.target === i && !dragPreview.note ? COLORS[dragPreview.color] : color < 0 ? 'var(--tile-empty)' : COLORS[color]} />
                   {fixed && <g transform={`translate(${x - 5},${y - 6})`} className="skeedomap-lock"><rect x="0" y="5" width="10" height="8" rx="2"/><path d="M2 5V3a3 3 0 0 1 6 0v2" fill="none" stroke="currentColor" strokeWidth="1.8"/></g>}
                   {labels && <text x={x} y={y + (fixed ? 23 : 5)}>{i + 1}</text>}
-                  {color < 0 && [0, 1, 2, 3].map(c => board.notes[i] & 1 << c ? <circle key={c} cx={x + (c % 2 ? 8 : -8)} cy={y + (c < 2 ? -8 : 8)} r="5" fill={COLORS[c]} stroke="#403e35" strokeWidth="1"/> : null)}
+                  {color < 0 && [0, 1, 2, 3].map(c => board.notes[i] & 1 << c ? <circle key={c} cx={x + (c % 2 ? 8 : -8)} cy={y + (c < 2 ? -8 : 8)} r="5" fill={COLORS[c]} stroke="var(--tile-border)" strokeWidth="1"/> : null)}
                   {conflicts.has(i) && <text className="skeedomap-warning" x={x} y={y - 17}>!</text>}
                 </g>;
               })}
