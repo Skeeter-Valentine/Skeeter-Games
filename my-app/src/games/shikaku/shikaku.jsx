@@ -3,146 +3,7 @@ import './shikaku.css';
 import Navbar from '../../components/Navbar';
 import FeedbackForm from '../../components/Feedback';
 
-function mulberry32(seed) {
-  return function () {
-    let t = (seed += 0x6d2b79f5);
-    t = Math.imul(t ^ (t >>> 15), t | 1);
-    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
-
-function getDailySeed(dateStr) {
-  let hash = 0;
-  for (let i = 0; i < dateStr.length; i++) {
-    hash = (hash << 5) - hash + dateStr.charCodeAt(i);
-    hash |= 0;
-  }
-  return Math.abs(hash);
-}
-
-function getDailyGridSize(dateStr) {
-  const sizes = [5, 7, 10, 15, 20];
-  const seed = getDailySeed(dateStr + '-size');
-  return sizes[seed % sizes.length];
-}
-
-function partitionArea(r1, r2, c1, c2, rects, minArea = 2, maxAreaRatio = 0.15, rng = Math.random) {
-  const height = r2 - r1 + 1;
-  const width = c2 - c1 + 1;
-  const area = height * width;
-
-  const maxAllowedArea = Math.max(6, Math.floor((r2 + 1) * (c2 + 1) * maxAreaRatio));
-
-  const validHorizontalCuts = [];
-  for (let cut = r1; cut < r2; cut++) {
-    const topArea = (cut - r1 + 1) * width;
-    const botArea = (r2 - cut) * width;
-    if (topArea >= minArea && botArea >= minArea) {
-      validHorizontalCuts.push(cut);
-    }
-  }
-
-  const validVerticalCuts = [];
-  for (let cut = c1; cut < c2; cut++) {
-    const leftArea = height * (cut - c1 + 1);
-    const rightArea = height * (c2 - cut);
-    if (leftArea >= minArea && rightArea >= minArea) {
-      validVerticalCuts.push(cut);
-    }
-  }
-
-  const canSplitH = validHorizontalCuts.length > 0;
-  const canSplitV = validVerticalCuts.length > 0;
-  const shouldSplit = (area > maxAllowedArea) || (area >= minArea * 2 && rng() < 0.70);
-
-  if (!shouldSplit || (!canSplitH && !canSplitV)) {
-    rects.push({ r1, r2, c1, c2, area });
-    return;
-  }
-
-  let splitHorizontally = false;
-  if (canSplitH && canSplitV) {
-    if (height > width) splitHorizontally = rng() < 0.7;
-    else if (width > height) splitHorizontally = rng() < 0.3;
-    else splitHorizontally = rng() < 0.5;
-  } else {
-    splitHorizontally = canSplitH;
-  }
-
-  if (splitHorizontally) {
-    const cut = validHorizontalCuts[Math.floor(rng() * validHorizontalCuts.length)];
-    partitionArea(r1, cut, c1, c2, rects, minArea, maxAreaRatio, rng);
-    partitionArea(cut + 1, r2, c1, c2, rects, minArea, maxAreaRatio, rng);
-  } else {
-    const cut = validVerticalCuts[Math.floor(rng() * validVerticalCuts.length)];
-    partitionArea(r1, r2, c1, cut, rects, minArea, maxAreaRatio, rng);
-    partitionArea(r1, r2, cut + 1, c2, rects, minArea, maxAreaRatio, rng);
-  }
-}
-
-function mergeSmallRectangles(rects, maxSmallPercentage = 0.20) {
-  let smallCount = rects.filter((r) => r.area <= 3).length;
-
-  for (let passes = 0; passes < 10; passes++) {
-    if (smallCount / rects.length <= maxSmallPercentage) break;
-
-    let merged = false;
-    for (let i = 0; i < rects.length; i++) {
-      if (rects[i].area > 3) continue;
-
-      for (let j = i + 1; j < rects.length; j++) {
-        if (rects[j].area > 3) continue;
-
-        const a = rects[i];
-        const b = rects[j];
-
-        if (a.c1 === b.c1 && a.c2 === b.c2 && (a.r2 + 1 === b.r1 || b.r2 + 1 === a.r1)) {
-          const newR1 = Math.min(a.r1, b.r1);
-          const newR2 = Math.max(a.r2, b.r2);
-          const newArea = (newR2 - newR1 + 1) * (a.c2 - a.c1 + 1);
-
-          rects[i] = { r1: newR1, r2: newR2, c1: a.c1, c2: a.c2, area: newArea };
-          rects.splice(j, 1);
-          merged = true;
-          break;
-        }
-
-        if (a.r1 === b.r1 && a.r2 === b.r2 && (a.c2 + 1 === b.c1 || b.c2 + 1 === a.c1)) {
-          const newC1 = Math.min(a.c1, b.c1);
-          const newC2 = Math.max(a.c2, b.c2);
-          const newArea = (a.r2 - a.r1 + 1) * (newC2 - newC1 + 1);
-
-          rects[i] = { r1: a.r1, r2: a.r2, c1: newC1, c2: newC2, area: newArea };
-          rects.splice(j, 1);
-          merged = true;
-          break;
-        }
-      }
-
-      if (merged) break;
-    }
-
-    if (!merged) break;
-    smallCount = rects.filter((r) => r.area <= 3).length;
-  }
-}
-
-function generateFastPuzzle(n, rng = Math.random) {
-  const rects = [];
-  partitionArea(0, n - 1, 0, n - 1, rects, 2, 0.15, rng);
-  mergeSmallRectangles(rects, 0.15);
-
-  const clues = Array(n).fill(null).map(() => Array(n).fill(0));
-
-  for (const rect of rects) {
-    const randomR = rect.r1 + Math.floor(rng() * (rect.r2 - rect.r1 + 1));
-    const randomC = rect.c1 + Math.floor(rng() * (rect.c2 - rect.c1 + 1));
-    clues[randomR][randomC] = rect.area;
-  }
-
-  return { clues, rects };
-}
+import { mulberry32, getDailySeed, getDailyGridSize, generateUniquePuzzle } from './puzzle.js';
 
 export default function Shikaku({ onWin }) {
   const todayStr = new Date().toISOString().split('T')[0];
@@ -192,10 +53,10 @@ export default function Shikaku({ onWin }) {
       setGridSize(dailySize);
       const seed = getDailySeed(todayStr);
       const rng = mulberry32(seed);
-      clues = generateFastPuzzle(dailySize, rng).clues;
+      clues = generateUniquePuzzle(dailySize, rng).clues;
       setCluesGrid(clues);
 
-      const saved = localStorage.getItem(`shikaku-daily-state-${todayStr}`);
+      const saved = localStorage.getItem(`shikaku-daily-state-v3-${todayStr}`);
       if (saved) {
         try {
           const { placedRects: savedRects, seconds: savedSeconds, isWin: savedWin } = JSON.parse(saved);
@@ -212,7 +73,7 @@ export default function Shikaku({ onWin }) {
         }
       }
     } else {
-      clues = generateFastPuzzle(overrideSize, Math.random).clues;
+      clues = generateUniquePuzzle(overrideSize, Math.random).clues;
       setCluesGrid(clues);
     }
 
@@ -233,7 +94,7 @@ export default function Shikaku({ onWin }) {
         seconds,
         isWin,
       };
-      localStorage.setItem(`shikaku-daily-state-${todayStr}`, JSON.stringify(dailyState));
+      localStorage.setItem(`shikaku-daily-state-v3-${todayStr}`, JSON.stringify(dailyState));
     }
   }, [placedRects, seconds, isWin, gameMode, cluesGrid, todayStr]);
 
@@ -561,7 +422,7 @@ export default function Shikaku({ onWin }) {
           className="shikaku-btn"
           onClick={() => {
             if (gameMode === 'daily') {
-              localStorage.removeItem(`shikaku-daily-state-${todayStr}`);
+              localStorage.removeItem(`shikaku-daily-state-v3-${todayStr}`);
             }
             setPlacedRects([]);
             setStatus('');
