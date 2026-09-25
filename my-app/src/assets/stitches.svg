@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600">
+  <defs><radialGradient id="bg"><stop stop-color="#34304b"/><stop offset="1" stop-color="#12101e"/></radialGradient></defs>
+  <rect width="600" height="600" fill="url(#bg)"/>
+  <text x="300" y="70" text-anchor="middle" fill="#b4a7c9" font-family="Georgia,serif" font-size="18" letter-spacing="5">SKEETER GAMES</text>
+  <g transform="translate(160 135)">
+    <path d="M0 0H140V210H0Z" fill="#354458"/><path d="M140 0H280V140H140Z" fill="#4d3657"/><path d="M0 210H140V140H280V280H0Z" fill="#2e504c"/>
+    <path d="M0 70H280M0 140H280M0 210H280M70 0V280M140 0V280M210 0V280" fill="none" stroke="#81718d"/>
+    <path d="M0 0H280V280H0ZM140 0V210H0M140 140H280" fill="none" stroke="#d9c5e8" stroke-width="5"/>
+    <g fill="#e5dcee" font-family="Georgia,serif" font-size="24" text-anchor="middle"><text x="35" y="-18">2</text><text x="105" y="-18">1</text><text x="175" y="-18">1</text><text x="245" y="-18">2</text><text x="-24" y="45">2</text><text x="-24" y="115">1</text><text x="-24" y="185">2</text><text x="-24" y="255">1</text></g>
+    <g stroke="#68ffdb" stroke-width="7" stroke-linecap="round"><path d="M105 35H175M245 105V175M35 175V245"/><g fill="#183530" stroke-width="4"><circle cx="105" cy="35" r="9"/><circle cx="175" cy="35" r="9"/><circle cx="245" cy="105" r="9"/><circle cx="245" cy="175" r="9"/><circle cx="35" cy="175" r="9"/><circle cx="35" cy="245" r="9"/></g></g>
+  </g>
+  <text x="300" y="500" text-anchor="middle" fill="#f9f2ff" font-family="Georgia,serif" font-size="58" font-weight="bold" letter-spacing="5">STITCHES</text>
+  <text x="300" y="541" text-anchor="middle" fill="#70e3ca" font-family="Georgia,serif" font-size="20">Connect every neighbor.</text>
+</svg>

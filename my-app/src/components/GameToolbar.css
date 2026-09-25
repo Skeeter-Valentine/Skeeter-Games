@@ -1,0 +1,8 @@
+.game-utility-bar { display: flex; align-items: center; justify-content: flex-end; gap: 8px; width: min(100% - 32px, 960px); margin: 12px auto; }
+.game-utility-bar .game-utility-icon { display: inline-flex; align-items: center; justify-content: center; flex: 0 0 40px; width: 40px; height: 40px; min-height: 40px; padding: 9px; margin: 0; border: 1px solid #5a486e; border-radius: 9px; background: #21192f; color: #00f0ff; cursor: pointer; box-shadow: none; }
+.game-utility-bar .game-utility-icon:hover { color: #00ff87; background: #30233e; border-color: #00ff87; }
+.game-utility-bar .game-utility-icon:focus-visible { outline: 2px solid #00f0ff; outline-offset: 3px; }
+.game-utility-bar .game-utility-icon svg { display: block; width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.game-utility-time { margin-right: auto; color: #c9bddf; font-size: 14px; font-variant-numeric: tabular-nums; }
+.game-instructions-list { text-align: left; padding-left: 28px; margin: 0; color: #e3d9ee; font-size: 20px; line-height: 1.6; }
+.game-instructions-list li { padding-left: 5px; margin-bottom: 14px; }

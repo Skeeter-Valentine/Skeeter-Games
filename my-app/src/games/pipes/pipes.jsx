@@ -1,3 +1,4 @@
+import DailyResults from '../../components/DailyResults';
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import './pipes.css';
 import Navbar from '../../components/Navbar';
@@ -506,6 +507,7 @@ export default function Pipes({ onWin }) {
   return (
     <div className="pipes-container">
       <Navbar />
+      <DailyResults gameId="pipes" title="Skeeter Piper" daily={gameMode === 'daily'} date={todayStr} finished={isWon} seconds={seconds} ready={userGrid.length > 0} />
       <h1 className="pipes-title">SKEETER PIPER</h1>
       <p className="pipes-instructions">
         Left-click to rotate pipes clockwise. Right-click to lock/darken cells you know are correct!

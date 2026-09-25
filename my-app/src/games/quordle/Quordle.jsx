@@ -1,3 +1,4 @@
+import DailyResults from '../../components/DailyResults';
 import React, { useState, useEffect, useRef } from 'react';
 import Board from './components/Board';
 import Keyboard from './components/Keyboard';
@@ -242,6 +243,7 @@ export default function Quordle({ onWin }) {
   return (
     <div className="game-container" onClick={focusHiddenInput}>
       <Navbar />
+      <DailyResults gameId="quordle" title="Ske4dle" daily={gameMode === 'daily'} date={getLocalDateString()} finished={gameOver} won={targetWords.length === 4 && targetWords.every(word => guesses.includes(word))} ready={targetWords.length === 4} />
 
       {/* 5. HIDDEN INPUT ELEMENT FOR MOBILE VIRTUAL KEYBOARD */}
       <input

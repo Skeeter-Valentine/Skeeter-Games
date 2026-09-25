@@ -10,6 +10,7 @@ import Game2048 from './games/2048/Game2048';
 import Shikaku from './games/shikaku/shikaku';
 import Pipes from './games/pipes/pipes';
 import Hashi from './games/hashi/Hashi';
+import Stitches from './games/stitches/Stitches';
 import Nerdle from './games/nerdle/Nerdle';
 import Nonograms from './games/nonograms/Nonograms';
 import Map from './games/map/Map';
@@ -30,6 +31,7 @@ export default function App() {
         <Route path="/shikaku" element={<Shikaku />} />
         <Route path="/pipes" element={<Pipes />} />
         <Route path="/hashi" element={<Hashi />} />
+        <Route path="/stitches" element={<Stitches />} />
         <Route path="/nerdle" element={<Nerdle />} />
         <Route path="/nonograms" element={<Nonograms />} />
         {/* <Route path="/nurikabe" element={<Nurikabe />} /> */}

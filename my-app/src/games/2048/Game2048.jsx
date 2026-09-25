@@ -1,3 +1,4 @@
+import DailyResults from '../../components/DailyResults';
 // src/pages/Game2048.jsx
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import Navbar from '../../components/Navbar';
@@ -44,6 +45,7 @@ export default function Game2048({ onWin }) {
   
   // Timer states
   const [elapsedTime, setElapsedTime] = useState(0);
+  const [completionTimeKnown, setCompletionTimeKnown] = useState(true);
   const [isTimerRunning, setIsTimerRunning] = useState(false);
   const timerIntervalRef = useRef(null);
 
@@ -103,6 +105,7 @@ export default function Game2048({ onWin }) {
   const initGame = useCallback(() => {
     stopTimer();
     setElapsedTime(0);
+    setCompletionTimeKnown(true);
     setIsTestMode(false);
     setGameWon(false);
     setWinTimeFormatted('');
@@ -125,6 +128,8 @@ export default function Game2048({ onWin }) {
           setHistory(parsed.history || []);
           setUndoCount(parsed.undoCount || 0);
           setGameWon(parsed.gameWon || false);
+          setCompletionTimeKnown(!parsed.gameWon || (parsed.completionTimeKnown !== false && Number.isFinite(parsed.elapsedTime)));
+          setElapsedTime(Number.isFinite(parsed.elapsedTime) ? Math.max(0, parsed.elapsedTime) : 0);
           
           if (parsed.tiles && parsed.tiles.length > 0) {
             const maxId = Math.max(...parsed.tiles.map(t => t.id || 0));
@@ -231,10 +236,12 @@ export default function Game2048({ onWin }) {
         history,
         undoCount,
         gameWon,
+        elapsedTime,
+        completionTimeKnown,
       };
       localStorage.setItem(`2048-daily-${todayStr}`, JSON.stringify(dailyPayload));
     }
-  }, [tiles, score, history, undoCount, gameWon, gameMode, todayStr]);
+  }, [tiles, score, history, undoCount, gameWon, gameMode, todayStr, elapsedTime, completionTimeKnown]);
 
   const handleUndo = () => {
     if (history.length === 0 || isTestMode) return;
@@ -438,16 +445,28 @@ export default function Game2048({ onWin }) {
       setUndoCount(count);
     };
 
+    // Set elapsed time in seconds without changing whether the timer is running.
+    window.setCustomTime = (seconds) => {
+      if (typeof seconds !== 'number' || !Number.isFinite(seconds) || seconds < 0) {
+        throw new TypeError('setCustomTime expects a non-negative number of seconds.');
+      }
+      setElapsedTime(Math.floor(seconds));
+      setCompletionTimeKnown(true);
+      setWinTimeFormatted('');
+    };
+
     return () => {
       delete window.injectTile;
       delete window.setCustomScore;
       delete window.setCustomUndos;
+      delete window.setCustomTime;
     };
   }, []);
 
   return (
     <div className={`game2048-container theme-${theme}`}>
       <Navbar />
+      <DailyResults gameId="2048" title="2048" daily={gameMode === 'daily' && !isTestMode} date={todayStr} finished={gameWon} won={gameWon} seconds={completionTimeKnown ? elapsedTime : null} ready={tiles.length > 0} />
 
       <main className="game2048-main">
         <div className="game2048-header">

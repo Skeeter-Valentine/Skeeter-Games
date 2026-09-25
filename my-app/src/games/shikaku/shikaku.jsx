@@ -1,3 +1,4 @@
+import DailyResults from '../../components/DailyResults';
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import './shikaku.css';
 import Navbar from '../../components/Navbar';
@@ -263,6 +264,7 @@ export default function Shikaku({ onWin }) {
   return (
     <div className="shikaku-container">
       <Navbar />
+      <DailyResults gameId="shikaku" title="Shikaku" daily={gameMode === 'daily'} date={todayStr} finished={isWin} seconds={seconds} ready={cluesGrid.length > 0} />
       <h1 className="shikaku-title">SKEEKAKU</h1>
 
       <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>

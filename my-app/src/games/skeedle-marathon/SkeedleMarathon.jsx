@@ -1,3 +1,4 @@
+import DailyResults from '../../components/DailyResults';
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import "./SkeedleMarathon.css";
 import words from "../../constants/words.json";
@@ -362,6 +363,7 @@ export default function SkeedleMarathon() {
   return (
     <>
       <Navbar />
+      <DailyResults gameId="skeedle-marathon" title="Skeedle Marathon" daily={gameMode === 'daily'} finished={gameOver} won={gameWon} seconds={secondsElapsed} ready={answers.length === BOARD_COUNT} />
       <main
         className="skeedle-marathon"
         ref={gameRef}

@@ -1,3 +1,4 @@
+import DailyResults from '../../components/DailyResults';
 // src/games/minesweeper/Minesweeper.jsx
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import './Minesweeper.css';
@@ -141,7 +142,7 @@ export default function Minesweeper({ onWin }) {
             timerIntervalRef.current = setInterval(() => {
               if (startTimeRef.current) {
                 const seconds = Math.floor((Date.now() - startTimeRef.current) / 1000);
-                setTimer(Math.min(seconds, 999));
+                setTimer(seconds);
               }
             }, 200);
           }
@@ -243,7 +244,7 @@ export default function Minesweeper({ onWin }) {
       timerIntervalRef.current = setInterval(() => {
         if (startTimeRef.current) {
           const seconds = Math.floor((Date.now() - startTimeRef.current) / 1000);
-          setTimer(Math.min(seconds, 999));
+          setTimer(seconds);
         }
       }, 200);
     }
@@ -457,6 +458,7 @@ export default function Minesweeper({ onWin }) {
   return (
     <div className={`minesweeper-container ${isExpertLayout ? 'expert-mode-active' : ''} ${isIntermediateLayout ? 'intermediate-mode-active' : ''}`}>
       <Navbar />
+      <DailyResults gameId="minesweeper" title="Mineskeeter" daily={gameMode === 'daily'} date={todayStr} finished={gameStatus !== 'playing'} won={gameStatus === 'won'} seconds={timer} ready={board.length > 0} />
       <h2 className="ms-title">MINESKEETER</h2>
 
       <div className="diff-toggle">

@@ -1,0 +1,282 @@
+// Original irregular puzzles, verified unique; rotations preserve their rules.
+const PUZZLES = {
+  "5": {
+    "regions": [
+      [
+        1,
+        1,
+        1,
+        2,
+        2
+      ],
+      [
+        1,
+        1,
+        2,
+        2,
+        2
+      ],
+      [
+        1,
+        3,
+        0,
+        4,
+        2
+      ],
+      [
+        3,
+        3,
+        0,
+        4,
+        4
+      ],
+      [
+        3,
+        3,
+        0,
+        0,
+        0
+      ]
+    ],
+    "rows": [
+      2,
+      2,
+      4,
+      3,
+      1
+    ],
+    "cols": [
+      0,
+      3,
+      4,
+      4,
+      1
+    ]
+  },
+  "7": {
+    "regions": [
+      [
+        1,
+        5,
+        5,
+        5,
+        5,
+        5,
+        5
+      ],
+      [
+        1,
+        1,
+        1,
+        5,
+        5,
+        5,
+        5
+      ],
+      [
+        1,
+        1,
+        1,
+        3,
+        3,
+        3,
+        0
+      ],
+      [
+        4,
+        4,
+        3,
+        3,
+        3,
+        3,
+        0
+      ],
+      [
+        4,
+        4,
+        2,
+        3,
+        3,
+        3,
+        0
+      ],
+      [
+        4,
+        4,
+        2,
+        6,
+        6,
+        6,
+        0
+      ],
+      [
+        2,
+        2,
+        2,
+        2,
+        6,
+        6,
+        6
+      ]
+    ],
+    "rows": [
+      1,
+      3,
+      5,
+      3,
+      5,
+      5,
+      2
+    ],
+    "cols": [
+      2,
+      4,
+      4,
+      4,
+      2,
+      3,
+      5
+    ]
+  },
+  "9": {
+    "regions": [
+      [
+        5,
+        5,
+        5,
+        5,
+        8,
+        8,
+        8,
+        1,
+        1
+      ],
+      [
+        5,
+        5,
+        5,
+        8,
+        8,
+        6,
+        8,
+        1,
+        1
+      ],
+      [
+        0,
+        5,
+        5,
+        3,
+        3,
+        6,
+        6,
+        1,
+        1
+      ],
+      [
+        0,
+        0,
+        0,
+        3,
+        3,
+        6,
+        6,
+        1,
+        1
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        3,
+        3,
+        6,
+        1,
+        1
+      ],
+      [
+        0,
+        0,
+        0,
+        2,
+        3,
+        3,
+        6,
+        6,
+        6
+      ],
+      [
+        2,
+        2,
+        2,
+        2,
+        4,
+        4,
+        4,
+        4,
+        6
+      ],
+      [
+        2,
+        2,
+        7,
+        7,
+        4,
+        4,
+        4,
+        4,
+        6
+      ],
+      [
+        7,
+        7,
+        7,
+        7,
+        7,
+        7,
+        4,
+        4,
+        4
+      ]
+    ],
+    "rows": [
+      3,
+      4,
+      4,
+      3,
+      3,
+      6,
+      6,
+      3,
+      0
+    ],
+    "cols": [
+      2,
+      2,
+      3,
+      7,
+      6,
+      6,
+      1,
+      3,
+      2
+    ]
+  }
+};
+
+export function fallbackPuzzle(size, rng) {
+  let puzzle = structuredClone(PUZZLES[size]);
+  const rotations = Math.floor(rng() * 4);
+  for (let turn = 0; turn < rotations; turn++) {
+    puzzle = {
+      regions: Array.from({ length: size }, (_, r) => Array.from({ length: size }, (_, c) => puzzle.regions[size - 1 - c][r])),
+      rows: puzzle.cols.slice(), cols: puzzle.rows.slice().reverse(),
+    };
+  }
+  if (rng() < 0.5) {
+    puzzle.regions = puzzle.regions.map(row => row.slice().reverse());
+    puzzle.cols.reverse();
+  }
+  return puzzle;
+}

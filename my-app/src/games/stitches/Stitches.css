@@ -1,0 +1,53 @@
+.stitches-page { max-width: 720px; margin: 0 auto; padding: 28px 18px 56px; }
+.stitches-heading { text-align: center; margin-bottom: 25px; }
+.stitches-heading h1 { font-size: clamp(38px, 8vw, 58px); letter-spacing: 5px; margin: 8px 0; }
+.stitches-heading p { color: #b9b1cb; font-size: 16px; }
+.stitches-toolbar, .stitches-tools { display: flex; justify-content: center; align-items: center; gap: 10px; flex-wrap: wrap; }
+.stitches-toolbar { margin-bottom: 18px; min-height: 42px; }
+.stitches-page button, .stitches-page select { background: #241f36; border: 1px solid #49405e; color: #eee9fa; border-radius: 7px; padding: 9px 14px; cursor: pointer; font-size: 15px; min-height: 40px; }
+.stitches-page button:hover { border-color: #00f0cf; }
+.stitches-page button[aria-pressed="true"] { background: #123c38; border-color: #00d8b5; color: #8cffe6; }
+.stitches-page button:disabled { opacity: .4; cursor: default; }
+.stitches-page button:focus-visible, .stitches-page select:focus-visible, .stitches-rules summary:focus-visible { outline: 2px solid #00f0cf; outline-offset: 3px; }
+.stitches-mode { display: flex; gap: 5px; }
+.stitches-size-control { display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; color: #eee9fa; font-size: 15px; }
+.stitches-size-control select { width: auto; height: 40px; flex: 0 0 auto; }
+.stitches-date { color: #b9b1cb; font-size: 14px; margin-left: 6px; }
+.stitches-panel { background: #191527; border: 1px solid #393049; border-radius: 16px; padding: 18px 18px 8px; box-shadow: 0 18px 50px #0003; }
+.stitches-progress { display: flex; justify-content: space-between; color: #b9b1cb; padding: 0 4px; font-size: 16px; font-variant-numeric: tabular-nums; }
+.stitches-progress strong { color: #80f4d9; }
+.stitches-board { display: block; width: 100%; max-width: 570px; margin: 8px auto 18px; user-select: none; touch-action: manipulation; overflow: visible; }
+.stitches-cell { fill-opacity: 1; stroke: #151022; stroke-opacity: .35; stroke-width: .016; }
+.stitches-cell:focus-visible { stroke: #151022; stroke-opacity: 1; stroke-width: .08; }
+.stitches-boundary { stroke: #151022; stroke-width: .075; pointer-events: none; }
+.stitches-outline { fill: none; stroke: #ddd2ec; stroke-width: .065; pointer-events: none; }
+.stitches-clue { fill: #e9e1f7; text-anchor: middle; dominant-baseline: middle; font-size: .4px; font-family: "Poor Richard", "IM Fell English", Georgia, serif; font-weight: 600; }
+.stitches-clue.met { fill: #39ff14; }
+.stitches-clue.over { fill: #ff72a8; }
+.stitches-hit { fill: transparent; cursor: pointer; }
+.stitches-edge:hover .stitches-hit, .stitches-edge:focus-visible .stitches-hit { fill: #15102233; stroke: #151022; stroke-width: .035; }
+.stitches-thread { opacity: 0; pointer-events: none; }
+.stitches-thread line { stroke: #ffffff; stroke-width: .065; stroke-linecap: round; }
+.stitches-thread .stitches-thread-outline { stroke: #151022; stroke-width: .15; }
+.stitches-thread circle { fill: #151022; stroke: #ffffff; stroke-width: .045; }
+.stitches-edge.active .stitches-thread { opacity: 1; }
+.stitches-edge:not(.active):hover .stitches-thread { opacity: .65; }
+.tool-mark .stitches-edge { pointer-events: none; }
+.tool-mark .stitches-cell { cursor: crosshair; }
+.stitches-mark { fill: #151022; font-weight: bold; text-anchor: middle; dominant-baseline: middle; font-size: .48px; pointer-events: none; }
+.stitches-tool-divider { width: 1px; height: 26px; background: #50435e; }
+.stitches-message { min-height: 64px; padding: 16px 2px 8px; text-align: center; color: #c6bdd7; font-size: 15px; line-height: 1.4; }
+.stitches-message.won { color: #69ffe0; font-size: 20px; }
+.stitches-rules { margin: 22px 6px 0; color: #b9b1cb; line-height: 1.6; }
+.stitches-rules summary { color: #eee6fa; cursor: pointer; font-size: 18px; }
+.stitches-rules ol { margin: 12px 0 12px 22px; }
+.stitches-rules li { padding-left: 4px; margin-bottom: 5px; }
+.stitches-rules p { font-size: 13px; }
+@media (max-width: 480px) {
+  .stitches-page { padding: 20px 10px 36px; }
+  .stitches-panel { padding: 12px 7px 6px; }
+  .stitches-heading { margin-bottom: 18px; }
+  .stitches-page button, .stitches-page select { padding: 8px 10px; font-size: 14px; }
+  .stitches-tools { gap: 6px; }
+  .stitches-progress { font-size: 14px; padding: 0 9px; }
+}

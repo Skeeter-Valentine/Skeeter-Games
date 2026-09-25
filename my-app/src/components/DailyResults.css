@@ -1,0 +1,18 @@
+.daily-results-dialog { position: fixed; inset: 0; margin: auto; width: min(94vw, 510px); max-height: 90dvh; overflow-y: auto; padding: 0; border: 1px solid #675279; border-radius: 18px; background: #171222; color: #f8f3ff; box-shadow: 0 24px 90px #0009; }
+.daily-results-dialog::backdrop { background: #080510cf; backdrop-filter: blur(5px); }
+.daily-results-content { position: relative; padding: 32px 24px 24px; text-align: center; }
+.daily-results-content .daily-results-close { position: absolute; top: 5px; right: 9px; width: 36px; height: 36px; background: transparent; color: #d6c8e5; cursor: pointer; font-size: 28px; }
+.daily-results-eyebrow { color: #b8a9ca; letter-spacing: 1px; margin-bottom: 12px; }
+.daily-results-content h2 { font-size: 28px; color: #00ff87; margin-bottom: 20px; }
+.daily-results-time { display: grid; gap: 5px; margin-bottom: 22px; }
+.daily-results-time span { color: #c3b5d3; font-size: 14px; }
+.daily-results-time strong { font-size: 38px; color: #00f0ff; font-variant-numeric: tabular-nums; }
+.daily-results-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.daily-results-grid > div { background: #282035; padding: 14px 5px; border-radius: 9px; display: grid; gap: 6px; }
+.daily-results-grid strong { font-size: 25px; color: #fff; font-variant-numeric: tabular-nums; }
+.daily-results-grid span { font-size: 13px; color: #c5b6d5; }
+.daily-results-note, .daily-results-legacy { font-size: 13px; line-height: 1.5; color: #b8a9ca; margin-top: 20px; }
+.daily-results-legacy summary { cursor: pointer; color: #ffb703; }
+.daily-results-content .daily-results-done { margin-top: 20px; width: 100%; padding: 12px; background: #ff2a85; color: #fff; font-size: 17px; font-weight: bold; border-radius: 8px; cursor: pointer; }
+.daily-results-dialog button:focus-visible, .daily-results-legacy summary:focus-visible { outline: 2px solid #00f0ff; outline-offset: 3px; }
+@media (max-width: 400px) { .daily-results-content { padding: 30px 14px 18px; } .daily-results-grid strong { font-size: 21px; } }

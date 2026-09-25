@@ -1,3 +1,4 @@
+import DailyResults from '../../components/DailyResults';
 // src/games/nonograms/Nonograms.jsx
 
 import React, { useState, useEffect, useCallback } from 'react';
@@ -287,6 +288,7 @@ export default function Nonograms({ onWin }) {
     <>
 
       <Navbar />
+      <DailyResults gameId="nonograms" title="Skeedograms" daily={gameMode === 'daily'} finished={isWon} />
 
       <div className="nonogram-wrapper">
 

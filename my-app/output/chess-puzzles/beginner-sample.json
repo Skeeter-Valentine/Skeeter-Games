@@ -1,0 +1,16 @@
+{
+  "playlistUrl": "https://www.youtube.com/playlist?list=PLg82qR1dt9GSmEh4EZN39t7BWX3qCJqXE",
+  "playlistVideoCount": 96,
+  "extractedCount": 1,
+  "puzzles": [
+    {
+      "title": "BEGINNER PUZZ 3/31",
+      "videoUrl": "https://www.youtube.com/watch?v=GR79pBLX_X8",
+      "fen": "r1bq2rk/pp1n4/4ppQ1/3p4/8/P1B1P3/1P3PPP/R4RK1 w - - 0 1",
+      "sideToMove": "white",
+      "solution": "Qh6#",
+      "verification": "Board transcribed visually from opening video frames; narration describes mate in one. Video thumbnail shows a different queen square and must not be used as the starting position.",
+      "moveCounterNote": "Halfmove and fullmove counters normalized to 0 and 1; historical counters unavailable."
+    }
+  ]
+}

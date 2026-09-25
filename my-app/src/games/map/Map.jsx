@@ -1,4 +1,5 @@
 import React, { useMemo, useRef, useState } from 'react';
+import MapGameTools from './MapGameTools';
 import './Map.css';
 
 // Original implementation of Simon Tatham's Map rules. No external dependencies.
@@ -281,6 +282,7 @@ export default function Map({ initialSeed = 17429, initialSize = 'Medium' }) {
         </a>
         <span className="skeedomap-tagline">FOUR COLORS. ONE QUIET CHALLENGE.</span>
       </header>
+      <MapGameTools puzzleId={`${settings.seed}:${settings.size}`} won={won} filled={filled} total={board.colors.length} actions={cursor} />
       <div className="skeedomap-heading">
         <div><p className="skeedomap-eyebrow">A LITTLE SPACE FOR LOGIC</p><h1>Make room for color.</h1>
           <p>Four colors. Every region. No matching neighbors.</p></div>

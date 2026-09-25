@@ -1,3 +1,4 @@
+import DailyResults from '../../components/DailyResults';
 // src/games/hashi/Hashi.jsx
 import React, { useState, useEffect, useRef } from 'react';
 import StatsModal from './components/StatsModal';
@@ -33,6 +34,7 @@ export default function Hashi({ onWin }) {
     const [isDailyMode, setIsDailyMode] = useState(false);
     
     const [seconds, setSeconds] = useState(0);
+    const [isSolved, setIsSolved] = useState(false);
     const [isActive, setIsActive] = useState(false);
     const [isStatsOpen, setIsStatsOpen] = useState(false);
     const [stats, setStats] = useState(DEFAULT_STATS);
@@ -93,6 +95,7 @@ export default function Hashi({ onWin }) {
 
     const startNewGame = (daily = false) => {
         setMessage('');
+        setIsSolved(false);
         setIsDailyMode(daily);
         setSeconds(0);
         setIsActive(true);
@@ -312,8 +315,11 @@ export default function Hashi({ onWin }) {
             if (allMet && isConnected(islands, updatedBridges)) {
                 setIsActive(false);
                 setMessage('🎉 Puzzle Solved Successfully!');
-                updateStatsOnGameEnd(true);
-                setIsStatsOpen(true);
+                setIsSolved(true);
+                if (!isDailyMode) {
+                    updateStatsOnGameEnd(true);
+                    setIsStatsOpen(true);
+                }
                 if (isDailyMode) {
                     localStorage.setItem(`hashi_solved_${todayStr}`, 'true');
                 }
@@ -328,12 +334,10 @@ export default function Hashi({ onWin }) {
     return (
         <>
             <Navbar />
+      <DailyResults gameId="hashi" title="Hashi" daily={isDailyMode} date={todayStr} finished={isSolved} seconds={seconds} ready={gameState.islands.length > 0} manualOpen={isStatsOpen} onClose={() => setIsStatsOpen(false)} legacyStats={stats} />
             <div className="hashi-container">
                 <div className="skeedle-header">
                     <h2>Hashkeet {isDailyMode && <span style={{ fontSize: '14px', color: '#58a6ff' }}>(Daily)</span>}</h2>
-                    <button className="stats-btn hashi-btn" onClick={() => setIsStatsOpen(true)} style={{ padding: '4px 10px' }}>
-                        STATS
-                    </button>
                 </div>
                 
                 <div className="hashi-status-bar">
@@ -356,7 +360,7 @@ export default function Hashi({ onWin }) {
                     >
                         Random
                     </button>
-                    <button onClick={() => { setGameState(prev => ({ ...prev, bridges: [] })); setSeconds(0); setIsActive(true); }} className="hashi-btn">Reset</button>
+                    <button onClick={() => { setGameState(prev => ({ ...prev, bridges: [] })); setSeconds(0); setIsActive(true); setIsSolved(false); }} className="hashi-btn">Reset</button>
                 </div>
 
                 {!isDailyMode && (
@@ -392,7 +396,7 @@ export default function Hashi({ onWin }) {
                     />
 
                     <StatsModal
-                        isOpen={isStatsOpen}
+                        isOpen={isStatsOpen && !isDailyMode}
                         onClose={() => setIsStatsOpen(false)}
                         stats={stats}
                         time={!isActive ? formatTime(seconds) : null}

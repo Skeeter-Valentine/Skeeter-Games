@@ -1,3 +1,4 @@
+import DailyResults from '../../components/DailyResults';
 // src/games/sudoku/Skeedoku.jsx
 import React, { useState, useEffect, useRef } from 'react';
 import './Sudoku.css';
@@ -248,14 +249,6 @@ export default function Skeedoku({ onWin }) {
   const handleGameComplete = () => {
     setCompleted(true);
     onWin?.();
-    if (configKey === 'daily') {
-      const newPlayed = stats.played + 1;
-      const newStreak = stats.streak + 1;
-      const newBest = stats.bestTime === null ? elapsed : Math.min(stats.bestTime, elapsed);
-      const updated = { played: newPlayed, streak: newStreak, bestTime: newBest };
-      setStats(updated);
-      localStorage.setItem('skeedoku_daily_stats', JSON.stringify(updated));
-    }
     setShowModal(true);
   };
 
@@ -384,6 +377,7 @@ export default function Skeedoku({ onWin }) {
   return (
     <>
     <Navbar />
+      <DailyResults gameId="sudoku" title="Skeedoku" daily={configKey === 'daily'} finished={completed} seconds={elapsed} ready={grid.length > 0} legacyStats={stats} />
     <div className="sudoku-app-wrapper">
       <div className="app">
         <section className="card game-card">
@@ -528,7 +522,7 @@ export default function Skeedoku({ onWin }) {
         </aside>
       </div>
 
-      {showModal && (
+      {showModal && configKey !== 'daily' && (
         <div className="modal-overlay">
           <div className="card modal-content">
             <h2>Puzzle Completed! 🎉</h2>

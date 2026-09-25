@@ -1,8 +1,8 @@
+import DailyResults from '../../components/DailyResults';
 // src/games/word500/Word500.jsx
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import Board, { getWord500Feedback } from './components/Board';
 import Keyboard from './components/Keyboard';
-import StatsModal from './components/StatsModal';
 import { getRandomTargetWord, getDailyTargetWord, isValidWord } from './constants/wordBank';
 import './Word500.css';
 import Navbar from '../../components/Navbar';
@@ -30,7 +30,6 @@ export default function Word500({ onWin }) {
   
   // Stats state
   const [stats, setStats] = useState(DEFAULT_STATS);
-  const [isStatsOpen, setIsStatsOpen] = useState(false);
 
   // Hidden input ref for mobile virtual keyboard trigger
   const hiddenInputRef = useRef(null);
@@ -44,35 +43,6 @@ export default function Word500({ onWin }) {
       setStats(JSON.parse(savedStats));
     }
   }, []);
-
-  const updateStatsOnGameEnd = (isWin, attemptCount) => {
-    setStats((prev) => {
-      const isNewDay = prev.lastPlayedDate !== todayStr;
-      if (!isNewDay) return prev;
-
-      const newPlayed = prev.played + 1;
-      const newWins = isWin ? prev.wins + 1 : prev.wins;
-      const newCurrentStreak = isWin ? prev.currentStreak + 1 : 0;
-      const newMaxStreak = Math.max(prev.maxStreak, newCurrentStreak);
-
-      const newDist = { ...prev.guessDistribution };
-      if (isWin && attemptCount) {
-        newDist[attemptCount] = (newDist[attemptCount] || 0) + 1;
-      }
-
-      const updated = {
-        played: newPlayed,
-        wins: newWins,
-        currentStreak: newCurrentStreak,
-        maxStreak: newMaxStreak,
-        guessDistribution: newDist,
-        lastPlayedDate: todayStr
-      };
-
-      localStorage.setItem('skeedle500_stats', JSON.stringify(updated));
-      return updated;
-    });
-  };
 
   const initGame = useCallback((mode) => {
     setCurrentGuess('');
@@ -170,10 +140,7 @@ export default function Word500({ onWin }) {
           setGameOver(true);
           setMessage(isWin ? 'Great job!' : `Game Over! The word was ${targetWord}`);
 
-          if (gameMode === 'daily') {
-            updateStatsOnGameEnd(isWin, updatedGuesses.length);
-            setTimeout(() => setIsStatsOpen(true), 1200);
-          }
+
         }
 
         if (gameMode === 'daily') {
@@ -243,6 +210,7 @@ export default function Word500({ onWin }) {
   return (
     <div className="word500-container">
       <Navbar />
+      <DailyResults gameId="word500" title="Skeedle500" daily={gameMode === 'daily'} date={todayStr} finished={gameOver} won={guesses.includes(targetWord)} ready={!!targetWord} legacyStats={stats} />
       
       {/* Hidden input to trigger mobile virtual keyboard cleanly */}
       <input
@@ -288,13 +256,6 @@ export default function Word500({ onWin }) {
         </button>
 
         <div className="header-actions">
-          <button 
-            className="stats-btn" 
-            onClick={() => setIsStatsOpen(true)}
-            aria-label="Statistics"
-          >
-            STATS
-          </button>
           
           <div className="mode-toggle">
             <button
@@ -337,11 +298,6 @@ export default function Word500({ onWin }) {
 
       <Keyboard onKeyPress={handleKeyPress} guessedLetters={guessedLetters} />
 
-      <StatsModal
-        isOpen={isStatsOpen}
-        onClose={() => setIsStatsOpen(false)}
-        stats={stats}
-      />
       
       <div style={{ marginTop: '24px' }}>
         <FeedbackForm />

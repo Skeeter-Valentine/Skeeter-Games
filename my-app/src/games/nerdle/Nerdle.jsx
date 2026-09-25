@@ -1,3 +1,4 @@
+import DailyResults from '../../components/DailyResults';
 // src/games/nerdle/Nerdle.jsx
 import React, { useState, useEffect } from 'react';
 import './Nerdle.css';
@@ -399,6 +400,7 @@ export default function Nerdle({ onWin }) {
   return (
     <>
       <Navbar />
+      <DailyResults gameId="nerdle" title="Skeedle+" daily={isDailyMode} finished={gameStatus !== 'IN_PROGRESS'} won={gameStatus === 'WON'} ready={!!targetEquation} />
       <div className="word500-container">
         <div className="skeedle-header">
           <h1 className="skeedle-title-btn" style={{ cursor: 'default' }}>SKEEDLE+</h1>
