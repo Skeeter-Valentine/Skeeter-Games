@@ -1,20 +1,20 @@
 // src/pages/LandingPage.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import './LandingPage.css';
-import logoImg from '../assets/logoFog.png';
-import mineskeeterImg from '../assets/mineskeeter2.png';
-import ske4dleImg from '../assets/ske4dle2.png';
-import skeedle500Img from '../assets/skeedle5002.png';
-import game2048Img from '../assets/20482.png';
-import shikakuImg from '../assets/shikaku2.png';
-import pipesImg from '../assets/pipes2.png';
-import hashiImg from '../assets/hashkeet2.png';
-import sudokuImg from '../assets/skeedoku2.png';
-import nerdleImg from '../assets/skeedle+2.png';
-import nonogramsImg from '../assets/skeedograms2.png';
-import skeedlemarathonImg from '../assets/skeedlemarathon.png';
-import stitchesImg from '../assets/skitches.png';
+import logoImg from '../assets/logoFog.webp';
+import mineskeeterImg from '../assets/mineskeeter2.webp';
+import ske4dleImg from '../assets/ske4dle2.webp';
+import skeedle500Img from '../assets/skeedle5002.webp';
+import game2048Img from '../assets/20482.webp';
+import shikakuImg from '../assets/shikaku2.webp';
+import pipesImg from '../assets/pipes2.webp';
+import hashiImg from '../assets/hashkeet2.webp';
+import sudokuImg from '../assets/skeedoku2.webp';
+import nerdleImg from '../assets/skeedle+2.webp';
+import nonogramsImg from '../assets/skeedograms2.webp';
+import skeedlemarathonImg from '../assets/skeedlemarathon.webp';
+import stitchesImg from '../assets/skitches.webp';
 import Stitches from '../games/stitches/Stitches';
 
 // Import Skeeter Gauntlet and your game components
@@ -48,24 +48,6 @@ const GAMES = [
 export default function LandingPage() {
   const [inGauntletMode, setInGauntletMode] = useState(false);
 
-  useEffect(() => {
-    const gtagScript = document.createElement('script');
-    gtagScript.src = 'https://www.googletagmanager.com/gtag/js?id=G-9TBQNYQE6V';
-    gtagScript.async = true;
-    document.head.appendChild(gtagScript);
-
-    window.dataLayer = window.dataLayer || [];
-    function gtag() {
-      window.dataLayer.push(arguments);
-    }
-    gtag('js', new Date());
-    gtag('config', 'G-9TBQNYQE6V');
-
-    return () => {
-      document.head.removeChild(gtagScript);
-    };
-  }, []);
-
   // Filter out games that have excludeFromGauntlet set to true
   const gauntletGames = GAMES.filter(game => !game.excludeFromGauntlet);
 
@@ -75,7 +57,7 @@ export default function LandingPage() {
         <header className="landing-header">
           <div className="landing-header-content" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', padding: '0 10px' }}>
             <Link to="/" className="landing-logo">
-              <img src={logoImg} alt="Skeeter Games Logo" className="landing-logo-image" />
+              <img src={logoImg} alt="Skeeter Games Logo" width="40" height="40" className="landing-logo-image" />
               <span className="landing-logo-text">Skeeter Games</span>
             </Link>
             <button 
@@ -105,7 +87,7 @@ export default function LandingPage() {
       <header className="landing-header">
         <div className="landing-header-content" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
           <Link to="/" className="landing-logo">
-            <img src={logoImg} alt="Skeeter Games Logo" className="landing-logo-image" />
+            <img src={logoImg} alt="Skeeter Games Logo" width="40" height="40" className="landing-logo-image" />
             <span className="landing-logo-text">Skeeter Games</span>
           </Link>
 
@@ -131,10 +113,10 @@ export default function LandingPage() {
 
       <main className="landing-main">
         <div className="landing-grid">
-          {GAMES.map((game) => (
+          {GAMES.map((game, index) => (
             <Link key={game.id} to={game.path} className="landing-card" aria-label={game.title}>
               {game.isNew && <span className="new-badge">NEW</span>}
-              <img src={game.image} alt={game.title} className="landing-card-image" />
+              <img src={game.image} alt={game.title} width="640" height="640" loading={index < 3 ? "eager" : "lazy"} decoding="async" className="landing-card-image" />
             </Link>
           ))}
         </div>
