@@ -12,6 +12,8 @@ test('all 13 active games render accessible statistics and instructions icons', 
   globalThis.window = { innerWidth: 1024 };
   const server = await createServer({ server: { middlewareMode: true }, appType: 'custom' });
   try {
+    const { default: GameFeedback } = await server.ssrLoadModule('/src/components/GameFeedback.jsx');
+    const { default: Seo } = await server.ssrLoadModule('/src/seo/Seo.jsx');
     const games = [
       ['2048/Game2048', '2048'], ['hashi/Hashi', 'hashi'], ['minesweeper/Minesweeper', 'minesweeper'],
       ['nerdle/Nerdle', 'nerdle'], ['nonograms/Nonograms', 'nonograms'], ['pipes/pipes', 'pipes'],
@@ -21,10 +23,16 @@ test('all 13 active games render accessible statistics and instructions icons', 
     for (const [path, id] of games) {
       assert.ok(gameInstructions[id]?.length >= 4, `${id} needs complete game directions`);
       const { default: Game } = await server.ssrLoadModule(`/src/games/${path}.jsx`);
-      const html = renderToString(React.createElement(MemoryRouter, null, React.createElement(Game)));
+      const html = renderToString(React.createElement(MemoryRouter, { initialEntries: [`/${id}`] },
+        React.createElement(Game), React.createElement(GameFeedback), React.createElement(Seo)));
+      assert.equal((html.match(/Send Feedback/g) || []).length, 1, `${id} needs exactly one feedback form`);
+      assert.ok(html.indexOf('Send Feedback') < html.indexOf('class="game-guide"'), `${id} feedback must precede the guide`);
       assert.equal((html.match(/title="Statistics"/g) || []).length, 1, `${id} needs one stats icon`);
       assert.equal((html.match(/title="How to play"/g) || []).length, 1, `${id} needs one instructions icon`);
       assert.ok(html.includes('aria-haspopup="dialog"'));
+    }
+    for (const path of ['/', '/not-a-game']) {
+      assert.equal(renderToString(React.createElement(MemoryRouter, { initialEntries: [path] }, React.createElement(GameFeedback))), '');
     }
     const { default: DailyResults } = await server.ssrLoadModule('/src/components/DailyResults.jsx');
     for (const daily of [true, false]) {

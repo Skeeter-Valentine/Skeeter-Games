@@ -12,7 +12,7 @@ const timeText = seconds => `${Math.floor(seconds / 60)}:${String(seconds % 60).
 function newGame(mode, size = 7) {
   const date = today();
   const puzzle = mode === 'daily' ? dailyPuzzle(date) : generatePuzzle(size);
-  const game = { mode, date, puzzle, selected: [], marks: [], seconds: 0, history: [] };
+  const game = { mode, date, puzzle, selected: [], marks: [], seconds: 0, started: false, history: [] };
   if (mode === 'daily') {
     try {
       const saved = JSON.parse(localStorage.getItem(storageKey(date)));
@@ -45,10 +45,10 @@ export default function Stitches({ onWin }) {
   const holes = new Set(chosen.flatMap(edge => [edge.a, edge.b]));
 
   useEffect(() => {
-    if (won) return;
+    if (won || !game.started) return;
     const timer = setInterval(() => setGame(current => ({ ...current, seconds: current.seconds + 1 })), 1000);
     return () => clearInterval(timer);
-  }, [won]);
+  }, [won, game.started]);
 
   useEffect(() => {
     if (game.mode !== 'daily') return;
@@ -68,7 +68,7 @@ export default function Stitches({ onWin }) {
   };
 
   const commit = (nextSelected, nextMarks) => {
-    setGame(current => ({ ...current, selected: nextSelected, marks: nextMarks,
+    setGame(current => ({ ...current, started: true, selected: nextSelected, marks: nextMarks,
       history: [...current.history, { selected: current.selected, marks: current.marks }],
     }));
     setMessage('');
@@ -132,7 +132,7 @@ export default function Stitches({ onWin }) {
     if (!changed) return;
     const nextMarks = [...drag.marks];
     setGame(current => current.puzzle !== drag.puzzle ? current : {
-      ...current, marks: nextMarks,
+      ...current, started: true, marks: nextMarks,
       history: [...drag.history, drag.before],
     });
     setMessage('');
@@ -260,7 +260,7 @@ export default function Stitches({ onWin }) {
             }}>Undo</button>
             <button onClick={() => {
               markDrag.current = null;
-              setGame(current => ({ ...current, selected: [], marks: [], history: [], seconds: 0 }));
+              setGame(current => ({ ...current, selected: [], marks: [], history: [], seconds: 0, started: false }));
               notified.current = false;
               setMessage('');
             }}>Reset</button>

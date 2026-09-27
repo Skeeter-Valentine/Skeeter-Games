@@ -3,6 +3,11 @@ import test from 'node:test';
 import { checkSolution, dailyPuzzle, generatePuzzle, getCounts, getEdges, seededRandom, solvePuzzle } from './puzzle.js';
 import { fallbackPuzzle } from './fallbacks.js';
 
+function checkZeroClues(puzzle) {
+  assert.ok([...puzzle.rows, ...puzzle.cols].filter(clue => clue === 0).length <= 1,
+    'At most one zero clue across all rows and columns');
+}
+
 function checkRegionShapes(regions) {
   const size = regions.length;
   const blocks = new Map();
@@ -106,10 +111,11 @@ test('solver matches independent subset enumeration on small region layouts', ()
   }
 });
 
-test('300 generated puzzles have exactly one solution and nontrivial block layouts', () => {
+test('300 generated puzzles are unique, irregular, and have at most one zero clue', () => {
   for (const size of [5, 7, 9]) {
     for (let seed = 0; seed < 100; seed++) {
       const puzzle = generatePuzzle(size, seededRandom(seed));
+      checkZeroClues(puzzle);
       assert.equal(puzzle.regions.length, size);
       assert.ok(puzzle.regions.every(row => row.length === size));
       checkRegionShapes(puzzle.regions);
@@ -128,6 +134,7 @@ test('all fallback rotations and reflections remain unique', () => {
       for (const flip of [0, 0.9]) {
         let call = 0;
         const puzzle = fallbackPuzzle(size, () => call++ === 0 ? rotation / 4 : flip);
+        checkZeroClues(puzzle);
         checkRegionShapes(puzzle.regions);
         const result = solvePuzzle(puzzle);
         assert.equal(result.complete, true);
@@ -140,8 +147,12 @@ test('all fallback rotations and reflections remain unique', () => {
 
 test('daily puzzles repeat and constant RNGs terminate safely', () => {
   assert.deepEqual(dailyPuzzle('2026-09-24'), dailyPuzzle('2026-09-24'));
+  for (let day = 1; day <= 30; day++) {
+    checkZeroClues(dailyPuzzle(`2026-09-${String(day).padStart(2, '0')}`));
+  }
   for (const value of [0, 0.5, 0.999999]) {
     const puzzle = generatePuzzle(9, () => value);
+    checkZeroClues(puzzle);
     checkRegionShapes(puzzle.regions);
     const result = solvePuzzle(puzzle);
     assert.equal(result.complete, true);

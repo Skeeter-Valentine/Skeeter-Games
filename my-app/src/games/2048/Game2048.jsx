@@ -3,7 +3,6 @@ import DailyResults from '../../components/DailyResults';
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import Navbar from '../../components/Navbar';
 import './Game2048.css';
-import FeedbackForm from '../../components/Feedback';
 
 const GRID_SIZE = 4;
 
@@ -636,7 +635,6 @@ export default function Game2048({ onWin }) {
           </div>
         </div>
       </main>
-      <FeedbackForm />
     </div>
   );
 }

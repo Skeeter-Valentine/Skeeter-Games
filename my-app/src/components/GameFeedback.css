@@ -1,0 +1,4 @@
+.game-feedback { box-sizing: border-box; width: min(400px, calc(100% - 32px)); margin: 32px auto; clear: both; }
+.game-feedback > div { width: 100%; box-sizing: border-box; }
+.game-feedback input, .game-feedback textarea { box-sizing: border-box; width: 100%; min-width: 0; }
+.game-feedback h3 { margin-bottom: 16px; }

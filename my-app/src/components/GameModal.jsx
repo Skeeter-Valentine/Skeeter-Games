@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import './DailyResults.css';
 
-export default function GameModal({ titleId, onClose, children }) {
+export default function GameModal({ titleId, onClose, children, closeLabel = 'Back to game' }) {
   const dialog = useRef(null);
   useEffect(() => {
     const element = dialog.current;
@@ -23,7 +23,7 @@ export default function GameModal({ titleId, onClose, children }) {
     <div className="daily-results-content">
       <button type="button" className="daily-results-close" aria-label="Close dialog" onClick={onClose}>×</button>
       {children}
-      <button type="button" className="daily-results-done" onClick={onClose}>Back to game</button>
+      <button type="button" className="daily-results-done" onClick={onClose}>{closeLabel}</button>
     </div>
   </dialog>, document.body);
 }

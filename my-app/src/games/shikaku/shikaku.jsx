@@ -2,7 +2,6 @@ import DailyResults from '../../components/DailyResults';
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import './shikaku.css';
 import Navbar from '../../components/Navbar';
-import FeedbackForm from '../../components/Feedback';
 
 import { mulberry32, getDailySeed, getDailyGridSize, generateUniquePuzzle } from './puzzle.js';
 
@@ -23,7 +22,7 @@ export default function Shikaku({ onWin }) {
   const [cursorPos, setCursorPos] = useState({ x: 0, y: 0 });
 
   const [seconds, setSeconds] = useState(0);
-  const [isTimerActive, setIsTimerActive] = useState(true);
+  const [isTimerActive, setIsTimerActive] = useState(false);
 
   const gridRef = useRef(null);
 
@@ -64,7 +63,7 @@ export default function Shikaku({ onWin }) {
           setPlacedRects(savedRects || []);
           setSeconds(savedSeconds || 0);
           setIsWin(!!savedWin);
-          setIsTimerActive(!savedWin);
+          setIsTimerActive(false);
           if (savedWin) {
             setStatus(`🎉 Daily Puzzle Solved in ${formatTime(savedSeconds || 0)}!`);
           }
@@ -81,7 +80,7 @@ export default function Shikaku({ onWin }) {
     setPlacedRects([]);
     setSeconds(0);
     setIsWin(false);
-    setIsTimerActive(true);
+    setIsTimerActive(false);
   }, [gameMode, gridSize, todayStr]);
 
   useEffect(() => {
@@ -204,6 +203,7 @@ export default function Shikaku({ onWin }) {
     const clientY = e.touches ? e.touches[0].clientY : e.clientY;
     setCursorPos({ x: clientX, y: clientY });
 
+    setIsTimerActive(true);
     const coords = getGridCoords(e);
     setIsDragging(true);
     setDragStart(coords);
@@ -249,6 +249,7 @@ export default function Shikaku({ onWin }) {
   };
 
   const handleRectClick = (index, e) => {
+    setIsTimerActive(true);
     e.stopPropagation();
     const updated = placedRects.filter((_, i) => i !== index);
     setPlacedRects(updated);
@@ -430,7 +431,7 @@ export default function Shikaku({ onWin }) {
             setStatus('');
             setIsWin(false);
             setSeconds(0);
-            setIsTimerActive(true);
+            setIsTimerActive(false);
           }}
         >
           Reset Board
@@ -442,9 +443,6 @@ export default function Shikaku({ onWin }) {
         )}
       </div>
 
-      <div style={{ marginTop: '24px' }}>
-        <FeedbackForm />
-      </div>
     </div>
   );
 }

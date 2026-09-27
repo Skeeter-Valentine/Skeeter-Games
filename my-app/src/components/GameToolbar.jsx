@@ -2,11 +2,13 @@ import { useState } from 'react';
 import GameModal from './GameModal';
 import { gameInstructions } from './gameInstructions.js';
 import './GameToolbar.css';
+import useBoardAlignment from './useBoardAlignment';
 
 export default function GameToolbar({ gameId, title, onStats, children }) {
   const [instructionsOpen, setInstructionsOpen] = useState(false);
+  const toolbarRef = useBoardAlignment(gameId);
   return <>
-    <div className="game-utility-bar" aria-label={`${title} game tools`}>
+    <div ref={toolbarRef} className="game-utility-bar" aria-label={`${title} game tools`}>
       {children && <span className="game-utility-time">{children}</span>}
       <button type="button" className="game-utility-icon" aria-label={`${title} statistics`} title="Statistics"
         aria-haspopup="dialog" onClick={onStats}>

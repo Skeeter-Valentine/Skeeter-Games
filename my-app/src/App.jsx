@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 
 import LandingPage from './pages/LandingPage';
 import Seo from './seo/Seo';
+import GameFeedback from './components/GameFeedback';
 import Minesweeper from './games/minesweeper/Minesweeper';
 import Quordle from './games/quordle/Quordle';
 import Word500 from './games/word500/Word500';
@@ -40,6 +41,7 @@ export default function App() {
         <Route path="/skeedle-marathon" element={<SkeedleMarathon />} />
         <Route path="*" element={<div>404 - Game Not Found</div>} />
       </Routes>
+      <GameFeedback />
       <Seo />
     </BrowserRouter>
   );

@@ -3,7 +3,6 @@ import DailyResults from '../../components/DailyResults';
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import './Minesweeper.css';
 import Navbar from '../../components/Navbar';
-import FeedbackForm from '../../components/Feedback';
 
 const DIFFICULTY_CONFIGS = {
   beginner: { rows: 9, cols: 9, mines: 10 },
@@ -136,16 +135,6 @@ export default function Minesweeper({ onWin }) {
           setGameStatus(parsed.gameStatus);
           setFlagsLeft(parsed.flagsLeft);
           setTimer(parsed.timer);
-          if (parsed.gameStatus === 'playing' && parsed.timer > 0) {
-            startTimeRef.current = Date.now() - parsed.timer * 1000;
-            setIsTimerRunning(true);
-            timerIntervalRef.current = setInterval(() => {
-              if (startTimeRef.current) {
-                const seconds = Math.floor((Date.now() - startTimeRef.current) / 1000);
-                setTimer(seconds);
-              }
-            }, 200);
-          }
           return;
         } catch (e) {}
       }
@@ -582,9 +571,6 @@ export default function Minesweeper({ onWin }) {
         </div>
       </div>
 
-      <div style={{ marginTop: '24px' }}>
-        <FeedbackForm />
-      </div>
     </div>
   );
 }

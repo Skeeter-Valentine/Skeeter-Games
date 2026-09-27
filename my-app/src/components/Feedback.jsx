@@ -44,12 +44,14 @@ export default function FeedbackForm() {
         <form onSubmit={handleSubmit} style={styles.form}>
           <input
             type="email"
+            aria-label="Your email (optional)"
             placeholder="Your email (optional)"
             value={userEmail}
             onChange={(e) => setUserEmail(e.target.value)}
             style={styles.input}
           />
           <textarea
+            aria-label="Your feedback"
             required
             rows={4}
             placeholder="Tell us what you think..."

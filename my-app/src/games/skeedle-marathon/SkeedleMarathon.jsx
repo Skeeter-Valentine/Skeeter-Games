@@ -1,4 +1,6 @@
 import DailyResults from '../../components/DailyResults';
+import GameModal from '../../components/GameModal';
+import { marathonProgress } from './progress.js';
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import "./SkeedleMarathon.css";
 import words from "../../constants/words.json";
@@ -132,6 +134,9 @@ export default function SkeedleMarathon() {
   const [activeBoardIndex, setActiveBoardIndex] = useState(0);
   const [hiddenBoards, setHiddenBoards] = useState(new Set());
   const [secondsElapsed, setSecondsElapsed] = useState(0);
+  const [hasStarted, setHasStarted] = useState(false);
+  const [loss, setLoss] = useState(null);
+  const [continuePlaying, setContinuePlaying] = useState(false);
 
   const answers = useMemo(() => {
     if (ANSWERS.length < BOARD_COUNT) {
@@ -163,20 +168,20 @@ export default function SkeedleMarathon() {
   }, [solvedBoards]);
 
   const solvedCount = solvedBoards.filter(Boolean).length;
-  const gameWon = answers.length === BOARD_COUNT && solvedCount === BOARD_COUNT;
-  const gameLost = guesses.length >= MAX_GUESSES && !gameWon;
-  const gameOver = gameWon || gameLost;
+  const allSolved = answers.length === BOARD_COUNT && solvedCount === BOARD_COUNT;
+  const gameWon = allSolved && !loss;
+  const gameOver = allSolved || (loss !== null && !continuePlaying);
 
-  // Run game timer (starts only after the first guess is entered)
+  // Start timing with the first letter, rather than waiting for a submitted guess.
   useEffect(() => {
-    if (gameOver || guesses.length === 0) return;
+    if (gameOver || !hasStarted) return;
 
     const timer = setInterval(() => {
       setSecondsElapsed((prev) => prev + 1);
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [gameOver, guesses.length]);
+  }, [gameOver, hasStarted]);
 
   // Ensure activeBoardIndex points to an unsolved board if possible
   useEffect(() => {
@@ -245,6 +250,8 @@ export default function SkeedleMarathon() {
     }
 
     const nextGuesses = [...guesses, currentGuess];
+    const progress = marathonProgress(answers, nextGuesses, MAX_GUESSES);
+    if (!loss && progress.lost) setLoss({ ...progress, seconds: secondsElapsed });
     setGuesses(nextGuesses);
     setCurrentGuess("");
     setMessage("");
@@ -279,6 +286,7 @@ export default function SkeedleMarathon() {
     }
 
     if (/^[A-Z]$/.test(key) && currentGuess.length < WORD_LENGTH) {
+      setHasStarted(true);
       setCurrentGuess((previous) => previous + key);
       setMessage("");
     }
@@ -319,12 +327,15 @@ export default function SkeedleMarathon() {
   }
 
   function resetGame() {
+    setLoss(null);
+    setContinuePlaying(false);
     setGuesses([]);
     setCurrentGuess("");
     setMessage("");
     setActiveBoardIndex(0);
     setHiddenBoards(new Set());
     setSecondsElapsed(0);
+    setHasStarted(false);
     setGameId((previous) => previous + 1);
 
     requestAnimationFrame(() => {
@@ -363,7 +374,15 @@ export default function SkeedleMarathon() {
   return (
     <>
       <Navbar />
-      <DailyResults gameId="skeedle-marathon" title="Skeedle Marathon" daily={gameMode === 'daily'} finished={gameOver} won={gameWon} seconds={secondsElapsed} ready={answers.length === BOARD_COUNT} />
+      <DailyResults gameId="skeedle-marathon" title="Skeedle Marathon" daily={gameMode === 'daily'} finished={!!loss || allSolved} won={gameWon} seconds={loss?.seconds ?? secondsElapsed} autoOpen={!loss} ready={answers.length === BOARD_COUNT} />
+      {loss && !continuePlaying && <GameModal titleId="marathon-loss-title" closeLabel="Continue playing" onClose={() => {
+        setContinuePlaying(true);
+        requestAnimationFrame(() => gameRef.current?.focus());
+      }}>
+        <h2 id="marathon-loss-title">Marathon lost</h2>
+        <p>You have {loss.remainingWords} unsolved words but only {loss.remainingGuesses} guesses remaining. You can no longer finish within the {MAX_GUESSES}-guess limit.</p>
+        <p>You can keep solving with extra guesses. This attempt remains a loss{gameMode === 'daily' ? ' in your daily statistics' : ''}.</p>
+      </GameModal>}
       <main
         className="skeedle-marathon"
         ref={gameRef}
@@ -422,12 +441,13 @@ export default function SkeedleMarathon() {
               </div>
 
               <div>
-                LEFT <strong>{MAX_GUESSES - guesses.length}</strong>
+                LEFT <strong>{Math.max(0, MAX_GUESSES - guesses.length)}</strong>
               </div>
             </div>
           </div>
 
           <div className="marathon-message" aria-live="polite">
+            {loss && <p>Marathon lost — continuing for practice. Extra guesses are allowed.</p>}
             {message}
           </div>
         </header>
@@ -556,10 +576,11 @@ export default function SkeedleMarathon() {
           </div>
         )}
 
-        {gameOver && (
+        {allSolved && (
           <div className="marathon-overlay">
             <section className="marathon-modal">
-              <h2>{gameWon ? "MARATHON COMPLETE!" : "MARATHON OVER"}</h2>
+              <h2>{gameWon ? "MARATHON COMPLETE!" : "PRACTICE COMPLETE"}</h2>
+              {loss && <p>You finished the boards after losing the challenge. Your result remains a loss.</p>}
 
               <p>
                 You solved <strong>{solvedCount}</strong> of{" "}

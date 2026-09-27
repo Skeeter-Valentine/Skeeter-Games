@@ -367,3 +367,18 @@ body {
   align-items: center;
   width: 100%;
 }
+
+/* Include the feedback form in the page height before the guide below it. */
+.quordle-game-container {
+  height: auto;
+  gap: 12px;
+}
+
+.quordle-game-container > * {
+  flex-shrink: 0;
+}
+
+.quordle-game-container .quordle-grid {
+  flex-grow: 0;
+  max-height: none;
+}

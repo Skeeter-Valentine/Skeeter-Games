@@ -54,6 +54,7 @@ export const gameInstructions = {
     'Every guess is evaluated across all boards. Green marks a correct letter and position; yellow marks a letter in the wrong position.',
     'Use the keyboard to type and Enter to submit. Select an unsolved board to focus on its feedback.',
     'Solved boards hide automatically. Solve every board before you run out of guesses.',
+    'If fewer guesses remain than unsolved words, the attempt is lost. You can continue with extra guesses for practice, but the result remains a loss.',
   ],
   stitches: [
     'Connect every pair of blocks sharing an edge with exactly one stitch. Blocks touching only at a corner are not neighbors.',

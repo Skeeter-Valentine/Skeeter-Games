@@ -51,6 +51,7 @@ export default function Nonograms({ onWin }) {
 
  
 
+  const [hasStarted, setHasStarted] = useState(false);
   const [currentTool, setCurrentTool] = useState(1); // 1 = fill, 2 = cross
 
   const [isWon, setIsWon] = useState(false);
@@ -103,6 +104,7 @@ export default function Nonograms({ onWin }) {
 
     setPlayerGrid(Array.from({ length: 10 }, () => Array(10).fill(0)));
 
+    setHasStarted(false);
     setIsWon(false);
 
   }, []);
@@ -121,6 +123,7 @@ export default function Nonograms({ onWin }) {
 
     setPlayerGrid(Array.from({ length: r }, () => Array(c).fill(0)));
 
+    setHasStarted(false);
     setIsWon(false);
 
   }, [selectedSize]);
@@ -143,6 +146,7 @@ export default function Nonograms({ onWin }) {
 
     setPlayerGrid(Array.from({ length: r }, () => Array(c).fill(0)));
 
+    setHasStarted(false);
     setIsWon(false);
 
   };
@@ -159,6 +163,7 @@ export default function Nonograms({ onWin }) {
 
     setPlayerGrid(Array.from({ length: r }, () => Array(c).fill(0)));
 
+    setHasStarted(false);
     setIsWon(false);
 
   };
@@ -169,6 +174,7 @@ export default function Nonograms({ onWin }) {
 
     if (isWon) return;
 
+    setHasStarted(true);
     e.preventDefault();
 
 
@@ -277,6 +283,7 @@ export default function Nonograms({ onWin }) {
 
     setPlayerGrid(Array.from({ length: height }, () => Array(width).fill(0)));
 
+    setHasStarted(false);
     setIsWon(false);
 
   };
@@ -288,7 +295,7 @@ export default function Nonograms({ onWin }) {
     <>
 
       <Navbar />
-      <DailyResults gameId="nonograms" title="Skeedograms" daily={gameMode === 'daily'} finished={isWon} />
+      <DailyResults started={hasStarted} gameId="nonograms" title="Skeedograms" daily={gameMode === 'daily'} finished={isWon} />
 
       <div className="nonogram-wrapper">
 

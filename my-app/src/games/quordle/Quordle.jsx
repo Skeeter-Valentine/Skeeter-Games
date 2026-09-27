@@ -9,7 +9,6 @@ import { getDailyTargetWords,
 } from './constants/wordBank';
 import './Quordle.css';
 import Navbar from '../../components/Navbar';
-import FeedbackForm from '../../components/Feedback';
 
 const WORD_LENGTH = 5;
 const MAX_ATTEMPTS = 9;
@@ -20,6 +19,7 @@ export default function Quordle({ onWin }) {
 
   const [targetWords, setTargetWords] = useState([]);
   const [guesses, setGuesses] = useState([]);
+  const [hasStarted, setHasStarted] = useState(false);
   const [currentGuess, setCurrentGuess] = useState('');
   const [gameOver, setGameOver] = useState(false);
   const [isInvalidGuess, setIsInvalidGuess] = useState(false);
@@ -36,6 +36,7 @@ export default function Quordle({ onWin }) {
 
   // Initialize or Reset Game based on selected mode
   const initGame = (mode) => {
+    setHasStarted(false);
     setCurrentGuess('');
     setIsInvalidGuess(false);
 
@@ -117,6 +118,7 @@ export default function Quordle({ onWin }) {
       setIsInvalidGuess(false);
     } else if (/^[A-Z]$/.test(upperKey)) {
       if (currentGuess.length < WORD_LENGTH) {
+        setHasStarted(true);
         setCurrentGuess((prev) => prev + upperKey);
         setIsInvalidGuess(false);
       }
@@ -241,9 +243,9 @@ export default function Quordle({ onWin }) {
     }, []);
 
   return (
-    <div className="game-container" onClick={focusHiddenInput}>
+    <div className="game-container quordle-game-container" onClick={focusHiddenInput}>
       <Navbar />
-      <DailyResults gameId="quordle" title="Ske4dle" daily={gameMode === 'daily'} date={getLocalDateString()} finished={gameOver} won={targetWords.length === 4 && targetWords.every(word => guesses.includes(word))} ready={targetWords.length === 4} />
+      <DailyResults started={hasStarted} gameId="quordle" title="Ske4dle" daily={gameMode === 'daily'} date={getLocalDateString()} finished={gameOver} won={targetWords.length === 4 && targetWords.every(word => guesses.includes(word))} ready={targetWords.length === 4} />
 
       {/* 5. HIDDEN INPUT ELEMENT FOR MOBILE VIRTUAL KEYBOARD */}
       <input
@@ -327,9 +329,6 @@ export default function Quordle({ onWin }) {
         letterStatuses={getLetterStatuses()}
       />
 
-      <div style={{ marginTop: '24px' }}>
-        <FeedbackForm />
-      </div>
     </div>
   );
 }

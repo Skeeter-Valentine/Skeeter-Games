@@ -212,6 +212,7 @@ export default function Nerdle({ onWin }) {
   const [isDailyMode, setIsDailyMode] = useState(true);
   const [targetEquation, setTargetEquation] = useState('');
   const [guesses, setGuesses] = useState([]);
+  const [hasStarted, setHasStarted] = useState(false);
   const [currentGuess, setCurrentGuess] = useState(Array(EQUATION_LENGTH).fill(''));
   const [activeCellIndex, setActiveCellIndex] = useState(0);
   const [gameStatus, setGameStatus] = useState('IN_PROGRESS');
@@ -220,6 +221,7 @@ export default function Nerdle({ onWin }) {
   const startNewGame = (daily = isDailyMode) => {
     const targetEq = generateEquation(daily);
     setTargetEquation(targetEq);
+    setHasStarted(false);
     setGuesses([]);
     setCurrentGuess(Array(EQUATION_LENGTH).fill(''));
     setActiveCellIndex(0);
@@ -311,6 +313,7 @@ export default function Nerdle({ onWin }) {
 
       if (/^[0-9+\-*/.=()²³]$/.test(charToInsert)) {
         const newGuess = [...currentGuess];
+        setHasStarted(true);
         newGuess[activeCellIndex] = charToInsert;
         setCurrentGuess(newGuess);
 
@@ -400,7 +403,7 @@ export default function Nerdle({ onWin }) {
   return (
     <>
       <Navbar />
-      <DailyResults gameId="nerdle" title="Skeedle+" daily={isDailyMode} finished={gameStatus !== 'IN_PROGRESS'} won={gameStatus === 'WON'} ready={!!targetEquation} />
+      <DailyResults started={hasStarted} gameId="nerdle" title="Skeedle+" daily={isDailyMode} finished={gameStatus !== 'IN_PROGRESS'} won={gameStatus === 'WON'} ready={!!targetEquation} />
       <div className="word500-container">
         <div className="skeedle-header">
           <h1 className="skeedle-title-btn" style={{ cursor: 'default' }}>SKEEDLE+</h1>

@@ -11,7 +11,7 @@ export default function DailyResults({ daily, date = new Date().toISOString().sl
 }
 
 function DailySession({ gameId, title, date, daily, finished, won = true, seconds, ready = true,
-  manualOpen = false, onClose, legacyStats }) {
+  manualOpen = false, onClose, legacyStats, started = false, autoOpen = true }) {
   const [stats, setStats] = useState(() => readDailyStats(gameId));
   const [open, setOpen] = useState(false);
   const [clock, setClock] = useState(() => {
@@ -23,7 +23,7 @@ function DailySession({ gameId, title, date, daily, finished, won = true, second
   const hasTimer = seconds !== undefined;
 
   useEffect(() => {
-    if (!daily || hasTimer || finished || !ready || stats.results[date]) return;
+    if (!daily || !started || hasTimer || finished || !ready || stats.results[date]) return;
     let last = performance.now();
     const tick = () => {
       const now = performance.now();
@@ -42,7 +42,7 @@ function DailySession({ gameId, title, date, daily, finished, won = true, second
       if (document.visibilityState !== 'hidden') elapsed.current += (performance.now() - last) / 1000;
       writeLocal(clockKey(gameId, date), elapsed.current);
     };
-  }, [gameId, date, daily, finished, ready, hasTimer, stats]);
+  }, [gameId, date, daily, started, finished, ready, hasTimer, stats]);
 
   useEffect(() => {
     if (!daily || !finished || !ready) { handled.current = false; return; }
@@ -53,10 +53,10 @@ function DailySession({ gameId, title, date, daily, finished, won = true, second
       handled.current = true;
       const time = hasTimer ? seconds : elapsed.current >= 1 ? elapsed.current : null;
       setStats(recordDailyResult(gameId, date, won, time));
-      setOpen(true);
+      if (autoOpen) setOpen(true);
     }, 0);
     return () => clearTimeout(timer);
-  }, [gameId, date, daily, finished, ready, won, seconds, hasTimer]);
+  }, [gameId, date, daily, finished, ready, won, seconds, hasTimer, autoOpen]);
 
   const visible = open || (daily && manualOpen);
   const close = () => { setOpen(false); onClose?.(); };

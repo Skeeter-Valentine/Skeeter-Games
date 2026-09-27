@@ -2,7 +2,6 @@ import DailyResults from '../../components/DailyResults';
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import './pipes.css';
 import Navbar from '../../components/Navbar';
-import FeedbackForm from '../../components/Feedback';
 
 /* ==========================================================================
    1. SEEDED PSEUDO-RANDOM NUMBER GENERATOR (For Daily Puzzles)
@@ -121,7 +120,7 @@ export default function Pipes({ onWin }) {
             setLockedGrid(locked || Array(size).fill(null).map(() => Array(size).fill(false)));
             setSeconds(time || 0);
             setIsWon(Boolean(completed));
-            setIsTimerActive(!completed);
+            setIsTimerActive(false);
             return;
           }
         } catch (err) {
@@ -188,7 +187,7 @@ export default function Pipes({ onWin }) {
     setLockedGrid(initialLocked);
     setIsWon(false);
     setSeconds(0);
-    setIsTimerActive(true);
+    setIsTimerActive(false);
 
     if (mode === 'daily') {
       localStorage.setItem(
@@ -412,6 +411,7 @@ export default function Pipes({ onWin }) {
   const handleLeftClick = (r, c) => {
     if (isWon || lockedGrid[r]?.[c]) return;
 
+    setIsTimerActive(true);
     setUserGrid((prevGrid) => {
       const nextGrid = prevGrid.map((row) => [...row]);
       nextGrid[r][c] = rotateMaskClockwise(nextGrid[r][c]);
@@ -423,6 +423,7 @@ export default function Pipes({ onWin }) {
   const handleRightClick = (r, c) => {
     if (isWon) return;
 
+    setIsTimerActive(true);
     setLockedGrid((prevLocked) => {
       const nextLocked = prevLocked.map((row) => [...row]);
       nextLocked[r][c] = !nextLocked[r][c];
@@ -578,9 +579,6 @@ export default function Pipes({ onWin }) {
             New Game
           </button>
         )}
-      </div>
-      <div style={{ marginTop: '24px' }}>
-        <FeedbackForm />
       </div>
     </div>
   );

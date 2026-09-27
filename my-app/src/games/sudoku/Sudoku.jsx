@@ -38,6 +38,7 @@ export default function Skeedoku({ onWin }) {
   const [notesMode, setNotesMode] = useState(false);
   const [mistakes, setMistakes] = useState(0);
   const [elapsed, setElapsed] = useState(0);
+  const [hasStarted, setHasStarted] = useState(false);
   const [completed, setCompleted] = useState(false);
   const [message, setMessage] = useState({ text: '', type: '' });
   const [showModal, setShowModal] = useState(false);
@@ -200,18 +201,20 @@ export default function Skeedoku({ onWin }) {
     setCompleted(false);
     setShowModal(false);
     setElapsed(0);
+    setHasStarted(false);
     setMessage({ text: '', type: '' });
   };
 
   useEffect(() => {
     if (timerRef.current) clearInterval(timerRef.current);
+    if (!hasStarted || completed) return;
     timerRef.current = setInterval(() => {
       if (!completed) {
         setElapsed(prev => prev + 1);
       }
     }, 1000);
     return () => clearInterval(timerRef.current);
-  }, [completed]);
+  }, [completed, hasStarted]);
 
   useEffect(() => {
     generatePuzzle('daily');
@@ -255,8 +258,9 @@ export default function Skeedoku({ onWin }) {
   const enterNumber = (n) => {
     if (n > size || selected < 0 || puzzle[selected] || completed) return;
 
+    if (notesMode && grid[selected]) return;
+    setHasStarted(true);
     if (notesMode) {
-      if (grid[selected]) return;
       setNotes(prev => {
         const nextNotes = [...prev];
         const cellNotes = new Set(nextNotes[selected]);
@@ -289,6 +293,7 @@ export default function Skeedoku({ onWin }) {
 
   const erase = () => {
     if (selected < 0 || puzzle[selected] || completed) return;
+    if (grid[selected] || notes[selected].size) setHasStarted(true);
     const nextGrid = [...grid];
     nextGrid[selected] = 0;
     setGrid(nextGrid);
@@ -316,6 +321,7 @@ export default function Skeedoku({ onWin }) {
       if (!candidates.length) return;
       idx = candidates[Math.floor(Math.random() * candidates.length)];
     }
+    setHasStarted(true);
     const nextGrid = [...grid];
     nextGrid[idx] = solution[idx];
     setGrid(nextGrid);
@@ -342,6 +348,7 @@ export default function Skeedoku({ onWin }) {
     setNotes(Array.from({ length: size * size }, () => new Set()));
     setMistakes(0);
     setElapsed(0);
+    setHasStarted(false);
     setCompleted(false);
     setShowModal(false);
     setSelected(puzzle.findIndex(v => v === 0));

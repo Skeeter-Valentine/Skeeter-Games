@@ -98,7 +98,7 @@ export default function Hashi({ onWin }) {
         setIsSolved(false);
         setIsDailyMode(daily);
         setSeconds(0);
-        setIsActive(true);
+        setIsActive(false);
         setIsStatsOpen(false);
 
         let rng = Math.random;
@@ -224,7 +224,7 @@ export default function Hashi({ onWin }) {
     }, [gameState, gridSize]);
 
     const handleCanvasClick = (e) => {
-        if (!isActive) return;
+        if (isSolved) return;
 
         const canvas = canvasRef.current;
         const rect = canvas.getBoundingClientRect();
@@ -291,6 +291,7 @@ export default function Hashi({ onWin }) {
                 if (crosses) return;
             }
 
+            setIsActive(true);
             let updatedBridges = [...bridges];
             if (existingIndex !== -1) {
                 if (updatedBridges[existingIndex].count === 1) {
@@ -360,7 +361,7 @@ export default function Hashi({ onWin }) {
                     >
                         Random
                     </button>
-                    <button onClick={() => { setGameState(prev => ({ ...prev, bridges: [] })); setSeconds(0); setIsActive(true); setIsSolved(false); }} className="hashi-btn">Reset</button>
+                    <button onClick={() => { setGameState(prev => ({ ...prev, bridges: [] })); setSeconds(0); setIsActive(false); setIsSolved(false); }} className="hashi-btn">Reset</button>
                 </div>
 
                 {!isDailyMode && (

@@ -6,7 +6,6 @@ import Keyboard from './components/Keyboard';
 import { getRandomTargetWord, getDailyTargetWord, isValidWord } from './constants/wordBank';
 import './Word500.css';
 import Navbar from '../../components/Navbar';
-import FeedbackForm from '../../components/Feedback';
 
 const MAX_ATTEMPTS = 8;
 
@@ -23,6 +22,7 @@ export default function Word500({ onWin }) {
   const [gameMode, setGameMode] = useState('daily');
   const [targetWord, setTargetWord] = useState('');
   const [guesses, setGuesses] = useState([]);
+  const [hasStarted, setHasStarted] = useState(false);
   const [currentGuess, setCurrentGuess] = useState('');
   const [gameOver, setGameOver] = useState(false);
   const [message, setMessage] = useState('');
@@ -45,6 +45,7 @@ export default function Word500({ onWin }) {
   }, []);
 
   const initGame = useCallback((mode) => {
+    setHasStarted(false);
     setCurrentGuess('');
     setMessage('');
     setTileNotes({});
@@ -74,6 +75,7 @@ export default function Word500({ onWin }) {
   }, [todayStr]);
 
   const handleTileClick = (rowIndex, tileIndex) => {
+    if (!gameOver) setHasStarted(true);
     const key = `${rowIndex}-${tileIndex}`;
     const currentColor = tileNotes[key] || 'none';
     
@@ -153,6 +155,7 @@ export default function Word500({ onWin }) {
           );
         }
       } else if (currentGuess.length < 5 && /^[A-Z]$/.test(upperKey)) {
+        setHasStarted(true);
         setCurrentGuess((prev) => prev + upperKey);
         setMessage('');
       }
@@ -210,7 +213,7 @@ export default function Word500({ onWin }) {
   return (
     <div className="word500-container">
       <Navbar />
-      <DailyResults gameId="word500" title="Skeedle500" daily={gameMode === 'daily'} date={todayStr} finished={gameOver} won={guesses.includes(targetWord)} ready={!!targetWord} legacyStats={stats} />
+      <DailyResults started={hasStarted} gameId="word500" title="Skeedle500" daily={gameMode === 'daily'} date={todayStr} finished={gameOver} won={guesses.includes(targetWord)} ready={!!targetWord} legacyStats={stats} />
       
       {/* Hidden input to trigger mobile virtual keyboard cleanly */}
       <input
@@ -299,9 +302,6 @@ export default function Word500({ onWin }) {
       <Keyboard onKeyPress={handleKeyPress} guessedLetters={guessedLetters} />
 
       
-      <div style={{ marginTop: '24px' }}>
-        <FeedbackForm />
-      </div>
     </div>
   );
 }

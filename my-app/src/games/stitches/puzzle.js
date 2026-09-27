@@ -178,6 +178,8 @@ export function generatePuzzle(size, rng = Math.random) {
     if (!initial.solutions.length) continue;
     const selected = new Set(initial.solutions[0]);
     const counts = getCounts(size, getEdges(regions).filter(edge => selected.has(edge.id)));
+    // Count across both axes: one empty row plus one empty column is two clues.
+    if ([...counts.rows, ...counts.cols].filter(count => count === 0).length > 1) continue;
     const puzzle = { regions, ...counts };
     const result = solvePuzzle(puzzle);
     if (result.complete && result.solutions.length === 1) return puzzle;
