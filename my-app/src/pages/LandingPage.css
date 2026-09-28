@@ -94,6 +94,11 @@ html, body {
   height: 100%;
   object-fit: cover;
   display: block;
+  /* Fade only the outer margin; keep the inset cream frame fully visible. */
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 4%, #000 96%, transparent), linear-gradient(to bottom, transparent, #000 4%, #000 96%, transparent);
+  -webkit-mask-composite: source-in;
+  mask-image: linear-gradient(to right, transparent, #000 4%, #000 96%, transparent), linear-gradient(to bottom, transparent, #000 4%, #000 96%, transparent);
+  mask-composite: intersect;
 }
 
 /* Diagonal Corner Wrapper Ribbon */

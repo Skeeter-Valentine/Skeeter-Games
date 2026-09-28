@@ -1,19 +1,20 @@
+import parshleImg from '../assets/parshle-blend.webp';
 // src/pages/LandingPage.jsx
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import './LandingPage.css';
 import logoImg from '../assets/logoFog.webp';
-import mineskeeterImg from '../assets/mineskeeter2.webp';
-import ske4dleImg from '../assets/ske4dle2.webp';
-import skeedle500Img from '../assets/skeedle5002.webp';
-import game2048Img from '../assets/20482.webp';
-import shikakuImg from '../assets/shikaku2.webp';
-import pipesImg from '../assets/pipes2.webp';
-import hashiImg from '../assets/hashkeet2.webp';
-import sudokuImg from '../assets/skeedoku2.webp';
-import nerdleImg from '../assets/skeedle+2.webp';
-import nonogramsImg from '../assets/skeedograms2.webp';
-import skeedlemarathonImg from '../assets/skeedlemarathon.webp';
+import mineskeeterImg from '../assets/mineskeeter2-blend.webp';
+import ske4dleImg from '../assets/ske4dle2-blend.webp';
+import skeedle500Img from '../assets/skeedle5002-blend.webp';
+import game2048Img from '../assets/20482-blend.webp';
+import shikakuImg from '../assets/shikaku2-blend.webp';
+import pipesImg from '../assets/pipes2-blend.webp';
+import hashiImg from '../assets/hashkeet2-blend.webp';
+import sudokuImg from '../assets/skeedoku2-blend.webp';
+import skeedlemathImg from '../assets/skeedlemath2-blend.webp';
+import nonogramsImg from '../assets/skeedograms2-blend.webp';
+import skeedlemarathonImg from '../assets/skeedlemarathon-blend.webp';
 import stitchesImg from '../assets/skitches.webp';
 import Stitches from '../games/stitches/Stitches';
 
@@ -26,14 +27,15 @@ import Game2048 from '../games/2048/Game2048';
 import Shikaku from '../games/shikaku/shikaku';
 import Pipes from '../games/pipes/pipes';
 import Hashi from '../games/hashi/Hashi';
-import Nerdle from '../games/nerdle/Nerdle';
+import Skeedlemath from '../games/skeedlemath/Skeedlemath';
 import Nonograms from '../games/nonograms/Nonograms';
 
 const GAMES = [
+  { id: 'parshle', title: 'Parshle', path: '/parshle', image: parshleImg, isNew: true, excludeFromGauntlet: true },
   { id: 'stitches', title: 'Skitches', path: '/stitches', image: stitchesImg, isNew: true, component: Stitches },
   { id: 'skeedlemarathon', title: 'Skeedlemarathon', path: '/skeedle-marathon', image: skeedlemarathonImg, isNew: true, excludeFromGauntlet: true },
-  { id: 'nonograms', title: 'Skeedograms', path: '/nonograms', image: nonogramsImg, isNew: true, component: Nonograms },
-  { id: 'nerdle', title: 'Nerdle', path: '/nerdle', image: nerdleImg, component: Nerdle },
+  { id: 'nonograms', title: 'Skeedograms', path: '/nonograms', image: nonogramsImg, component: Nonograms },
+  { id: 'skeedlemath', title: 'Skeedle+', path: '/skeedlemath', image: skeedlemathImg, component: Skeedlemath },
   { id: 'pipes', title: 'Skeeter Piper (net)', path: '/pipes', image: pipesImg, component: Pipes },
   { id: 'shikaku', title: 'Shikaku', path: '/shikaku', image: shikakuImg, component: Shikaku },
   { id: 'quordle', title: 'Ske4dle', path: '/quordle', image: ske4dleImg, component: Quordle },

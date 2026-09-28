@@ -1,4 +1,12 @@
 export const gameInstructions = {
+  parshle: [
+    'Guess the hidden five-letter word in six attempts. Every guess must be a word in the word list.',
+    'Green means the right letter in the right spot. Yellow means the letter belongs elsewhere. Pink means absent or used too many times.',
+    'Two randomly chosen tiles in every row are black from the start, so you can plan around the hidden clues. These positions stay fixed for the puzzle. Typed letters stay visible, but their feedback is hidden. The winning guess reveals all five tiles in green, with formerly black tiles slightly shaded.',
+    'The keyboard only tracks revealed feedback. Black tiles do not provide any information about whether a letter belongs in the answer.',
+    'Type with your keyboard or tap the on-screen keys. Enter submits and Backspace erases.',
+    'Daily mode gives everyone the same word and hidden positions. Random mode lets you practice with new puzzles.',
+  ],
   '2048': [
     'Slide the tiles with the arrow keys or swipe across the board.',
     'Two tiles with the same value merge when pushed together. Each tile can merge once per move.',
@@ -19,7 +27,7 @@ export const gameInstructions = {
     'Click a revealed number after flagging that many neighbors to reveal the remaining neighbors. Incorrect flags can cause a mine to open.',
     'Flags are reminders; winning requires revealing all safe cells.',
   ],
-  nerdle: [
+  skeedlemath: [
     'Find the hidden 10-character equation in six guesses. Every guess must be a valid equation with equal values on both sides of the equals sign.',
     'Use digits, arithmetic operators, parentheses, and the square/cube keys to build your equation.',
     'Green means the character is in the correct position. Yellow means it appears elsewhere. Other characters are absent or used too many times.',

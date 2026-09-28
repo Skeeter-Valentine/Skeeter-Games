@@ -1,0 +1,19 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /users/{userId}/runs2048/{runId} {
+      function owner() { return request.auth != null && request.auth.uid == userId; }
+      allow read, delete: if owner();
+      allow create, update: if owner()
+        && request.resource.data.keys().hasAll(['version', 'name', 'payload', 'updatedAt'])
+        && request.resource.data.keys().hasOnly(['version', 'name', 'payload', 'updatedAt'])
+        && request.resource.data.version == 1
+        && request.resource.data.name is string
+        && request.resource.data.name.size() > 0
+        && request.resource.data.name.size() <= 60
+        && request.resource.data.payload is string
+        && request.resource.data.payload.size() <= 800000
+        && request.resource.data.updatedAt == request.time;
+    }
+  }
+}

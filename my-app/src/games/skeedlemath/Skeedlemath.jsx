@@ -1,8 +1,8 @@
 import { generateEquation } from './equations.js';
 import DailyResults from '../../components/DailyResults';
-// src/games/nerdle/Nerdle.jsx
+// src/games/skeedlemath/Skeedlemath.jsx
 import React, { useState, useEffect } from 'react';
-import './Nerdle.css';
+import './Skeedlemath.css';
 import Navbar from '../../components/Navbar';
 
 const EQUATION_LENGTH = 10;
@@ -61,7 +61,7 @@ const hasValidParentheses = (expr, strictCheck = true) => {
   return true;
 };
 
-export default function Nerdle({ onWin }) {
+export default function Skeedlemath({ onWin }) {
   const [isDailyMode, setIsDailyMode] = useState(true);
   const [targetEquation, setTargetEquation] = useState('');
   const [guesses, setGuesses] = useState([]);
@@ -92,7 +92,7 @@ export default function Nerdle({ onWin }) {
   };
 
   const handleLogEquations = () => {
-    console.log("--- 10 Generated Nerdle Equations ---");
+    console.log("--- 10 Generated Skeedlemath Equations ---");
     for (let i = 0; i < 10; i++) {
       console.log(`[${i + 1}]`, generateEquation(false));
     }
@@ -256,7 +256,7 @@ export default function Nerdle({ onWin }) {
   return (
     <>
       <Navbar />
-      <DailyResults started={hasStarted} gameId="nerdle" title="Skeedle+" daily={isDailyMode} finished={gameStatus !== 'IN_PROGRESS'} won={gameStatus === 'WON'} ready={!!targetEquation} />
+      <DailyResults started={hasStarted} gameId="skeedlemath" title="Skeedle+" daily={isDailyMode} finished={gameStatus !== 'IN_PROGRESS'} won={gameStatus === 'WON'} ready={!!targetEquation} />
       <div className="word500-container">
         <div className="skeedle-header">
           <h1 className="skeedle-title-btn" style={{ cursor: 'default' }}>SKEEDLE+</h1>

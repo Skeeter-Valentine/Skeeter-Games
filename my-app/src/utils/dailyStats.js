@@ -4,7 +4,12 @@ export const clockKey = (gameId, date) => `skeeter:daily-clock:v1:${gameId}:${da
 
 export function readLocal(key, fallback) {
   try {
-    const raw = globalThis.localStorage.getItem(key);
+    let raw = globalThis.localStorage.getItem(key);
+    // Preserve statistics and clocks saved before the Skeedlemath rename.
+    if (raw === null && /^skeeter:daily-(results|clock):v1:skeedlemath(?::|$)/.test(key)) {
+      raw = globalThis.localStorage.getItem(key.replace(':skeedlemath', ':nerdle'));
+      if (raw !== null) writeLocal(key, JSON.parse(raw));
+    }
     if (raw !== null) return JSON.parse(raw);
   } catch { /* Corrupt/blocked storage must not interrupt a game. */ }
   return memory.get(key) ?? fallback;

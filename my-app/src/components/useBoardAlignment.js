@@ -2,11 +2,12 @@ import { useLayoutEffect, useRef } from 'react';
 
 // Use the full playing area for games with multiple boards or outside clues.
 export const boardSelectors = {
+  parshle: '.parshle-board',
   '2048': '.game2048-board',
   hashi: '.hashi-canvas',
   minesweeper: '.ms-classic-board',
   word500: '.word500-board',
-  nerdle: '.word500-board',
+  skeedlemath: '.word500-board',
   quordle: '.quordle-grid',
   'skeedle-marathon': '.marathon-boards',
   nonograms: '.grid-layout',

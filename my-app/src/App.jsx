@@ -1,5 +1,6 @@
+import Parshle from './games/parshle/Parshle';
 import React from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 
 import LandingPage from './pages/LandingPage';
 import Seo from './seo/Seo';
@@ -13,7 +14,7 @@ import Shikaku from './games/shikaku/shikaku';
 import Pipes from './games/pipes/pipes';
 import Hashi from './games/hashi/Hashi';
 import Stitches from './games/stitches/Stitches';
-import Nerdle from './games/nerdle/Nerdle';
+import Skeedlemath from './games/skeedlemath/Skeedlemath';
 import Nonograms from './games/nonograms/Nonograms';
 import Map from './games/map/Map';
 // import Nurikabe from './games/nurikabe/Nurikabe';
@@ -24,6 +25,8 @@ export default function App() {
   return (
     <BrowserRouter>
       <Routes>
+        <Route path="/nerdle" element={<Navigate to="/skeedlemath" replace />} />
+        <Route path="/parshle" element={<Parshle />} />
         <Route path="/" element={<LandingPage />} />
         <Route path="/minesweeper" element={<Minesweeper />} />
         <Route path="/quordle" element={<Quordle />} />
@@ -34,7 +37,7 @@ export default function App() {
         <Route path="/pipes" element={<Pipes />} />
         <Route path="/hashi" element={<Hashi />} />
         <Route path="/stitches" element={<Stitches />} />
-        <Route path="/nerdle" element={<Nerdle />} />
+        <Route path="/skeedlemath" element={<Skeedlemath />} />
         <Route path="/nonograms" element={<Nonograms />} />
         {/* <Route path="/nurikabe" element={<Nurikabe />} /> */}
         <Route path="/map" element={<Map />} />

@@ -31,7 +31,6 @@ function getDailySeed(dateStr) {
 export default function Game2048({ onWin }) {
   const todayStr = new Date().toISOString().split('T')[0];
   const nextId = useRef(1);
-
   const [gameMode, setGameMode] = useState('daily'); // 'daily', 'classic', or 'unlimited'
   const [unlimitedSeed, setUnlimitedSeed] = useState(() => Math.floor(Math.random() * 1000000));
   const [tiles, setTiles] = useState([]);
@@ -415,6 +414,7 @@ export default function Game2048({ onWin }) {
 
   useEffect(() => {
     const handleKeyDown = (e) => {
+      if (e.target.closest?.('input, textarea, select, button, [role="dialog"]')) return;
       if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
         e.preventDefault();
       }

@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="640" viewBox="0 0 640 640">
+<rect width="640" height="640" rx="40" fill="#101620"/>
+<rect x="28" y="28" width="584" height="584" rx="40" fill="none" stroke="#f9f7ed" stroke-width="8"/>
+<g stroke-width="3" stroke="#b8c1ce">
+<rect x="68" y="112" width="88" height="100" rx="8" fill="#6fe58b"/><rect x="172" y="112" width="88" height="100" rx="8" fill="#000"/><rect x="276" y="112" width="88" height="100" rx="8" fill="#f3d34a"/><rect x="380" y="112" width="88" height="100" rx="8" fill="#000"/><rect x="484" y="112" width="88" height="100" rx="8" fill="#515d70"/>
+<rect x="68" y="424" width="88" height="100" rx="8" fill="#000"/><rect x="172" y="424" width="88" height="100" rx="8" fill="#f3d34a"/><rect x="276" y="424" width="88" height="100" rx="8" fill="#515d70"/><rect x="380" y="424" width="88" height="100" rx="8" fill="#6fe58b"/><rect x="484" y="424" width="88" height="100" rx="8" fill="#000"/>
+</g><text x="320" y="345" text-anchor="middle" font-family="Georgia,serif" font-weight="bold" font-size="88" fill="#f9f7ed">PARSHLE</text>
+<text x="320" y="380" text-anchor="middle" font-family="sans-serif" font-size="18" letter-spacing="3" fill="#d8ff00">SOME CLUES STAY IN THE DARK</text></svg>

@@ -34,6 +34,16 @@ export function getDailyTargetWord(dateStr) {
   return TARGET_WORDS[randomIndex];
 }
 
+export function getParshleDailyTargetWord(dateStr) {
+  const excluded = getDailyTargetWord(dateStr);
+  // Exclude by word, not index, so duplicate dictionary entries cannot collide.
+  const candidates = TARGET_WORDS.filter(word => word !== excluded);
+  if (!candidates.length) throw new Error('Parshle needs at least two distinct target words');
+  let seed = 2166136261;
+  for (const char of `parshle:${dateStr}`) seed = Math.imul(seed ^ char.charCodeAt(0), 16777619);
+  return candidates[Math.floor(mulberry32(seed)() * candidates.length)];
+}
+
 export function isValidWord(word) {
   if (!word || word.length !== 5) return false;
   return VALID_DICTIONARY.has(word.toUpperCase());

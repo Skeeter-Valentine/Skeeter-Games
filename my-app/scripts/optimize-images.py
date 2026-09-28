@@ -4,7 +4,7 @@ from PIL import Image
 
 assets = Path(__file__).resolve().parents[1] / 'src' / 'assets'
 names = ['mineskeeter2', 'ske4dle2', 'skeedle5002', '20482', 'shikaku2',
-         'pipes2', 'hashkeet2', 'skeedoku2', 'skeedle+2', 'skeedograms2',
+         'pipes2', 'hashkeet2', 'skeedoku2', 'skeedlemath2', 'skeedograms2',
          'skeedlemarathon', 'skitches']
 before = after = 0
 for name in names + ['logoFog', 'logo2', 'logo']:

@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="640" viewBox="0 0 640 640">
+<rect width="640" height="640" rx="40" fill="#0d0f12"/>
+<rect x="28" y="28" width="584" height="584" rx="40" fill="none" stroke="#f0f6fc" stroke-width="8"/>
+<g fill="#161a22" stroke-width="4"><rect x="85" y="110" width="130" height="110" rx="8" stroke="#39ff14"/><rect x="255" y="110" width="130" height="110" rx="8" stroke="#ffff00"/><rect x="425" y="110" width="130" height="110" rx="8" stroke="#ff2a85"/></g>
+<g text-anchor="middle" font-family="Georgia,serif" font-weight="bold"><text x="150" y="187" fill="#39ff14" font-size="70">+</text><text x="320" y="187" fill="#ffff00" font-size="70">×</text><text x="490" y="187" fill="#ff2a85" font-size="70">=</text><text x="320" y="335" fill="#f0f6fc" font-size="75">SKEEDLE</text><text x="320" y="435" fill="#ff2a85" font-size="92">MATH</text></g>
+<text x="320" y="525" text-anchor="middle" font-family="sans-serif" font-size="22" letter-spacing="3" fill="#39ff14">FIND THE HIDDEN EQUATION</text>
+</svg>
