@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import emailjs from '@emailjs/browser';
 
-export default function FeedbackForm() {
+export default function FeedbackForm({ pageName, pagePath }) {
   const [feedback, setFeedback] = useState('');
   const [userEmail, setUserEmail] = useState('');
   const [status, setStatus] = useState('idle'); // 'idle' | 'sending' | 'success' | 'error'
@@ -10,8 +10,9 @@ export default function FeedbackForm() {
     e.preventDefault();
     setStatus('sending');
 
+    const pageUrl = `${window.location.origin}${pagePath || window.location.pathname}`;
     const templateParams = {
-      message: feedback,
+      message: `Game: ${pageName || 'Unknown page'}\nPage: ${pageUrl}\n\n${feedback}`,
       user_email: userEmail || 'Anonymous',
     };
 

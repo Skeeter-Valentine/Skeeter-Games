@@ -9,6 +9,6 @@ export default function GameFeedback() {
   if (!page || page.path === '/') return null;
   return <section className="game-feedback" aria-label={`${page.name} feedback`}
     onKeyDown={event => event.stopPropagation()} onKeyUp={event => event.stopPropagation()}>
-    <FeedbackForm key={page.path} />
+    <FeedbackForm key={page.path} pageName={page.name} pagePath={page.path} />
   </section>;
 }

@@ -414,7 +414,8 @@ export default function Game2048({ onWin }) {
 
   useEffect(() => {
     const handleKeyDown = (e) => {
-      if (e.target.closest?.('input, textarea, select, button, [role="dialog"]')) return;
+      // Keep arrow controls active after clicking buttons such as Undo or Reset.
+      if (e.target.closest?.('input, textarea, select, [contenteditable="true"], [role="dialog"]')) return;
       if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
         e.preventDefault();
       }
