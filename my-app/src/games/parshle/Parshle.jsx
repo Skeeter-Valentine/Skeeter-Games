@@ -1,3 +1,4 @@
+import { useDailyDate } from '../../components/DailyBoundary';
 import { useEffect, useState } from 'react';
 import Navbar from '../../components/Navbar';
 import DailyResults from '../../components/DailyResults';
@@ -9,7 +10,7 @@ import './Parshle.css';
 export default function Parshle() {
   const [mode, setMode] = useState('daily');
   const [round, setRound] = useState(0);
-  const [date] = useState(() => new Date().toISOString().slice(0, 10));
+  const date = useDailyDate();
   return <main className="parshle"><Navbar /><h1>PARSHLE</h1>
     <p className="parshle-tagline">Some clues stay in the dark.</p>
     <div className="parshle-controls">
@@ -82,7 +83,7 @@ function Session({ daily, date }) {
         </div>;
       })}
     </div>
-    <p className="parshle-message" role="status">{finished ? won ? `You solved it in ${guesses.length}! The word was ${answer}.` : `The word was ${answer}. Try another in Random mode.` : message || 'Two black tiles hide their feedback in every guess.'}</p>
+    <p className="parshle-message" role="status">{finished ? won ? `You solved it in ${guesses.length}! The word was ${answer}.` : `The word was ${answer}. Try another in Random mode.` : message || 'Each board hides 5–12 cells across the first five guesses.'}</p>
     <div className="parshle-keyboard" aria-label="On-screen keyboard">
       {['QWERTYUIOP', 'ASDFGHJKL', 'ZXCVBNM'].map((row, i) => <div key={row}>
         {i === 2 && <button disabled={finished} onClick={() => press('Enter')}>Enter</button>}

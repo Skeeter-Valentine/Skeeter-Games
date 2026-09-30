@@ -2,6 +2,20 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { checkSolution, dailyPuzzle, generatePuzzle, getCounts, getEdges, seededRandom, solvePuzzle } from './puzzle.js';
 import { fallbackPuzzle } from './fallbacks.js';
+import { getDailySize } from './dailyConfig.js';
+
+test('daily board dimensions follow the size schedule at all three levels', () => {
+  const sizes = new Set();
+  for (let day = 1; day <= 10; day++) {
+    const date = `2026-10-${String(day).padStart(2, '0')}`;
+    const puzzle = dailyPuzzle(date);
+    const size = getDailySize(date);
+    assert.equal(puzzle.regions.length, size);
+    assert.ok(puzzle.regions.every(row => row.length === size));
+    sizes.add(size);
+  }
+  assert.deepEqual([...sizes].sort((a, b) => a - b), [5, 7, 9]);
+});
 
 function checkZeroClues(puzzle) {
   assert.ok([...puzzle.rows, ...puzzle.cols].filter(clue => clue === 0).length <= 1,

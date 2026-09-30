@@ -1,3 +1,4 @@
+import { useDailyDate } from '../../components/DailyBoundary';
 import DailyResults from '../../components/DailyResults';
 // src/pages/Game2048.jsx
 import React, { useState, useEffect, useCallback, useRef } from 'react';
@@ -29,7 +30,7 @@ function getDailySeed(dateStr) {
 }
 
 export default function Game2048({ onWin }) {
-  const todayStr = new Date().toISOString().split('T')[0];
+  const todayStr = useDailyDate();
   const nextId = useRef(1);
   const [gameMode, setGameMode] = useState('daily'); // 'daily', 'classic', or 'unlimited'
   const [unlimitedSeed, setUnlimitedSeed] = useState(() => Math.floor(Math.random() * 1000000));

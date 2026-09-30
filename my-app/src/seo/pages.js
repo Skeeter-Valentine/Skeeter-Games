@@ -1,7 +1,8 @@
 import { gameInstructions } from '../components/gameInstructions.js';
 
 const entries = [
-  ['parshle', 'Parshle', 'Word Puzzle with Hidden Clues', 'Guess a five-letter word in six tries while two tiles in every guess hide their feedback.', 'A black tile hides its color, not its letter. Use the other three colors and earlier guesses to narrow down the answer.'],
+  ['akari', 'Akari', 'Daily Light Up Puzzle', 'Place bulbs, light every white square, and satisfy numbered walls in this daily Akari logic puzzle.', 'A wall marked 0 forbids bulbs in its neighboring squares. A bulb lights every square along its row and column until it reaches a wall.'],
+  ['parshle', 'Parshle', 'Word Puzzle with Hidden Clues', 'Guess a five-letter word in six tries with 5–12 hidden-feedback cells spread across the first five guesses.', 'A black tile hides its color, not its letter. Use the visible colors and earlier guesses to narrow down the answer.'],
   ['stitches', 'Skitches', 'Daily Stitches Puzzle', 'Connect jagged blocks with stitches while matching the hole counts around the grid.', 'If two neighboring blocks share three boundary edges, choose just one stitch between them. That stitch adds one hole at each endpoint.'],
   ['nonograms', 'Skeedograms', 'Daily Nonogram Puzzles', 'Use row and column clues to reveal a hidden pixel pattern in this nonogram logic game.', 'In a five-cell row, the clue 3, 1 fills the first three cells, leaves one empty, then fills the last cell.'],
   ['hashi', 'Hashkeet', 'Hashi Bridges Puzzles', 'Connect numbered islands into one network in this online Hashi logic puzzle.', 'An island marked 3 with only two possible neighbors needs a double bridge to one and a single bridge to the other.'],

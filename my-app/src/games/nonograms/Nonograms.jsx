@@ -1,3 +1,4 @@
+import { useDailyDate } from '../../components/DailyBoundary';
 import DailyResults from '../../components/DailyResults';
 // src/games/nonograms/Nonograms.jsx
 
@@ -10,8 +11,10 @@ import Navbar from '../../components/Navbar';
 
 
 import { generateUniquePuzzleGrid, generateClues, getDailyRng } from './puzzle';
+import { getDailySize } from './dailyConfig.js';
 
 export default function Nonograms({ onWin }) {
+  const todayStr = useDailyDate();
 
   const [gameMode, setGameMode] = useState('daily'); // Start on daily mode by default
 
@@ -23,13 +26,14 @@ export default function Nonograms({ onWin }) {
 
 
 
-  // Generate initial Daily puzzle grid (10x10) based on today's date
+  // Generate the daily board at the same size shown by the homepage rating.
 
   const [solutionGrid, setSolutionGrid] = useState(() => {
 
-    const todayStr = new Date().toISOString().slice(0, 10);
 
-    return generateUniquePuzzleGrid(10, 10, getDailyRng(todayStr));
+
+    const size = getDailySize(todayStr);
+    return generateUniquePuzzleGrid(size, size, getDailyRng(todayStr));
 
   });
 
@@ -90,19 +94,20 @@ export default function Nonograms({ onWin }) {
 
     setGameMode('daily');
 
-    const todayStr = new Date().toISOString().slice(0, 10);
+
 
     const dailyRng = getDailyRng(todayStr);
 
-    const dailyPuzzle = generateUniquePuzzleGrid(10, 10, dailyRng);
+    const size = getDailySize(todayStr);
+    const dailyPuzzle = generateUniquePuzzleGrid(size, size, dailyRng);
 
    
 
-    setSelectedSize('10x10');
+    setSelectedSize(`${size}x${size}`);
 
     setSolutionGrid(dailyPuzzle);
 
-    setPlayerGrid(Array.from({ length: 10 }, () => Array(10).fill(0)));
+    setPlayerGrid(Array.from({ length: size }, () => Array(size).fill(0)));
 
     setHasStarted(false);
     setIsWon(false);
@@ -303,7 +308,7 @@ export default function Nonograms({ onWin }) {
 
         <p className="nonogram-subtitle">
 
-          {gameMode === 'daily' ? "📅 Today's Daily 10x10 Puzzle" : "Practice Mode - Click and drag to solve!"}
+          {gameMode === 'daily' ? `📅 Today's Daily ${height}x${width} Puzzle` : "Practice Mode - Click and drag to solve!"}
 
         </p>
 

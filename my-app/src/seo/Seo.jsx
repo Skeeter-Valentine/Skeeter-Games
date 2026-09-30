@@ -9,7 +9,7 @@ export function Guide({ page }) {
     {page.path === '/' ? <h1>{page.topic}</h1> : <h2>{page.name}: {page.topic}</h2>}
     <p>{page.description}</p>
     {page.rules && <><h3>How to play</h3><ol>{page.rules.map(rule => <li key={rule}>{rule}</li>)}</ol><h3>A quick example</h3><p>{page.example}</p></>}
-    <nav aria-label="Explore puzzle games"><h3>{page.path === '/' ? 'Choose a puzzle' : 'Explore more puzzles'}</h3><ul>{Object.values(pages).filter(other => other.path !== page.path).map(other => <li key={other.path}><a href={other.path}>{other.name}{other.path !== '/' && ` — ${other.topic}`}</a></li>)}</ul></nav>
+    <nav aria-label="Explore puzzle games"><h3>{page.path === '/' ? 'Choose a puzzle' : 'Explore more puzzles'}</h3><ul>{Object.values(pages).filter(other => other.path !== page.path && !(page.path === '/' && other.path === '/akari')).map(other => <li key={other.path}><a href={other.path}>{other.name}{other.path !== '/' && ` — ${other.topic}`}</a></li>)}</ul></nav>
   </section>;
 }
 export default function Seo() {

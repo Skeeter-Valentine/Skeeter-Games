@@ -1,3 +1,4 @@
+import { useDailyDate } from '../../components/DailyBoundary';
 import DailyResults from '../../components/DailyResults';
 // src/games/word500/Word500.jsx
 import React, { useState, useEffect, useCallback, useRef } from 'react';
@@ -34,7 +35,7 @@ export default function Word500({ onWin }) {
   // Hidden input ref for mobile virtual keyboard trigger
   const hiddenInputRef = useRef(null);
 
-  const todayStr = new Date().toISOString().split('T')[0];
+  const todayStr = useDailyDate();
 
   // Load stats from localStorage
   useEffect(() => {

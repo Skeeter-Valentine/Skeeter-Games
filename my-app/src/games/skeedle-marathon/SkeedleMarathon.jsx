@@ -1,3 +1,4 @@
+import { useDailyDate } from '../../components/DailyBoundary';
 import DailyResults from '../../components/DailyResults';
 import GameModal from '../../components/GameModal';
 import { marathonProgress } from './progress.js';
@@ -43,8 +44,7 @@ function shuffle(array) {
   return copy;
 }
 
-function getDaySeed() {
-  const dateStr = new Date().toISOString().slice(0, 10); // "YYYY-MM-DD"
+function getDaySeed(dateStr) {
   let hash = 0;
   for (let i = 0; i < dateStr.length; i++) {
     hash = (hash << 5) - hash + dateStr.charCodeAt(i);
@@ -124,6 +124,7 @@ function buildKeyboardStatusesForBoard(guesses, answer) {
 }
 
 export default function SkeedleMarathon() {
+  const date = useDailyDate();
   const gameRef = useRef(null);
   const boardRefs = useRef({});
   const [gameId, setGameId] = useState(0);
@@ -146,12 +147,12 @@ export default function SkeedleMarathon() {
     }
 
     if (gameMode === "daily") {
-      const seed = getDaySeed();
+      const seed = getDaySeed(date);
       return seededShuffle(ANSWERS, seed).slice(0, BOARD_COUNT);
     } else {
       return shuffle(ANSWERS).slice(0, BOARD_COUNT);
     }
-  }, [gameId, gameMode]);
+  }, [gameId, gameMode, date]);
 
   const solvedBoards = useMemo(
     () => answers.map((answer) => guesses.includes(answer)),

@@ -1,6 +1,10 @@
+import { watchDailyDate } from '../utils/dailyClock.js';
 import parshleImg from '../assets/parshle-blend.webp';
+// import akariImg from '../assets/akari.svg'; // Enable when Akari launches.
+import ChiliRating from '../components/ChiliRating';
 // src/pages/LandingPage.jsx
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { dailyDate, dailyDifficulty } from '../utils/dailyDifficulty.js';
 import { Link } from 'react-router-dom';
 import './LandingPage.css';
 import logoImg from '../assets/logoFog.webp';
@@ -31,6 +35,7 @@ import Skeedlemath from '../games/skeedlemath/Skeedlemath';
 import Nonograms from '../games/nonograms/Nonograms';
 
 const GAMES = [
+  // { id: 'akari', title: 'Akari — Light Up', path: '/akari', image: akariImg, isNew: true, excludeFromGauntlet: true },
   { id: 'parshle', title: 'Parshle', path: '/parshle', image: parshleImg, isNew: true, excludeFromGauntlet: true },
   { id: 'stitches', title: 'Skitches', path: '/stitches', image: stitchesImg, isNew: true, component: Stitches },
   { id: 'skeedlemarathon', title: 'Skeedlemarathon', path: '/skeedle-marathon', image: skeedlemarathonImg, isNew: true, excludeFromGauntlet: true },
@@ -49,6 +54,9 @@ const GAMES = [
 
 export default function LandingPage() {
   const [inGauntletMode, setInGauntletMode] = useState(false);
+  const [date, setDate] = useState(dailyDate);
+
+  useEffect(() => watchDailyDate(setDate), []);
 
   // Filter out games that have excludeFromGauntlet set to true
   const gauntletGames = GAMES.filter(game => !game.excludeFromGauntlet);
@@ -93,6 +101,15 @@ export default function LandingPage() {
             <span className="landing-logo-text">Skeeter Games</span>
           </Link>
 
+          <section className="difficulty-guide" aria-labelledby="difficulty-title">
+            <h2 id="difficulty-title">Today’s spice level</h2>
+            <div className="difficulty-scale">
+              <span><ChiliRating level={1} /> Mild</span>
+              <span><ChiliRating level={2} /> Medium</span>
+              <span><ChiliRating level={3} /> Picante</span>
+            </div>
+          </section>
+
           {/* <button
             onClick={() => setInGauntletMode(true)}
             className="gauntlet-launch-btn"
@@ -116,9 +133,12 @@ export default function LandingPage() {
       <main className="landing-main">
         <div className="landing-grid">
           {GAMES.map((game, index) => (
-            <Link key={game.id} to={game.path} className="landing-card" aria-label={game.title}>
+            <Link key={game.id} to={game.path} className="landing-card" aria-label={`${game.title}, daily difficulty ${dailyDifficulty(game.id, date)} of 3 chilis`}>
               {game.isNew && <span className="new-badge">NEW</span>}
               <img src={game.image} alt={game.title} width="640" height="640" loading={index < 3 ? "eager" : "lazy"} decoding="async" className="landing-card-image" />
+              <span className="difficulty-badge" aria-hidden="true" title={`Today's difficulty: ${dailyDifficulty(game.id, date)} of 3 chilis`}>
+                <ChiliRating level={dailyDifficulty(game.id, date)} />
+              </span>
             </Link>
           ))}
         </div>

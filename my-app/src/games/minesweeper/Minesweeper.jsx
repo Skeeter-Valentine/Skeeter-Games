@@ -1,3 +1,5 @@
+import { useDailyDate } from '../../components/DailyBoundary';
+import { getDailyBoardConfig } from './dailyConfig.js';
 import DailyResults from '../../components/DailyResults';
 // src/games/minesweeper/Minesweeper.jsx
 import React, { useState, useEffect, useCallback, useRef } from 'react';
@@ -28,20 +30,10 @@ function getDailySeed(dateStr) {
   return Math.abs(hash);
 }
 
-function getDailyBoardConfig(dateStr) {
-  const configs = [
-    { rows: 9, cols: 9, mines: 10 },
-    { rows: 12, cols: 12, mines: 22 },
-    { rows: 14, cols: 14, mines: 30 },
-    { rows: 16, cols: 16, mines: 40 },
-    { rows: 16, cols: 30, mines: 99 },
-  ];
-  const seed = getDailySeed(dateStr + '-minesweeter');
-  return configs[seed % configs.length];
-}
+
 
 export default function Minesweeper({ onWin }) {
-  const todayStr = new Date().toISOString().split('T')[0];
+  const todayStr = useDailyDate();
 
   const [gameMode, setGameMode] = useState('daily');
   const [difficulty, setDifficulty] = useState('beginner');
@@ -131,6 +123,10 @@ export default function Minesweeper({ onWin }) {
       if (saved) {
         try {
           const parsed = JSON.parse(saved);
+          if (!Array.isArray(parsed.board) || parsed.board.length !== rows
+            || !parsed.board.every(row => Array.isArray(row) && row.length === cols)) {
+            throw new Error('Saved board does not match today’s size');
+          }
           setBoard(parsed.board);
           setGameStatus(parsed.gameStatus);
           setFlagsLeft(parsed.flagsLeft);

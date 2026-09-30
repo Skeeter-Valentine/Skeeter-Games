@@ -1,4 +1,5 @@
 import { countSolutions } from './solver.js';
+import { scheduledDifficulty } from '../../utils/dailySchedule.js';
 
 export function mulberry32(seed) {
   return function () {
@@ -19,7 +20,7 @@ export function getDailySeed(dateStr) {
 }
 
 export function getDailyGridSize(dateStr) {
-  const sizes = [5, 7, 10, 15, 20];
+  const sizes = [[5, 7], [10], [15, 20]][scheduledDifficulty('shikaku', dateStr) - 1];
   const seed = getDailySeed(dateStr + '-size');
   return sizes[seed % sizes.length];
 }

@@ -101,6 +101,56 @@ html, body {
   mask-composite: intersect;
 }
 
+.difficulty-guide {
+  text-align: center;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.difficulty-guide h2 { margin: 0 0 0.25rem; font-size: 1.1rem; }
+.difficulty-scale { display: flex; justify-content: center; gap: 0.75rem; font-size: 1rem; }
+.difficulty-scale > span { display: inline-flex; flex-direction: column; align-items: center; gap: 0.15rem; white-space: nowrap; }
+.difficulty-guide .chili-icon { width: 15px; height: 19px; }
+.landing-header-content { gap: 1rem; }
+.difficulty-scale span span { white-space: nowrap; }
+.chili-rating { display: inline-flex; align-items: center; justify-content: center; gap: 3px; vertical-align: middle; }
+.chili-icon { display: block; width: 24px; height: 30px; }
+.chili-icon-muted { opacity: 0.25; filter: grayscale(1); }
+
+.difficulty-badge {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 1;
+  width: 132px;
+  height: 90px;
+  isolation: isolate;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.difficulty-badge::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: #171321;
+  clip-path: polygon(0 0, 100% 0, 0 100%);
+}
+
+/* A narrow underside along the diagonal gives the corner its folded edge. */
+.difficulty-badge::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: #3a304b;
+  clip-path: polygon(100% 0, 0 100%, 0 87%);
+}
+
+.difficulty-badge .chili-rating { position: absolute; top: 8px; left: 2px; z-index: 1; margin: 0; gap: 3px; }
+.difficulty-badge .chili-icon { width: 21px; height: 27px; }
+
 /* Diagonal Corner Wrapper Ribbon */
 .new-badge {
   position: absolute;
@@ -133,6 +183,14 @@ html, body {
 
 /* Mobile Responsive Adjustments */
 @media (max-width: 600px) {
+  .landing-header-content { gap: 0.5rem; }
+  .landing-logo { font-size: 1rem; gap: 0.4rem; letter-spacing: 0; }
+  .landing-logo-image { width: 30px; height: 30px; }
+  .landing-logo-text { max-width: 75px; }
+  .difficulty-guide h2 { font-size: 1rem; }
+  .difficulty-scale { gap: 0.35rem; font-size: 0.85rem; }
+  .difficulty-guide .chili-icon { width: 12px; height: 15px; }
+  .difficulty-guide .chili-rating { gap: 1px; }
   .landing-header {
     padding: 0.75rem 1rem;
   }

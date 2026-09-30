@@ -6,7 +6,7 @@ import { renderToString } from 'react-dom/server';
 import { MemoryRouter } from 'react-router-dom';
 import { gameInstructions } from './gameInstructions.js';
 
-test('all 14 active games render accessible statistics and instructions icons', async () => {
+test('all active games render accessible statistics and instructions icons', async () => {
   const oldStorage = globalThis.localStorage, oldWindow = globalThis.window;
   globalThis.localStorage = { getItem: () => null };
   globalThis.window = { innerWidth: 1024 };
@@ -15,6 +15,7 @@ test('all 14 active games render accessible statistics and instructions icons', 
     const { default: GameFeedback } = await server.ssrLoadModule('/src/components/GameFeedback.jsx');
     const { default: Seo } = await server.ssrLoadModule('/src/seo/Seo.jsx');
     const games = [
+      ['akari/Akari', 'akari'],
       ['parshle/Parshle', 'parshle'],
       ['2048/Game2048', '2048'], ['hashi/Hashi', 'hashi'], ['minesweeper/Minesweeper', 'minesweeper'],
       ['skeedlemath/Skeedlemath', 'skeedlemath'], ['nonograms/Nonograms', 'nonograms'], ['pipes/pipes', 'pipes'],

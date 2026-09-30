@@ -1,11 +1,11 @@
+import { useDailyDate } from '../../components/DailyBoundary';
 import DailyResults from '../../components/DailyResults';
 import React, { useState, useEffect, useRef } from 'react';
 import Board from './components/Board';
 import Keyboard from './components/Keyboard';
 import { getDailyTargetWords, 
   getRandomTargetWords, 
-  isValidWord,
-  getLocalDateString 
+  isValidWord
 } from './constants/wordBank';
 import './Quordle.css';
 import Navbar from '../../components/Navbar';
@@ -14,6 +14,7 @@ const WORD_LENGTH = 5;
 const MAX_ATTEMPTS = 9;
 
 export default function Quordle({ onWin }) {
+  const sessionDate = useDailyDate();
   // Mode state: 'daily' (default) or 'practice'
   const [gameMode, setGameMode] = useState('daily');
 
@@ -41,7 +42,7 @@ export default function Quordle({ onWin }) {
     setIsInvalidGuess(false);
 
     if (mode === 'daily') {
-      const todayStr = getLocalDateString();
+      const todayStr = sessionDate;
       const todayKey = `quordle_daily_${todayStr}`;
       Object.keys(localStorage).forEach((key) => {
         if (key.startsWith('quordle_daily_') && key !== todayKey) {
@@ -70,19 +71,10 @@ export default function Quordle({ onWin }) {
     }
   };
 
-  // 2. Initial Load & Visibility Change (Resets board automatically if day rolled over)
+  // DailyBoundary remounts the game when the shared UTC date changes.
   useEffect(() => {
     initGame(gameMode);
 
-    // Re-check date when user tabs back into the page
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible' && gameMode === 'daily') {
-        initGame('daily');
-      }
-    };
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
   }, [gameMode]);
 
   // 3. Auto-focus hidden input on initial mount so mobile keyboard opens
@@ -93,7 +85,7 @@ export default function Quordle({ onWin }) {
   // Save Daily Progress cleanly under today's date key
   useEffect(() => {
     if (gameMode === 'daily') {
-      const todayKey = `quordle_daily_${getLocalDateString()}`;
+      const todayKey = `quordle_daily_${sessionDate}`;
       
       // Only write to localStorage if user has made at least one guess
       if (guesses.length > 0) {
@@ -245,7 +237,7 @@ export default function Quordle({ onWin }) {
   return (
     <div className="game-container quordle-game-container" onClick={focusHiddenInput}>
       <Navbar />
-      <DailyResults started={hasStarted} gameId="quordle" title="Ske4dle" daily={gameMode === 'daily'} date={getLocalDateString()} finished={gameOver} won={targetWords.length === 4 && targetWords.every(word => guesses.includes(word))} ready={targetWords.length === 4} />
+      <DailyResults started={hasStarted} gameId="quordle" title="Ske4dle" daily={gameMode === 'daily'} date={sessionDate} finished={gameOver} won={targetWords.length === 4 && targetWords.every(word => guesses.includes(word))} ready={targetWords.length === 4} />
 
       {/* 5. HIDDEN INPUT ELEMENT FOR MOBILE VIRTUAL KEYBOARD */}
       <input

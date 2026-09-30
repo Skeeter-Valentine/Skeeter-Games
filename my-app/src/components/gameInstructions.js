@@ -1,8 +1,16 @@
 export const gameInstructions = {
+  akari: [
+    'Place bulbs in white squares to light the entire board. Each bulb shines horizontally and vertically until a black wall blocks it.',
+    'No bulb may shine directly on another bulb. Conflicting bulbs are highlighted in red.',
+    'A number on a black wall tells you exactly how many bulbs touch it above, below, left, or right. Diagonal bulbs do not count. Unnumbered walls have no bulb-count requirement.',
+    'Tap or click to add or remove a bulb. Select Mark ×, shift-click, or right-click to note a square without a bulb. Notes are optional and can still be lit.',
+    'Use arrow keys to move between white cells, B to toggle a bulb, X to toggle a note, or Delete to erase. Undo and Redo let you revisit moves; Reset clears the board and can be undone.',
+    'Daily puzzles reset at midnight UTC and save progress in this browser. Mild is 5×5, Medium is 7×7, and Picante is 9×9. Practice lets you choose a size and generate another puzzle.',
+  ],
   parshle: [
     'Guess the hidden five-letter word in six attempts. Every guess must be a word in the word list.',
     'Green means the right letter in the right spot. Yellow means the letter belongs elsewhere. Pink means absent or used too many times.',
-    'Two randomly chosen tiles in every row are black from the start, so you can plan around the hidden clues. These positions stay fixed for the puzzle. Typed letters stay visible, but their feedback is hidden. The winning guess reveals all five tiles in green, with formerly black tiles slightly shaded.',
+    'Each board has 5–12 black tiles spread across the first five rows, with different hidden counts per row. They are visible from the start, so you can plan around the hidden clues. These positions stay fixed for the puzzle. Typed letters stay visible, but their feedback is hidden. The last row has no black tiles and shows all feedback. The winning guess reveals all five tiles in green, with formerly black tiles slightly shaded.',
     'The keyboard only tracks revealed feedback. Black tiles do not provide any information about whether a letter belongs in the answer.',
     'Type with your keyboard or tap the on-screen keys. Enter submits and Backspace erases.',
     'Daily mode gives everyone the same word and hidden positions. Random mode lets you practice with new puzzles.',

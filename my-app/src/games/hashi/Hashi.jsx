@@ -1,3 +1,4 @@
+import { useDailyDate } from '../../components/DailyBoundary';
 import DailyResults from '../../components/DailyResults';
 // src/games/hashi/Hashi.jsx
 import React, { useState, useEffect, useRef } from 'react';
@@ -5,7 +6,8 @@ import StatsModal from './components/StatsModal';
 import Navbar from '../../components/Navbar';
 import './Hashi.css';
 
-import { mulberry32, generateUniquePuzzle } from './puzzle.js';
+import { generateUniquePuzzle } from './puzzle.js';
+import { getDailyConfig } from './dailyConfig.js';
 import { doSegmentsCross, isConnected } from './solver.js';
 
 function distanceToSegment(px, py, x1, y1, x2, y2) {
@@ -43,7 +45,7 @@ export default function Hashi({ onWin }) {
     const offset = 35;
     const cellSize = (canvasSize - offset * 2) / (gridSize - 1);
 
-    const todayStr = new Date().toISOString().split('T')[0];
+    const todayStr = useDailyDate();
 
     useEffect(() => {
         const savedStats = localStorage.getItem('hashi_stats');
@@ -105,18 +107,16 @@ export default function Hashi({ onWin }) {
         let targetSize = gridSize;
 
         if (daily) {
-            const seedNum = parseInt(todayStr.replace(/-/g, ''), 10);
-            rng = mulberry32(seedNum);
-
-            const sizes = [5, 6, 7, 8];
-            targetSize = sizes[Math.floor(rng() * sizes.length)];
+            const config = getDailyConfig(todayStr);
+            rng = config.rng;
+            targetSize = config.size;
             setGridSize(targetSize);
         }
 
         const generatedIslands = generateUniquePuzzle(targetSize, rng);
 
         if (daily) {
-            const savedSolved = localStorage.getItem(`hashi_solved_${todayStr}`);
+            const savedSolved = localStorage.getItem(`hashi_solved_v2_${todayStr}`);
             if (savedSolved === 'true') {
                 setMessage('🎉 Daily Puzzle Already Completed Today!');
             }
@@ -322,7 +322,7 @@ export default function Hashi({ onWin }) {
                     setIsStatsOpen(true);
                 }
                 if (isDailyMode) {
-                    localStorage.setItem(`hashi_solved_${todayStr}`, 'true');
+                    localStorage.setItem(`hashi_solved_v2_${todayStr}`, 'true');
                 }
                 // Notify the gauntlet that this game has been successfully won!
                 onWin?.();

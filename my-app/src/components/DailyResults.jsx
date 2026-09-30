@@ -3,11 +3,15 @@ import GameModal from './GameModal';
 import GameToolbar from './GameToolbar';
 import { clockKey, formatDuration, readDailyStats, readLocal, recordDailyResult, summarizeDailyStats, validSeconds, writeLocal } from '../utils/dailyStats.js';
 import './DailyResults.css';
+import { useDailyDate, useDailyMode } from './DailyBoundary';
 
 // Icons remain available in every mode. Only daily sessions record results
 // or run the shared clock; existing game timers remain authoritative.
-export default function DailyResults({ daily, date = new Date().toISOString().slice(0, 10), ...props }) {
-  return <DailySession key={`${props.gameId}:${date}:${daily}`} daily={daily} date={date} {...props} />;
+export default function DailyResults({ daily, date, ...props }) {
+  const sessionDate = useDailyDate();
+  useDailyMode(daily);
+  const resultDate = date ?? sessionDate;
+  return <DailySession key={`${props.gameId}:${resultDate}:${daily}`} daily={daily} date={resultDate} {...props} />;
 }
 
 function DailySession({ gameId, title, date, daily, finished, won = true, seconds, ready = true,

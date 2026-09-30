@@ -1,3 +1,5 @@
+import { useDailyDate } from '../../components/DailyBoundary';
+import { getDailyGridSize } from './dailyConfig.js';
 import DailyResults from '../../components/DailyResults';
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import './pipes.css';
@@ -25,11 +27,7 @@ function getDailySeed(dateStr) {
   return Math.abs(hash);
 }
 
-function getDailyGridSize(dateStr) {
-  const sizes = [5, 7, 9];
-  const seed = getDailySeed(dateStr + '-size');
-  return sizes[seed % sizes.length];
-}
+
 
 /* ==========================================================================
    2. DIRECTIONS & UTILITIES
@@ -62,7 +60,7 @@ function countBits(n) {
 }
 
 export default function Pipes({ onWin }) {
-  const todayStr = new Date().toISOString().split('T')[0];
+  const todayStr = useDailyDate();
 
   const [gameMode, setGameMode] = useState('daily');
   const [gridSize, setGridSize] = useState(() => getDailyGridSize(todayStr));

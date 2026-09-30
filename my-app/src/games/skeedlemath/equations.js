@@ -1,3 +1,4 @@
+import { dailyDate } from '../../utils/dailyClock.js';
 // Adjacent days change both the first operation and its character position.
 // Parentheses appear only in separated slots, including across cycle boundaries.
 const schedule = [
@@ -52,7 +53,7 @@ function random(seed) {
   };
 }
 
-export function generateEquation(isDaily = false, date = new Date().toISOString().slice(0, 10)) {
+export function generateEquation(isDaily = false, date = dailyDate()) {
   const day = Date.parse(`${date}T00:00:00Z`) / 86400000;
   if (isDaily && (!Number.isInteger(day) || new Date(day * 86400000).toISOString().slice(0, 10) !== date)) throw new RangeError('Expected a valid YYYY-MM-DD date');
   const rng = isDaily ? random(day) : Math.random;

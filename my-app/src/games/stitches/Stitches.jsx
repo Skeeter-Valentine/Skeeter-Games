@@ -1,3 +1,4 @@
+import { useDailyDate } from '../../components/DailyBoundary';
 import DailyResults from '../../components/DailyResults';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Navbar from '../../components/Navbar';
@@ -5,12 +6,10 @@ import { checkSolution, dailyPuzzle, generatePuzzle, getCounts, getEdges } from 
 import './Stitches.css';
 
 const COLORS = ['#ff2a85', '#00f0ff', '#ffb703', '#00ff87', '#b568ff', '#398cff', '#ff7538', '#ffff00', '#f251ff'];
-const today = () => new Date().toISOString().slice(0, 10);
 const storageKey = date => `stitches-daily-v2-${date}`;
 const timeText = seconds => `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
 
-function newGame(mode, size = 7) {
-  const date = today();
+function newGame(date, mode, size = 7) {
   const puzzle = mode === 'daily' ? dailyPuzzle(date) : generatePuzzle(size);
   const game = { mode, date, puzzle, selected: [], marks: [], seconds: 0, started: false, history: [] };
   if (mode === 'daily') {
@@ -19,7 +18,7 @@ function newGame(mode, size = 7) {
       const validIds = new Set(getEdges(puzzle.regions).map(edge => edge.id));
       if (saved && saved.fingerprint === JSON.stringify(puzzle)
         && Array.isArray(saved.selected) && saved.selected.every(id => validIds.has(id))
-        && Array.isArray(saved.marks) && saved.marks.every(cell => Number.isInteger(cell) && cell >= 0 && cell < 49)) {
+        && Array.isArray(saved.marks) && saved.marks.every(cell => Number.isInteger(cell) && cell >= 0 && cell < puzzle.regions.length ** 2)) {
         game.selected = [...new Set(saved.selected)];
         game.marks = [...new Set(saved.marks)];
         game.seconds = Number.isInteger(saved.seconds) && saved.seconds >= 0 ? saved.seconds : 0;
@@ -30,7 +29,8 @@ function newGame(mode, size = 7) {
 }
 
 export default function Stitches({ onWin }) {
-  const [game, setGame] = useState(() => newGame('daily'));
+  const date = useDailyDate();
+  const [game, setGame] = useState(() => newGame(date, 'daily'));
   const [tool, setTool] = useState('stitch');
   const [message, setMessage] = useState('');
   const notified = useRef(false);
@@ -61,7 +61,7 @@ export default function Stitches({ onWin }) {
 
   const changeGame = (mode, nextSize = size) => {
     markDrag.current = null;
-    setGame(newGame(mode, nextSize));
+    setGame(newGame(date, mode, nextSize));
     setMessage('');
     setTool('stitch');
     notified.current = false;
@@ -185,7 +185,7 @@ export default function Stitches({ onWin }) {
               {[5, 7, 9].map(n => <option key={n} value={n}>{n} × {n}</option>)}
             </select></label>
             <button onClick={() => changeGame('random')}>New puzzle</button>
-          </> : <span className="stitches-date">{game.date} · 7 × 7</span>}
+          </> : <span className="stitches-date">{game.date} · {size} × {size}</span>}
         </div>
 
         <section className="stitches-panel" aria-label="Skitches puzzle">

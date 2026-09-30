@@ -1,3 +1,4 @@
+import { dailyDate } from '../../../utils/dailyClock.js';
 import wordData from '../../../constants/words.json'
 
 // Set lookups for O(1) performance
@@ -32,8 +33,8 @@ function getDateSeed(dateString) {
  * 1. DAILY MODE: Returns the exact same 4 words for a given date
  */
 export function getDailyTargetWords(dateOverride = null) {
-  // Get today's local date in YYYY-MM-DD format
-  const todayStr = dateOverride || new Date().toISOString().split('T')[0];
+  // Get today's UTC date in YYYY-MM-DD format
+  const todayStr = dateOverride || dailyDate();
   const seed = getDateSeed(todayStr);
   const random = mulberry32(seed);
 
@@ -50,15 +51,6 @@ export function getDailyTargetWords(dateOverride = null) {
   }
 
   return selectedWords;
-}
-
-// Helper to get local date in "YYYY-MM-DD" format
-export function getLocalDateString() {
-  const d = new Date();
-  const year = d.getFullYear();
-  const month = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
 }
 
 /**

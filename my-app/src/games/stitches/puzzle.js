@@ -1,4 +1,5 @@
 import { fallbackPuzzle } from './fallbacks.js';
+import { getDailySize } from './dailyConfig.js';
 
 export function seededRandom(seed) {
   return () => {
@@ -190,5 +191,5 @@ export function generatePuzzle(size, rng = Math.random) {
 export function dailyPuzzle(date) {
   let seed = 0;
   for (const char of `stitches-v2-${date}`) seed = (Math.imul(seed, 31) + char.charCodeAt(0)) | 0;
-  return generatePuzzle(7, seededRandom(seed));
+  return generatePuzzle(getDailySize(date), seededRandom(seed));
 }

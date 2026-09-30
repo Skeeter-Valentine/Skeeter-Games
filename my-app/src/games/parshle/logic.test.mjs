@@ -8,16 +8,35 @@ test('duplicate letters consume only the available matches, greens first', () =>
   assert.deepEqual(feedback('APPLE', 'APPLE'), Array(5).fill('correct'));
 });
 
-test('masks are deterministic and hide exactly two distinct positions each row', () => {
+test('boards deterministically hide 5–12 cells with varying row counts and an unhidden last row', () => {
+  const totals = new Set();
   const patterns = new Set();
-  for (let day = 0; day < 365; day++) for (let row = 0; row < 6; row++) {
-    const mask = hiddenPositions(`day:${day}`, row);
-    assert.deepEqual(mask, hiddenPositions(`day:${day}`, row));
-    assert.equal(new Set(mask).size, 2);
-    assert.ok(mask.every(i => i >= 0 && i < 5));
-    patterns.add([...mask].sort().join(''));
+  for (let day = 0; day < 365; day++) {
+    const seed = `parshle:day:${day}`;
+    const masks = Array.from({ length: 5 }, (_, row) => hiddenPositions(seed, row));
+    const counts = masks.map(mask => mask.length);
+    const total = counts.reduce((sum, count) => sum + count, 0);
+    assert.ok(total >= 5 && total <= 12);
+    assert.ok(new Set(counts).size > 1);
+    assert.deepEqual(hiddenPositions(seed, 5), []);
+    masks.forEach((mask, row) => {
+      assert.deepEqual(mask, hiddenPositions(seed, row));
+      assert.equal(new Set(mask).size, mask.length);
+      assert.ok(mask.every(i => Number.isInteger(i) && i >= 0 && i < 5));
+    });
+    totals.add(total);
+    patterns.add(JSON.stringify(masks));
   }
-  assert.equal(patterns.size, 10);
+  assert.deepEqual([...totals].sort((a, b) => a - b), [5, 6, 7, 8, 9, 10, 11, 12]);
+  assert.ok(patterns.size > 300);
+});
+
+test('the last guess has no hidden cells and reveals full feedback', () => {
+  for (const seed of ['daily:2026-09-29', 'random:0.42']) {
+    assert.deepEqual(hiddenPositions(seed, 5), []);
+    assert.deepEqual(visibleFeedback('ALLEY', 'APPLE', seed, 5), feedback('ALLEY', 'APPLE'));
+    assert.deepEqual(visibleFeedback('APPLE', 'APPLE', seed, 5), Array(5).fill('correct'));
+  }
 });
 
 test('keyboard cannot leak hidden feedback, and retains strongest revealed evidence', () => {

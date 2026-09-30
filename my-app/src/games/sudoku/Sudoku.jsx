@@ -1,3 +1,4 @@
+import { useDailyDate } from '../../components/DailyBoundary';
 import DailyResults from '../../components/DailyResults';
 // src/games/sudoku/Skeedoku.jsx
 import React, { useState, useEffect, useRef } from 'react';
@@ -24,6 +25,7 @@ function mulberry32(seed) {
 }
 
 export default function Skeedoku({ onWin }) {
+  const todayStr = useDailyDate();
   const [configKey, setConfigKey] = useState('daily');
   const cfg = CONFIGS[configKey];
   const size = cfg.size;
@@ -114,7 +116,7 @@ export default function Skeedoku({ onWin }) {
 
     let rand = Math.random;
     if (level === 'daily') {
-      const todayStr = new Date().toISOString().split('T')[0];
+
       const seedNum = parseInt(todayStr.replace(/-/g, ''), 10);
       rand = mulberry32(seedNum);
     }

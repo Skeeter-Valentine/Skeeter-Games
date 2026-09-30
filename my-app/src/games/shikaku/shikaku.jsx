@@ -1,3 +1,4 @@
+import { useDailyDate } from '../../components/DailyBoundary';
 import DailyResults from '../../components/DailyResults';
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import './shikaku.css';
@@ -6,7 +7,7 @@ import Navbar from '../../components/Navbar';
 import { mulberry32, getDailySeed, getDailyGridSize, generateUniquePuzzle } from './puzzle.js';
 
 export default function Shikaku({ onWin }) {
-  const todayStr = new Date().toISOString().split('T')[0];
+  const todayStr = useDailyDate();
 
   const [gameMode, setGameMode] = useState('daily');
   const [gridSize, setGridSize] = useState(() => getDailyGridSize(todayStr));
@@ -56,7 +57,7 @@ export default function Shikaku({ onWin }) {
       clues = generateUniquePuzzle(dailySize, rng).clues;
       setCluesGrid(clues);
 
-      const saved = localStorage.getItem(`shikaku-daily-state-v3-${todayStr}`);
+      const saved = localStorage.getItem(`shikaku-daily-state-v4-${todayStr}`);
       if (saved) {
         try {
           const { placedRects: savedRects, seconds: savedSeconds, isWin: savedWin } = JSON.parse(saved);
@@ -94,7 +95,7 @@ export default function Shikaku({ onWin }) {
         seconds,
         isWin,
       };
-      localStorage.setItem(`shikaku-daily-state-v3-${todayStr}`, JSON.stringify(dailyState));
+      localStorage.setItem(`shikaku-daily-state-v4-${todayStr}`, JSON.stringify(dailyState));
     }
   }, [placedRects, seconds, isWin, gameMode, cluesGrid, todayStr]);
 
@@ -425,7 +426,7 @@ export default function Shikaku({ onWin }) {
           className="shikaku-btn"
           onClick={() => {
             if (gameMode === 'daily') {
-              localStorage.removeItem(`shikaku-daily-state-v3-${todayStr}`);
+              localStorage.removeItem(`shikaku-daily-state-v4-${todayStr}`);
             }
             setPlacedRects([]);
             setStatus('');

@@ -1,3 +1,4 @@
+import { useDailyDate } from '../../components/DailyBoundary';
 import { generateEquation } from './equations.js';
 import DailyResults from '../../components/DailyResults';
 // src/games/skeedlemath/Skeedlemath.jsx
@@ -62,6 +63,7 @@ const hasValidParentheses = (expr, strictCheck = true) => {
 };
 
 export default function Skeedlemath({ onWin }) {
+  const date = useDailyDate();
   const [isDailyMode, setIsDailyMode] = useState(true);
   const [targetEquation, setTargetEquation] = useState('');
   const [guesses, setGuesses] = useState([]);
@@ -72,7 +74,7 @@ export default function Skeedlemath({ onWin }) {
   const [message, setMessage] = useState('');
 
   const startNewGame = (daily = isDailyMode) => {
-    const targetEq = generateEquation(daily);
+    const targetEq = generateEquation(daily, date);
     setTargetEquation(targetEq);
     setHasStarted(false);
     setGuesses([]);

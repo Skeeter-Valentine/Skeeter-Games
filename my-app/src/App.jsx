@@ -1,3 +1,5 @@
+import DailyBoundary from './components/DailyBoundary';
+import Akari from './games/akari/Akari';
 import Parshle from './games/parshle/Parshle';
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
@@ -25,23 +27,25 @@ export default function App() {
   return (
     <BrowserRouter>
       <Routes>
+        <Route path="/akari" element={<DailyBoundary><Akari /></DailyBoundary>} />
+        <Route path="/light-up" element={<Navigate to="/akari" replace />} />
         <Route path="/nerdle" element={<Navigate to="/skeedlemath" replace />} />
-        <Route path="/parshle" element={<Parshle />} />
+        <Route path="/parshle" element={<DailyBoundary><Parshle /></DailyBoundary>} />
         <Route path="/" element={<LandingPage />} />
-        <Route path="/minesweeper" element={<Minesweeper />} />
-        <Route path="/quordle" element={<Quordle />} />
-        <Route path="/word500" element={<Word500 />} />
-        <Route path="/sudoku" element={<Sudoku />} />
-        <Route path="/2048" element={<Game2048 />} />
-        <Route path="/shikaku" element={<Shikaku />} />
-        <Route path="/pipes" element={<Pipes />} />
-        <Route path="/hashi" element={<Hashi />} />
-        <Route path="/stitches" element={<Stitches />} />
-        <Route path="/skeedlemath" element={<Skeedlemath />} />
-        <Route path="/nonograms" element={<Nonograms />} />
+        <Route path="/minesweeper" element={<DailyBoundary><Minesweeper /></DailyBoundary>} />
+        <Route path="/quordle" element={<DailyBoundary><Quordle /></DailyBoundary>} />
+        <Route path="/word500" element={<DailyBoundary><Word500 /></DailyBoundary>} />
+        <Route path="/sudoku" element={<DailyBoundary><Sudoku /></DailyBoundary>} />
+        <Route path="/2048" element={<DailyBoundary><Game2048 /></DailyBoundary>} />
+        <Route path="/shikaku" element={<DailyBoundary><Shikaku /></DailyBoundary>} />
+        <Route path="/pipes" element={<DailyBoundary><Pipes /></DailyBoundary>} />
+        <Route path="/hashi" element={<DailyBoundary><Hashi /></DailyBoundary>} />
+        <Route path="/stitches" element={<DailyBoundary><Stitches /></DailyBoundary>} />
+        <Route path="/skeedlemath" element={<DailyBoundary><Skeedlemath /></DailyBoundary>} />
+        <Route path="/nonograms" element={<DailyBoundary><Nonograms /></DailyBoundary>} />
         {/* <Route path="/nurikabe" element={<Nurikabe />} /> */}
         <Route path="/map" element={<Map />} />
-        <Route path="/skeedle-marathon" element={<SkeedleMarathon />} />
+        <Route path="/skeedle-marathon" element={<DailyBoundary><SkeedleMarathon /></DailyBoundary>} />
         <Route path="*" element={<div>404 - Game Not Found</div>} />
       </Routes>
       <GameFeedback />

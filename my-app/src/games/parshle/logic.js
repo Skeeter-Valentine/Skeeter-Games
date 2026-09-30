@@ -1,3 +1,5 @@
+import { scheduledDifficulty } from '../../utils/dailySchedule.js';
+
 export function feedback(guess, answer) {
   const colors = Array(5).fill('absent');
   const remaining = {};
@@ -15,17 +17,34 @@ export function feedback(guess, answer) {
 }
 
 export function hiddenPositions(seed, row) {
+  if (row < 0 || row >= 5) return [];
   let state = 2166136261;
-  for (const char of `${seed}:${row}`) state = Math.imul(state ^ char.charCodeAt(0), 16777619);
-  const positions = [0, 1, 2, 3, 4];
-  for (let i = 4; i > 0; i--) {
-    state += 0x6d2b79f5;
+  for (const char of `${seed}:board`) state = Math.imul(state ^ char.charCodeAt(0), 16777619);
+  const random = () => {
+    state = (state + 0x6d2b79f5) | 0;
     let t = Math.imul(state ^ (state >>> 15), state | 1);
     t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-    const j = Math.floor(((t ^ (t >>> 14)) >>> 0) / 4294967296 * (i + 1));
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+  const daily = /^parshle:(\d{4}-\d{2}-\d{2})$/.exec(seed);
+  const [minimum, count] = daily
+    ? [[5, 3], [8, 2], [10, 3]][scheduledDifficulty('parshle', daily[1]) - 1]
+    : [5, 8];
+  const total = minimum + Math.floor(random() * count);
+  const positions = Array.from({ length: 25 }, (_, i) => i);
+  for (let i = positions.length - 1; i > 0; i--) {
+    const j = Math.floor(random() * (i + 1));
     [positions[i], positions[j]] = [positions[j], positions[i]];
   }
-  return positions.slice(0, 2);
+  const hidden = positions.slice(0, total);
+  const counts = Array(5).fill(0);
+  hidden.forEach(position => counts[Math.floor(position / 5)]++);
+  // Avoid boards with the same hidden count in all five rows.
+  if (counts.every(count => count === counts[0])) {
+    const lastRow = Math.floor(hidden[total - 1] / 5);
+    hidden[total - 1] = positions.slice(total).find(position => Math.floor(position / 5) !== lastRow);
+  }
+  return hidden.filter(position => Math.floor(position / 5) === row).map(position => position % 5);
 }
 
 export function visibleFeedback(guess, answer, seed, row) {
