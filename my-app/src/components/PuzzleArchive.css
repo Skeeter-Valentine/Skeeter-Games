@@ -1,0 +1,7 @@
+.archive-open, .archive-current button { background: #272134; border: 1px solid #5b4e70; color: #f5f0fb; padding: 8px 10px; border-radius: 7px; cursor: pointer; font: inherit; }
+.archive-current { font-size: 13px; color: #ffe390; }
+.archive-date { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+.archive-date input { color-scheme: dark; padding: 10px; max-width: 100%; }
+.archive-rating { display: flex; align-items: center; gap: 12px; }
+.archive-note { color: #c8c0d5; font-size: 13px; line-height: 1.5; }
+.game-utility-bar { flex-wrap: wrap; }

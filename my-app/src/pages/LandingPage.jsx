@@ -1,4 +1,5 @@
 import { watchDailyDate } from '../utils/dailyClock.js';
+import cartograskeetImg from '../assets/cartograskeet.png';
 import parshleImg from '../assets/parshle-blend.webp';
 // import akariImg from '../assets/akari.svg'; // Enable when Akari launches.
 import ChiliRating from '../components/ChiliRating';
@@ -35,10 +36,11 @@ import Skeedlemath from '../games/skeedlemath/Skeedlemath';
 import Nonograms from '../games/nonograms/Nonograms';
 
 const GAMES = [
+  { id: 'map', title: 'Cartograskeet', path: '/map', image: cartograskeetImg, isNew: true, excludeFromGauntlet: true },
   // { id: 'akari', title: 'Akari — Light Up', path: '/akari', image: akariImg, isNew: true, excludeFromGauntlet: true },
   { id: 'parshle', title: 'Parshle', path: '/parshle', image: parshleImg, isNew: true, excludeFromGauntlet: true },
   { id: 'stitches', title: 'Skitches', path: '/stitches', image: stitchesImg, isNew: true, component: Stitches },
-  { id: 'skeedlemarathon', title: 'Skeedlemarathon', path: '/skeedle-marathon', image: skeedlemarathonImg, isNew: true, excludeFromGauntlet: true },
+  { id: 'skeedlemarathon', title: 'Skeedlemarathon', path: '/skeedle-marathon', image: skeedlemarathonImg, excludeFromGauntlet: true },
   { id: 'nonograms', title: 'Skeedograms', path: '/nonograms', image: nonogramsImg, component: Nonograms },
   { id: 'skeedlemath', title: 'Skeedle+', path: '/skeedlemath', image: skeedlemathImg, component: Skeedlemath },
   { id: 'pipes', title: 'Skeeter Piper (net)', path: '/pipes', image: pipesImg, component: Pipes },
@@ -146,3 +148,4 @@ export default function LandingPage() {
     </div>
   );
 }
+

@@ -3,6 +3,7 @@ import GameModal from './GameModal';
 import { gameInstructions } from './gameInstructions.js';
 import './GameToolbar.css';
 import useBoardAlignment from './useBoardAlignment';
+import PuzzleArchive from './PuzzleArchive';
 
 export default function GameToolbar({ gameId, title, onStats, children }) {
   const [instructionsOpen, setInstructionsOpen] = useState(false);
@@ -10,6 +11,7 @@ export default function GameToolbar({ gameId, title, onStats, children }) {
   return <>
     <div ref={toolbarRef} className="game-utility-bar" aria-label={`${title} game tools`}>
       {children && <span className="game-utility-time">{children}</span>}
+      <PuzzleArchive gameId={gameId} title={title} />
       <button type="button" className="game-utility-icon" aria-label={`${title} statistics`} title="Statistics"
         aria-haspopup="dialog" onClick={onStats}>
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h16" /><rect x="5" y="12" width="3" height="6" rx=".5" /><rect x="10.5" y="5" width="3" height="13" rx=".5" /><rect x="16" y="9" width="3" height="9" rx=".5" /></svg>

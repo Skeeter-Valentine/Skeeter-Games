@@ -1,6 +1,13 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    match /puzzleRates/{puzzleId} {
+      allow read: if true;
+      allow write: if false;
+    }
+    match /puzzleAttempts/{puzzleId}/players/{userId} {
+      allow read, write: if false;
+    }
     match /users/{userId}/runs2048/{runId} {
       function owner() { return request.auth != null && request.auth.uid == userId; }
       allow read, delete: if owner();

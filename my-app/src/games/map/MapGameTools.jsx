@@ -23,16 +23,16 @@ export default function MapGameTools({ puzzleId, won, filled, total, actions }) 
   }, [won, puzzleId]);
 
   return <>
-    <GameToolbar gameId="map" title="Skeedomap" onStats={() => { setCompleted(readCompletions()); setOpen(true); }} />
+    <GameToolbar gameId="map" title="Cartograskeet" onStats={() => { setCompleted(readCompletions()); setOpen(true); }} />
     {open && <GameModal titleId="map-statistics" onClose={() => setOpen(false)}>
-      <p className="daily-results-eyebrow">Skeedomap</p>
+      <p className="daily-results-eyebrow">Cartograskeet</p>
       <h2 id="map-statistics">Your map statistics</h2>
       <div className="daily-results-grid">
         <div><strong>{completed.length}</strong><span>Maps completed</span></div>
         <div><strong>{filled} / {total}</strong><span>Regions colored</span></div>
         <div><strong>{actions}</strong><span>Actions on this board</span></div>
       </div>
-      <p className="daily-results-note">{won ? 'This map is complete.' : 'This map is in progress.'} Completed maps are saved in this browser and counted once per puzzle. Map has no daily mode.</p>
+      <p className="daily-results-note">{won ? 'This map is complete.' : 'This map is in progress.'} Completed maps are saved in this browser and counted once per puzzle. Practice results are separate from daily results.</p>
     </GameModal>}
   </>;
 }

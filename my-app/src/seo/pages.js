@@ -15,7 +15,7 @@ const entries = [
   ['quordle', 'Ske4dle', 'Four Word Puzzle', 'Solve four five-letter words together using shared guesses and separate feedback.', 'A letter may be green on one board and absent on another. Track each word separately while choosing guesses that help several boards.'],
   ['word500', 'Skeedle500', 'Word Deduction Puzzle', 'Find a five-letter word from totals of matching letters rather than individual letter colors.', 'Two green matches mean two letters have the right positions, but the feedback does not say which two. Compare guesses to work them out.'],
   ['skeedle-marathon', 'Skeedle Marathon', '26 Word Puzzle Challenge', 'Solve 26 five-letter words with a shared pool of guesses in this extended word challenge.', 'A guess that solves one board also gives feedback on every unsolved board. Use that feedback before spending another guess.'],
-  ['map', 'Map', 'Four Color Map Puzzle', 'Color a map with four colors so that regions sharing an edge have different colors.', 'If a region borders fixed red, blue, and green regions, choose the fourth color. A neighbor touching only at a corner does not restrict it.'],
+  ['map', 'Cartograskeet', 'Daily Four Color Map Puzzle', 'Play a new daily map or practice with four colors so that regions sharing an edge have different colors.', 'If a region borders fixed red, blue, and green regions, choose the fourth color. A neighbor touching only at a corner does not restrict it.'],
 ];
 export const pages = Object.fromEntries(entries.map(([id, name, topic, description, example]) => [`/${id}`, {
   path: `/${id}`, name, title: `${name} — ${topic} | Skeeter Games`, topic, description, example, rules: gameInstructions[id],

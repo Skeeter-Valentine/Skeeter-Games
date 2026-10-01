@@ -92,8 +92,9 @@ export const gameInstructions = {
     'Type a valid five-letter word and press Enter to submit. Match the target exactly to win.',
   ],
   map: [
+    'Daily maps reset at midnight UTC and save progress in this browser. Mild has 12 regions, Medium 24, and Picante 35. Choose Archive for an earlier date, or New practice map to choose your own size.',
     'Color every region with one of four colors. Regions sharing an edge must have different colors; regions touching only at a corner may match.',
-    'Locked regions are fixed clues. Choose a palette color and select an unlocked region, or drag a colored region onto another to copy its color.',
+    'At most one-third of regions start filled; these are fixed clues. Choose a palette color and select an unlocked region, or drag a colored region onto another to copy its color.',
     'Use pencil mode for candidate colors. Right-click an empty region to toggle a note, or right-drag a colored region into an empty region to copy a note.',
     'Press 1–4 to select a color, E for the eraser, P for pencil mode, and L for region labels. Escape cancels a drag.',
     'Fill every region with no matching neighbors to win. Undo, Redo, Reset, and Hint are available in the side panel.',

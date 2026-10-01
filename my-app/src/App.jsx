@@ -44,7 +44,7 @@ export default function App() {
         <Route path="/skeedlemath" element={<DailyBoundary><Skeedlemath /></DailyBoundary>} />
         <Route path="/nonograms" element={<DailyBoundary><Nonograms /></DailyBoundary>} />
         {/* <Route path="/nurikabe" element={<Nurikabe />} /> */}
-        <Route path="/map" element={<Map />} />
+        <Route path="/map" element={<DailyBoundary><Map /></DailyBoundary>} />
         <Route path="/skeedle-marathon" element={<DailyBoundary><SkeedleMarathon /></DailyBoundary>} />
         <Route path="*" element={<div>404 - Game Not Found</div>} />
       </Routes>

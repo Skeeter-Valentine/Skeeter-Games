@@ -12,6 +12,7 @@ export { dailyDate } from './dailyClock.js';
 // Difficulty is relative to each game's daily range, not its practice settings.
 export function dailyDifficulty(game, date) {
   switch (game) {
+    case 'map': return scheduledDifficulty('map', date);
     case 'akari': return scheduledDifficulty('akari', date);
     case 'parshle': {
       const hiddenCount = Array.from({ length: 5 }, (_, row) =>

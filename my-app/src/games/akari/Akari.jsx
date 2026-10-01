@@ -1,12 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Navbar from '../../components/Navbar';
 import DailyResults from '../../components/DailyResults';
-import { useDailyDate } from '../../components/DailyBoundary';
+import { useDailyDate, useArchive } from '../../components/DailyBoundary';
 import { readLocal, writeLocal } from '../../utils/dailyStats.js';
 import { dailyPuzzle, evaluateBoard, generatePuzzle } from './puzzle.js';
 import './Akari.css';
+import { puzzleSnapshot } from '../../utils/archive.js';
 
-const saveKey = date => `akari-daily-v1:${date}`;
+const saveKey = (date, archive) => `${archive ? 'archive:v1:' : ''}akari-daily-v1:${date}`;
 
 export function restoreProgress(puzzle, saved) {
   const empty = { bulbs: [], marks: [], seconds: 0, started: false };
@@ -19,9 +20,9 @@ export function restoreProgress(puzzle, saved) {
     started: !!saved.started || saved.bulbs.length > 0 || saved.marks.length > 0 };
 }
 
-function newGame(date, mode = 'daily', size = 7) {
-  const puzzle = mode === 'daily' ? dailyPuzzle(date) : generatePuzzle(size, `practice:${Math.random()}`);
-  const progress = restoreProgress(puzzle, mode === 'daily' ? readLocal(saveKey(date), null) : null);
+function newGame(date, mode = 'daily', size = 7, archive = false) {
+  const puzzle = mode === 'daily' ? puzzleSnapshot('akari', date, () => dailyPuzzle(date)) : generatePuzzle(size, `practice:${Math.random()}`);
+  const progress = restoreProgress(puzzle, mode === 'daily' ? readLocal(saveKey(date, archive), null) : null);
   return { puzzle, mode, ...progress, past: [], future: [] };
 }
 
@@ -34,7 +35,8 @@ function Bulb() {
 
 export default function Akari() {
   const date = useDailyDate();
-  const [game, setGame] = useState(() => newGame(date));
+  const archive = !!useArchive()?.archive;
+  const [game, setGame] = useState(() => newGame(date, 'daily', 7, archive));
   const [tool, setTool] = useState('bulb');
   const [practiceSize, setPracticeSize] = useState(7);
   const boardRef = useRef(null);
@@ -49,13 +51,13 @@ export default function Akari() {
   }, [game.started, won]);
 
   useEffect(() => {
-    if (game.mode === 'daily') writeLocal(saveKey(date), {
+    if (game.mode === 'daily') writeLocal(saveKey(date, archive), {
       fingerprint: JSON.stringify(puzzle), bulbs, marks, seconds: game.seconds, started: game.started,
     });
-  }, [date, game.mode, game.seconds, game.started, puzzle, bulbs, marks]);
+  }, [date, archive, game.mode, game.seconds, game.started, puzzle, bulbs, marks]);
 
   function changeMode(mode, size = practiceSize) {
-    setGame(newGame(date, mode, size));
+    setGame(newGame(date, mode, size, archive));
     setTool('bulb');
   }
 
@@ -104,7 +106,7 @@ export default function Akari() {
     <header className="akari-heading"><p className="akari-eyebrow">LIGHT UP</p><h1>Akari</h1><p>A little light goes a long way.</p></header>
     <DailyResults gameId="akari" title="Akari" daily={game.mode === 'daily'} date={date} finished={won} seconds={game.seconds} started={game.started} />
     <div className="akari-controls">
-      <button aria-pressed={game.mode === 'daily'} onClick={() => changeMode('daily')}>Daily</button>
+      <button aria-pressed={game.mode === 'daily'} onClick={() => changeMode('daily')}>{archive ? 'Archive puzzle' : 'Daily'}</button>
       <button aria-pressed={game.mode === 'practice'} onClick={() => changeMode('practice')}>Practice</button>
       {game.mode === 'practice' && <>
         <select aria-label="Practice board size" value={practiceSize} onChange={event => { const size = Number(event.target.value); setPracticeSize(size); changeMode('practice', size); }}>
@@ -113,7 +115,7 @@ export default function Akari() {
         <button onClick={() => changeMode('practice')}>New puzzle</button>
       </>}
     </div>
-    <p className="akari-date">{game.mode === 'daily' ? `${date} · Daily` : 'Practice'} · {puzzle.size} × {puzzle.size}</p>
+    <p className="akari-date">{game.mode === 'daily' ? `${date} · ${archive ? 'Archive' : 'Daily'}` : 'Practice'} · {puzzle.size} × {puzzle.size}</p>
     <section className="akari-panel" aria-label="Akari puzzle">
       <div className="akari-progress"><span><strong>{lit.size}</strong> / {whiteCount} lit</span><span>{Math.floor(game.seconds / 60)}:{String(game.seconds % 60).padStart(2, '0')}</span></div>
       <div className="akari-board" ref={boardRef} style={{ '--size': puzzle.size }} aria-label="Light Up board">
