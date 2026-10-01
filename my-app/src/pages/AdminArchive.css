@@ -1,0 +1,14 @@
+.admin-archive { max-width: 1100px; margin: 0 auto; padding: 32px 16px 60px; color: #f5f0fb; }
+.admin-archive h1 { font-size: 28px; margin-bottom: 18px; }
+.admin-archive p { line-height: 1.5; margin: 10px 0; }
+.admin-archive button, .admin-archive select { background: #272134; border: 1px solid #5b4e70; color: #f5f0fb; padding: 8px 12px; border-radius: 7px; font: inherit; cursor: pointer; }
+.admin-archive-controls { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-bottom: 12px; }
+.admin-archive-controls label { display: flex; gap: 8px; align-items: center; }
+.admin-archive-note { color: #c8c0d5; font-size: 14px; }
+.admin-archive-note code, .admin-archive code { background: #221a2e; padding: 2px 5px; border-radius: 4px; word-break: break-all; }
+.admin-archive-scroll { overflow-x: auto; margin: 12px 0; border: 1px solid #3b2f4b; border-radius: 10px; }
+.admin-archive table { width: 100%; border-collapse: collapse; font-size: 14px; font-variant-numeric: tabular-nums; }
+.admin-archive th, .admin-archive td { padding: 9px 10px; text-align: left; border-bottom: 1px solid #2f263c; white-space: nowrap; }
+.admin-archive th { background: #1e1729; color: #c5b6d5; font-weight: 600; position: sticky; top: 0; }
+.admin-archive tbody tr:hover { background: #1c1526; }
+.admin-archive a { color: #00f0ff; }

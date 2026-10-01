@@ -1,8 +1,11 @@
-import { useDailyDate } from '../../components/DailyBoundary';
+import { useDailyDate, useArchive } from '../../components/DailyBoundary';
+import { puzzleSnapshot } from '../../utils/archive.js';
+import { readLocal, writeLocal } from '../../utils/dailyStats.js';
+import { nonogramProgressKey, saveNonogram, restoreNonogram } from './progress.js';
 import DailyResults from '../../components/DailyResults';
 // src/games/nonograms/Nonograms.jsx
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 
 import './Nonograms.css';
 
@@ -15,6 +18,14 @@ import { getDailySize } from './dailyConfig.js';
 
 export default function Nonograms({ onWin }) {
   const todayStr = useDailyDate();
+  const archive = !!useArchive()?.archive;
+  const progressKey = nonogramProgressKey(todayStr, archive);
+  // The daily (and each archive date) keeps the exact picture it was played with.
+  const dailySolution = useMemo(() => puzzleSnapshot('nonograms', todayStr, () => {
+    const size = getDailySize(todayStr);
+    return generateUniquePuzzleGrid(size, size, getDailyRng(todayStr));
+  }), [todayStr]);
+  const [initialProgress] = useState(() => restoreNonogram(dailySolution, readLocal(progressKey, null)));
 
   const [gameMode, setGameMode] = useState('daily'); // Start on daily mode by default
 
@@ -28,14 +39,7 @@ export default function Nonograms({ onWin }) {
 
   // Generate the daily board at the same size shown by the homepage rating.
 
-  const [solutionGrid, setSolutionGrid] = useState(() => {
-
-
-
-    const size = getDailySize(todayStr);
-    return generateUniquePuzzleGrid(size, size, getDailyRng(todayStr));
-
-  });
+  const [solutionGrid, setSolutionGrid] = useState(dailySolution);
 
  
 
@@ -47,18 +51,14 @@ export default function Nonograms({ onWin }) {
 
 
 
-  const [playerGrid, setPlayerGrid] = useState(
-
-    Array.from({ length: height }, () => Array(width).fill(0))
-
-  );
+  const [playerGrid, setPlayerGrid] = useState(initialProgress.grid);
 
  
 
-  const [hasStarted, setHasStarted] = useState(false);
+  const [hasStarted, setHasStarted] = useState(initialProgress.hasStarted);
   const [currentTool, setCurrentTool] = useState(1); // 1 = fill, 2 = cross
 
-  const [isWon, setIsWon] = useState(false);
+  const [isWon, setIsWon] = useState(initialProgress.isWon);
 
 
 
@@ -96,23 +96,24 @@ export default function Nonograms({ onWin }) {
 
 
 
-    const dailyRng = getDailyRng(todayStr);
+    const progress = restoreNonogram(dailySolution, readLocal(progressKey, null));
 
-    const size = getDailySize(todayStr);
-    const dailyPuzzle = generateUniquePuzzleGrid(size, size, dailyRng);
+    setSelectedSize(`${dailySolution.length}x${dailySolution[0].length}`);
 
-   
+    setSolutionGrid(dailySolution);
 
-    setSelectedSize(`${size}x${size}`);
+    setPlayerGrid(progress.grid);
 
-    setSolutionGrid(dailyPuzzle);
+    setHasStarted(progress.hasStarted);
+    setIsWon(progress.isWon);
 
-    setPlayerGrid(Array.from({ length: size }, () => Array(size).fill(0)));
+  }, [dailySolution, progressKey]);
 
-    setHasStarted(false);
-    setIsWon(false);
-
-  }, []);
+  // Save daily/archive progress so a reload resumes the same picture.
+  useEffect(() => {
+    if (gameMode !== 'daily' || solutionGrid !== dailySolution) return;
+    writeLocal(progressKey, saveNonogram(dailySolution, playerGrid, hasStarted, isWon));
+  }, [gameMode, solutionGrid, dailySolution, progressKey, playerGrid, hasStarted, isWon]);
 
 
 

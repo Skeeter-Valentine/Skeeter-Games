@@ -47,15 +47,15 @@ export function hiddenPositions(seed, row) {
   return hidden.filter(position => Math.floor(position / 5) === row).map(position => position % 5);
 }
 
-export function visibleFeedback(guess, answer, seed, row) {
-  const hidden = hiddenPositions(seed, row);
+export function visibleFeedback(guess, answer, seed, row, masks) {
+  const hidden = masks?.[row] ?? hiddenPositions(seed, row);
   return feedback(guess, answer).map((color, i) => hidden.includes(i) ? 'hidden' : color);
 }
 
-export function keyboardFeedback(guesses, answer, seed) {
+export function keyboardFeedback(guesses, answer, seed, masks) {
   const keys = {};
   const rank = { absent: 1, present: 2, correct: 3 };
-  guesses.forEach((guess, row) => visibleFeedback(guess, answer, seed, row).forEach((color, i) => {
+  guesses.forEach((guess, row) => visibleFeedback(guess, answer, seed, row, masks).forEach((color, i) => {
     if (color !== 'hidden' && (rank[color] > (rank[keys[guess[i]]] || 0))) keys[guess[i]] = color;
   }));
   return keys;

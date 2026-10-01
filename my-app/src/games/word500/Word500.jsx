@@ -1,4 +1,4 @@
-import { useDailyDate } from '../../components/DailyBoundary';
+import { useDailyDate, useArchive } from '../../components/DailyBoundary';
 import DailyResults from '../../components/DailyResults';
 // src/games/word500/Word500.jsx
 import React, { useState, useEffect, useCallback, useRef } from 'react';
@@ -7,6 +7,9 @@ import Keyboard from './components/Keyboard';
 import { getRandomTargetWord, getDailyTargetWord, isValidWord } from './constants/wordBank';
 import './Word500.css';
 import Navbar from '../../components/Navbar';
+
+import { puzzleSnapshot } from '../../utils/archive.js';
+import { readLocal, writeLocal } from '../../utils/dailyStats.js';
 
 const MAX_ATTEMPTS = 8;
 
@@ -36,14 +39,13 @@ export default function Word500({ onWin }) {
   const hiddenInputRef = useRef(null);
 
   const todayStr = useDailyDate();
+  const archive = !!useArchive()?.archive;
+  const progressKey = `${archive ? 'archive:v1:' : ''}skeedle500_daily_${todayStr}`;
 
   // Load stats from localStorage
   useEffect(() => {
-    const savedStats = localStorage.getItem('skeedle500_stats');
-    if (savedStats) {
-      setStats(JSON.parse(savedStats));
-    }
-  }, []);
+    if (!archive) setStats(readLocal('skeedle500_stats', DEFAULT_STATS));
+  }, [archive]);
 
   const initGame = useCallback((mode) => {
     setHasStarted(false);
@@ -52,12 +54,15 @@ export default function Word500({ onWin }) {
     setTileNotes({});
 
     if (mode === 'daily') {
-      const dailyWord = getDailyTargetWord(todayStr);
+      const dailyWord = puzzleSnapshot('word500', todayStr, () => getDailyTargetWord(todayStr));
       setTargetWord(dailyWord);
 
-      const saved = localStorage.getItem(`skeedle500_daily_${todayStr}`);
-      if (saved) {
-        const { savedGuesses, isFinished } = JSON.parse(saved);
+      const saved = readLocal(progressKey, null);
+      if (Array.isArray(saved?.savedGuesses) && saved.savedGuesses.length <= MAX_ATTEMPTS
+        && saved.savedGuesses.every(word => typeof word === 'string' && /^[A-Z]{5}$/.test(word) && isValidWord(word))) {
+        const { savedGuesses } = saved;
+        const isFinished = savedGuesses.includes(dailyWord) || savedGuesses.length === MAX_ATTEMPTS;
+        setHasStarted(savedGuesses.length > 0);
         setGuesses(savedGuesses);
         setGameOver(isFinished);
         if (isFinished) {
@@ -73,7 +78,7 @@ export default function Word500({ onWin }) {
       setGuesses([]);
       setGameOver(false);
     }
-  }, [todayStr]);
+  }, [todayStr, progressKey]);
 
   const handleTileClick = (rowIndex, tileIndex) => {
     if (!gameOver) setHasStarted(true);
@@ -147,13 +152,7 @@ export default function Word500({ onWin }) {
         }
 
         if (gameMode === 'daily') {
-          localStorage.setItem(
-            `skeedle500_daily_${todayStr}`,
-            JSON.stringify({
-              savedGuesses: updatedGuesses,
-              isFinished: isWin || isLoss,
-            })
-          );
+          writeLocal(progressKey, { savedGuesses: updatedGuesses, isFinished: isWin || isLoss });
         }
       } else if (currentGuess.length < 5 && /^[A-Z]$/.test(upperKey)) {
         setHasStarted(true);
@@ -161,7 +160,7 @@ export default function Word500({ onWin }) {
         setMessage('');
       }
     },
-    [currentGuess, gameOver, guesses, targetWord, gameMode, todayStr, onWin]
+    [currentGuess, gameOver, guesses, targetWord, gameMode, todayStr, progressKey, onWin]
   );
 
   // Desktop physical keyboard listener
@@ -214,7 +213,7 @@ export default function Word500({ onWin }) {
   return (
     <div className="word500-container">
       <Navbar />
-      <DailyResults started={hasStarted} gameId="word500" title="Skeedle500" daily={gameMode === 'daily'} date={todayStr} finished={gameOver} won={guesses.includes(targetWord)} ready={!!targetWord} legacyStats={stats} />
+      <DailyResults started={hasStarted} gameId="word500" title="Skeedle500" daily={gameMode === 'daily'} date={todayStr} finished={gameOver} won={guesses.includes(targetWord)} ready={!!targetWord} legacyStats={archive ? undefined : stats} />
       
       {/* Hidden input to trigger mobile virtual keyboard cleanly */}
       <input

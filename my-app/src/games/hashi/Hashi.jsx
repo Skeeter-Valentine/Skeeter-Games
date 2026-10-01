@@ -1,7 +1,10 @@
-import { useDailyDate } from '../../components/DailyBoundary';
+import { useDailyDate, useArchive } from '../../components/DailyBoundary';
+import { puzzleSnapshot } from '../../utils/archive.js';
+import { readLocal, writeLocal } from '../../utils/dailyStats.js';
+import { hashiProgressKey, hashiSolvedKey, islandFingerprint, restoreHashi } from './progress.js';
 import DailyResults from '../../components/DailyResults';
 // src/games/hashi/Hashi.jsx
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import StatsModal from './components/StatsModal';
 import Navbar from '../../components/Navbar';
 import './Hashi.css';
@@ -46,6 +49,14 @@ export default function Hashi({ onWin }) {
     const cellSize = (canvasSize - offset * 2) / (gridSize - 1);
 
     const todayStr = useDailyDate();
+    const archive = !!useArchive()?.archive;
+    const progressKey = hashiProgressKey(todayStr, archive);
+    const solvedKey = hashiSolvedKey(todayStr, archive);
+    // Each daily (and archive date) keeps the exact islands it was played with.
+    const dailyPuzzle = useMemo(() => puzzleSnapshot('hashi', todayStr, () => {
+        const config = getDailyConfig(todayStr);
+        return { size: config.size, islands: generateUniquePuzzle(config.size, config.rng) };
+    }), [todayStr]);
 
     useEffect(() => {
         const savedStats = localStorage.getItem('hashi_stats');
@@ -103,27 +114,31 @@ export default function Hashi({ onWin }) {
         setIsActive(false);
         setIsStatsOpen(false);
 
-        let rng = Math.random;
-        let targetSize = gridSize;
-
         if (daily) {
-            const config = getDailyConfig(todayStr);
-            rng = config.rng;
-            targetSize = config.size;
-            setGridSize(targetSize);
-        }
-
-        const generatedIslands = generateUniquePuzzle(targetSize, rng);
-
-        if (daily) {
-            const savedSolved = localStorage.getItem(`hashi_solved_v2_${todayStr}`);
-            if (savedSolved === 'true') {
-                setMessage('🎉 Daily Puzzle Already Completed Today!');
+            setGridSize(dailyPuzzle.size);
+            const islands = dailyPuzzle.islands;
+            const progress = restoreHashi(islands, readLocal(progressKey, null));
+            const savedSolved = localStorage.getItem(solvedKey);
+            if (progress) {
+                setSeconds(progress.seconds);
+                setIsSolved(progress.solved);
             }
+            if (savedSolved === 'true' || progress?.solved) {
+                setMessage(archive ? '🎉 Archive Puzzle Already Completed!' : '🎉 Daily Puzzle Already Completed Today!');
+            }
+            setGameState({ islands, bridges: progress?.bridges ?? [] });
+            return;
         }
 
+        const generatedIslands = generateUniquePuzzle(gridSize, Math.random);
         setGameState({ islands: generatedIslands, bridges: [] });
     };
+
+    // Save daily/archive bridges so a reload resumes the same board.
+    useEffect(() => {
+        if (!isDailyMode || gameState.islands !== dailyPuzzle.islands) return;
+        writeLocal(progressKey, { fingerprint: islandFingerprint(gameState.islands), bridges: gameState.bridges, seconds, solved: isSolved });
+    }, [isDailyMode, gameState, dailyPuzzle, progressKey, seconds, isSolved]);
 
     useEffect(() => {
         if (!isDailyMode) {
@@ -322,7 +337,7 @@ export default function Hashi({ onWin }) {
                     setIsStatsOpen(true);
                 }
                 if (isDailyMode) {
-                    localStorage.setItem(`hashi_solved_v2_${todayStr}`, 'true');
+                    try { localStorage.setItem(solvedKey, 'true'); } catch { /* progress also records the win */ }
                 }
                 // Notify the gauntlet that this game has been successfully won!
                 onWin?.();
@@ -335,7 +350,7 @@ export default function Hashi({ onWin }) {
     return (
         <>
             <Navbar />
-      <DailyResults gameId="hashi" title="Hashi" daily={isDailyMode} date={todayStr} finished={isSolved} seconds={seconds} ready={gameState.islands.length > 0} manualOpen={isStatsOpen} onClose={() => setIsStatsOpen(false)} legacyStats={stats} />
+      <DailyResults gameId="hashi" title="Hashi" daily={isDailyMode} date={todayStr} finished={isSolved} seconds={seconds} ready={gameState.islands.length > 0} manualOpen={isStatsOpen} onClose={() => setIsStatsOpen(false)} legacyStats={archive ? undefined : stats} />
             <div className="hashi-container">
                 <div className="skeedle-header">
                     <h2>Hashkeet {isDailyMode && <span style={{ fontSize: '14px', color: '#58a6ff' }}>(Daily)</span>}</h2>

@@ -21,6 +21,8 @@ export const recordPuzzleAttempt = onCall({ region: 'us-central1', maxInstances:
     transaction.set(aggregateRef, {
       version: data.version, game: data.game, date: data.date, mode: data.mode,
       starts: FieldValue.increment(change.starts), wins: FieldValue.increment(change.wins), losses: FieldValue.increment(change.losses),
+      timedWins: FieldValue.increment(change.timedWins), winSeconds: FieldValue.increment(change.winSeconds),
+      ...(change.bucket ? { timeBuckets: { [change.bucket]: FieldValue.increment(1) } } : {}),
       updatedAt: FieldValue.serverTimestamp(),
     }, { merge: true });
   });

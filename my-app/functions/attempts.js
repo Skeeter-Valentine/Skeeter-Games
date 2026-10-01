@@ -12,8 +12,22 @@ export function validateAttempt(data, today) {
   return { version: data.version, game: data.game, date: data.date, mode: data.mode, status: data.status, seconds: data.seconds };
 }
 
+// Upper edges (seconds) of the solve-time buckets kept per puzzle. Buckets let
+// the site estimate a median time without reading individual players' records.
+// Keep in sync with src/utils/difficulty.js (a test checks this).
+export const TIME_BUCKETS = [30, 60, 120, 180, 300, 450, 600, 900, 1200, 1800, 2700, 3600];
+export function timeBucket(seconds) {
+  const index = TIME_BUCKETS.findIndex(edge => seconds <= edge);
+  return `b${index === -1 ? TIME_BUCKETS.length : index}`;
+}
+
 export function transition(previous, input) {
   if (previous && previous.status !== 'started') return null;
   if (previous?.status === input.status) return null;
-  return { attempt: input, starts: previous ? 0 : 1, wins: input.status === 'won' ? 1 : 0, losses: input.status === 'lost' ? 1 : 0 };
+  const timedWin = input.status === 'won' && Number.isInteger(input.seconds);
+  return {
+    attempt: input, starts: previous ? 0 : 1, wins: input.status === 'won' ? 1 : 0, losses: input.status === 'lost' ? 1 : 0,
+    // Only winning times count toward average/median solve time.
+    timedWins: timedWin ? 1 : 0, winSeconds: timedWin ? input.seconds : 0, bucket: timedWin ? timeBucket(input.seconds) : null,
+  };
 }

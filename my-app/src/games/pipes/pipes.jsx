@@ -1,7 +1,8 @@
-import { useDailyDate } from '../../components/DailyBoundary';
+import { useDailyDate, useArchive } from '../../components/DailyBoundary';
 import { getDailyGridSize } from './dailyConfig.js';
 import DailyResults from '../../components/DailyResults';
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { puzzleSnapshot } from '../../utils/archive.js';
 import './pipes.css';
 import Navbar from '../../components/Navbar';
 
@@ -59,11 +60,68 @@ function countBits(n) {
   return count;
 }
 
+/* Builds a scrambled board: a random spanning tree from the centre server,
+   then every tile rotated randomly. Daily boards use the seeded generator. */
+function buildPipes(size, rng) {
+  const sR = Math.floor(size / 2);
+  const sC = Math.floor(size / 2);
+
+  const solGrid = Array(size).fill(null).map(() => Array(size).fill(0));
+  const visited = Array(size).fill(null).map(() => Array(size).fill(false));
+  const edges = [];
+
+  const addEdges = (r, c) => {
+    for (let dir = 0; dir < 4; dir++) {
+      const nr = r + DIRS[dir].dr;
+      const nc = c + DIRS[dir].dc;
+      if (nr >= 0 && nr < size && nc >= 0 && nc < size && !visited[nr][nc]) {
+        edges.push({ r1: r, c1: c, r2: nr, c2: nc, dir });
+      }
+    }
+  };
+
+  visited[sR][sC] = true;
+  addEdges(sR, sC);
+
+  while (edges.length > 0) {
+    const randIdx = Math.floor(rng() * edges.length);
+    const { r1, c1, r2, c2, dir } = edges[randIdx];
+    edges.splice(randIdx, 1);
+
+    if (!visited[r2][c2]) {
+      visited[r2][c2] = true;
+      solGrid[r1][c1] |= DIRS[dir].bit;
+      solGrid[r2][c2] |= DIRS[OPPOSITE[dir]].bit;
+      addEdges(r2, c2);
+    }
+  }
+
+  const newUserGrid = Array(size).fill(null).map(() => Array(size).fill(0));
+  for (let r = 0; r < size; r++) {
+    for (let c = 0; c < size; c++) {
+      let mask = solGrid[r][c];
+      const rotations = Math.floor(rng() * 4);
+      for (let i = 0; i < rotations; i++) {
+        mask = rotateMaskClockwise(mask);
+      }
+      newUserGrid[r][c] = mask;
+    }
+  }
+  return { server: { r: sR, c: sC }, grid: newUserGrid };
+}
+
 export default function Pipes({ onWin }) {
   const todayStr = useDailyDate();
+  const archive = !!useArchive()?.archive;
+  // Archive progress uses its own key; the live daily key is unchanged.
+  const saveKey = `${archive ? 'archive:v1:' : ''}pipes-daily-${todayStr}`;
+  const dailyPuzzle = useMemo(() => puzzleSnapshot('pipes', todayStr, () => {
+    const size = getDailyGridSize(todayStr);
+    return { size, ...buildPipes(size, mulberry32(getDailySeed(todayStr))) };
+  }), [todayStr]);
 
   const [gameMode, setGameMode] = useState('daily');
-  const [gridSize, setGridSize] = useState(() => getDailyGridSize(todayStr));
+  const [gridSize, setGridSize] = useState(() => dailyPuzzle.size);
   const [userGrid, setUserGrid] = useState([]);
   const [lockedGrid, setLockedGrid] = useState([]);
   const [poweredGrid, setPoweredGrid] = useState([]);
@@ -108,14 +166,14 @@ export default function Pipes({ onWin }) {
   const generatePuzzle = useCallback((size, mode) => {
     // If loading daily mode, check local storage for saved state first
     if (mode === 'daily') {
-      const savedData = localStorage.getItem(`pipes-daily-${todayStr}`);
+      const savedData = localStorage.getItem(saveKey);
       if (savedData) {
         try {
           const { grid, locked, time, completed, server } = JSON.parse(savedData);
-          if (grid && grid.length === size) {
-            setServerPos(server || { r: Math.floor(size / 2), c: Math.floor(size / 2) });
+          if (grid && grid.length === dailyPuzzle.size) {
+            setServerPos(server || dailyPuzzle.server);
             setUserGrid(grid);
-            setLockedGrid(locked || Array(size).fill(null).map(() => Array(size).fill(false)));
+            setLockedGrid(locked || Array(grid.length).fill(null).map(() => Array(grid.length).fill(false)));
             setSeconds(time || 0);
             setIsWon(Boolean(completed));
             setIsTimerActive(false);
@@ -128,57 +186,10 @@ export default function Pipes({ onWin }) {
     }
 
     // Generate fresh board if no saved daily state exists or if playing custom mode
-    const sR = Math.floor(size / 2);
-    const sC = Math.floor(size / 2);
+    const fresh = mode === 'daily' ? dailyPuzzle : buildPipes(size, Math.random);
+    const newUserGrid = fresh.grid.map(row => [...row]);
+    const { r: sR, c: sC } = fresh.server;
     setServerPos({ r: sR, c: sC });
-
-    let rng = Math.random;
-    if (mode === 'daily') {
-      const seed = getDailySeed(todayStr);
-      rng = mulberry32(seed);
-    }
-
-    const solGrid = Array(size).fill(null).map(() => Array(size).fill(0));
-    const visited = Array(size).fill(null).map(() => Array(size).fill(false));
-    const edges = [];
-
-    const addEdges = (r, c) => {
-      for (let dir = 0; dir < 4; dir++) {
-        const nr = r + DIRS[dir].dr;
-        const nc = c + DIRS[dir].dc;
-        if (nr >= 0 && nr < size && nc >= 0 && nc < size && !visited[nr][nc]) {
-          edges.push({ r1: r, c1: c, r2: nr, c2: nc, dir });
-        }
-      }
-    };
-
-    visited[sR][sC] = true;
-    addEdges(sR, sC);
-
-    while (edges.length > 0) {
-      const randIdx = Math.floor(rng() * edges.length);
-      const { r1, c1, r2, c2, dir } = edges[randIdx];
-      edges.splice(randIdx, 1);
-
-      if (!visited[r2][c2]) {
-        visited[r2][c2] = true;
-        solGrid[r1][c1] |= DIRS[dir].bit;
-        solGrid[r2][c2] |= DIRS[OPPOSITE[dir]].bit;
-        addEdges(r2, c2);
-      }
-    }
-
-    const newUserGrid = Array(size).fill(null).map(() => Array(size).fill(0));
-    for (let r = 0; r < size; r++) {
-      for (let c = 0; c < size; c++) {
-        let mask = solGrid[r][c];
-        const rotations = Math.floor(rng() * 4);
-        for (let i = 0; i < rotations; i++) {
-          mask = rotateMaskClockwise(mask);
-        }
-        newUserGrid[r][c] = mask;
-      }
-    }
 
     const initialLocked = Array(size).fill(null).map(() => Array(size).fill(false));
     setUserGrid(newUserGrid);
@@ -189,7 +200,7 @@ export default function Pipes({ onWin }) {
 
     if (mode === 'daily') {
       localStorage.setItem(
-        `pipes-daily-${todayStr}`,
+        saveKey,
         JSON.stringify({
           grid: newUserGrid,
           locked: initialLocked,
@@ -199,12 +210,12 @@ export default function Pipes({ onWin }) {
         })
       );
     }
-  }, [todayStr]);
+  }, [saveKey, dailyPuzzle]);
 
   const handleModeChange = (mode) => {
     setGameMode(mode);
     if (mode === 'daily') {
-      const dailySize = getDailyGridSize(todayStr);
+      const dailySize = dailyPuzzle.size;
       setGridSize(dailySize);
       generatePuzzle(dailySize, 'daily');
     } else {
@@ -282,7 +293,7 @@ export default function Pipes({ onWin }) {
   const saveDailyState = useCallback((grid, locked, wonState, currentTime) => {
     if (gameMode === 'daily') {
       localStorage.setItem(
-        `pipes-daily-${todayStr}`,
+        saveKey,
         JSON.stringify({
           grid,
           locked,
@@ -292,7 +303,7 @@ export default function Pipes({ onWin }) {
         })
       );
     }
-  }, [gameMode, todayStr, serverPos]);
+  }, [gameMode, saveKey, serverPos]);
 
   useEffect(() => {
     const handleResize = () => {

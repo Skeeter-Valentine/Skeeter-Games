@@ -1,6 +1,6 @@
 import { signInAnonymously } from 'firebase/auth';
 import { getFunctions, httpsCallable } from 'firebase/functions';
-import { doc, getDocFromServer } from 'firebase/firestore';
+import { collection, doc, getDocFromServer, getDocsFromServer, query, where } from 'firebase/firestore';
 import { firebaseConfigured, firebaseServices } from './firebase.js';
 import { readLocal, writeLocal } from '../utils/dailyStats.js';
 
@@ -13,6 +13,15 @@ export async function readPuzzleRate(game, date, mode) {
   const { db } = firebaseServices();
   const result = await getDocFromServer(doc(db, 'puzzleRates', puzzleResultId(game, date, mode)));
   return result.exists() ? result.data() : null;
+}
+
+// Every daily and archive counter document for one game (used by the hidden
+// admin archive). puzzleRates is publicly readable, so no special access is needed.
+export async function readGameRates(game) {
+  if (!puzzleLoggingEnabled) throw new Error('Community results are not enabled');
+  const { db } = firebaseServices();
+  const result = await getDocsFromServer(query(collection(db, 'puzzleRates'), where('game', '==', game)));
+  return result.docs.map(item => item.data());
 }
 
 export async function sendPuzzleResult(game, date, mode, status, seconds) {

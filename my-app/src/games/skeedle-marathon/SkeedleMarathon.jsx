@@ -1,7 +1,9 @@
-import { useDailyDate } from '../../components/DailyBoundary';
+import { useDailyDate, useArchive } from '../../components/DailyBoundary';
+import { puzzleSnapshot } from '../../utils/archive.js';
+import { readLocal, writeLocal } from '../../utils/dailyStats.js';
 import DailyResults from '../../components/DailyResults';
 import GameModal from '../../components/GameModal';
-import { marathonProgress } from './progress.js';
+import { marathonProgress, marathonProgressKey, saveMarathon, restoreMarathon } from './progress.js';
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import "./SkeedleMarathon.css";
 import words from "../../constants/words.json";
@@ -125,19 +127,25 @@ function buildKeyboardStatusesForBoard(guesses, answer) {
 
 export default function SkeedleMarathon() {
   const date = useDailyDate();
+  const archive = !!useArchive()?.archive;
+  const progressKey = marathonProgressKey(date, archive);
+  // The daily (and each archive date) keeps its exact 26 answers, even if the word list changes.
+  const dailyAnswers = useMemo(() => puzzleSnapshot('skeedle-marathon', date,
+    () => seededShuffle(ANSWERS, getDaySeed(date)).slice(0, BOARD_COUNT)), [date]);
+  const [initial] = useState(() => restoreMarathon(dailyAnswers, readLocal(progressKey, null)));
   const gameRef = useRef(null);
   const boardRefs = useRef({});
   const [gameId, setGameId] = useState(0);
   const [gameMode, setGameMode] = useState("daily"); // Starts on daily mode by default
-  const [guesses, setGuesses] = useState([]);
+  const [guesses, setGuesses] = useState(initial.guesses);
   const [currentGuess, setCurrentGuess] = useState("");
   const [message, setMessage] = useState("");
   const [activeBoardIndex, setActiveBoardIndex] = useState(0);
   const [hiddenBoards, setHiddenBoards] = useState(new Set());
-  const [secondsElapsed, setSecondsElapsed] = useState(0);
-  const [hasStarted, setHasStarted] = useState(false);
-  const [loss, setLoss] = useState(null);
-  const [continuePlaying, setContinuePlaying] = useState(false);
+  const [secondsElapsed, setSecondsElapsed] = useState(initial.secondsElapsed);
+  const [hasStarted, setHasStarted] = useState(initial.hasStarted);
+  const [loss, setLoss] = useState(initial.loss);
+  const [continuePlaying, setContinuePlaying] = useState(initial.continuePlaying);
 
   const answers = useMemo(() => {
     if (ANSWERS.length < BOARD_COUNT) {
@@ -147,12 +155,17 @@ export default function SkeedleMarathon() {
     }
 
     if (gameMode === "daily") {
-      const seed = getDaySeed(date);
-      return seededShuffle(ANSWERS, seed).slice(0, BOARD_COUNT);
+      return dailyAnswers;
     } else {
       return shuffle(ANSWERS).slice(0, BOARD_COUNT);
     }
-  }, [gameId, gameMode, date]);
+  }, [gameId, gameMode, dailyAnswers]);
+
+  // Save the daily/archive attempt so a reload resumes it.
+  useEffect(() => {
+    if (gameMode !== "daily") return;
+    writeLocal(progressKey, saveMarathon(dailyAnswers, { guesses, secondsElapsed, hasStarted, loss, continuePlaying }));
+  }, [gameMode, progressKey, dailyAnswers, guesses, secondsElapsed, hasStarted, loss, continuePlaying]);
 
   const solvedBoards = useMemo(
     () => answers.map((answer) => guesses.includes(answer)),
@@ -327,16 +340,16 @@ export default function SkeedleMarathon() {
     }
   }
 
-  function resetGame() {
-    setLoss(null);
-    setContinuePlaying(false);
-    setGuesses([]);
+  function resetGame(saved = null) {
+    setLoss(saved?.loss ?? null);
+    setContinuePlaying(saved?.continuePlaying ?? false);
+    setGuesses(saved?.guesses ?? []);
     setCurrentGuess("");
     setMessage("");
     setActiveBoardIndex(0);
     setHiddenBoards(new Set());
-    setSecondsElapsed(0);
-    setHasStarted(false);
+    setSecondsElapsed(saved?.secondsElapsed ?? 0);
+    setHasStarted(saved?.hasStarted ?? false);
     setGameId((previous) => previous + 1);
 
     requestAnimationFrame(() => {
@@ -401,8 +414,9 @@ export default function SkeedleMarathon() {
                 type="button"
                 className={`mode-btn ${gameMode === "daily" ? "is-active" : ""}`}
                 onClick={() => {
+                  if (gameMode === "daily") return;
                   setGameMode("daily");
-                  resetGame();
+                  resetGame(restoreMarathon(dailyAnswers, readLocal(progressKey, null)));
                 }}
               >
                 Daily
@@ -612,7 +626,7 @@ export default function SkeedleMarathon() {
               <button
                 type="button"
                 className="new-marathon-button"
-                onClick={resetGame}
+                onClick={() => resetGame()}
               >
                 NEW MARATHON
               </button>

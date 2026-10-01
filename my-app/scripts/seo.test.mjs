@@ -6,7 +6,7 @@ import { pages } from '../src/seo/pages.js';
 test('every public route has initial HTML, unique metadata, canonical and sitemap entry', async () => {
   const sitemap = await readFile('dist/sitemap.xml', 'utf8');
   const app = (await readFile('src/App.jsx', 'utf8')).replace(/\{\/\*[\s\S]*?\*\/\}/g, '');
-  const routes = [...app.matchAll(/<Route path="([^"]+)"/g)].map(match => match[1]).filter(path => path !== '*' && path !== '/nerdle');
+  const routes = [...app.matchAll(/<Route path="([^"]+)"/g)].map(match => match[1]).filter(path => path !== '*' && path !== '/nerdle' && !path.startsWith('/admin/'));
   assert.deepEqual(routes.sort(), Object.keys(pages).sort());
   assert.equal(new Set(Object.values(pages).map(page => page.title)).size, routes.length);
   assert.equal(new Set(Object.values(pages).map(page => page.description)).size, routes.length);

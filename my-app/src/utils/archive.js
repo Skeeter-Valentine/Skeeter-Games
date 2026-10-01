@@ -3,7 +3,8 @@ import { readLocal, writeLocal } from './dailyStats.js';
 export const ARCHIVE_START = '2026-08-20';
 export const ARCHIVE_VERSION = 'v1';
 // Enable each game only after its puzzle snapshots and progress are isolated.
-export const ARCHIVE_GAMES = ['map', 'akari'];
+export const ARCHIVE_GAMES = ['map', 'akari', 'stitches', 'parshle', 'word500', 'quordle', 'shikaku',
+  'minesweeper', 'sudoku', 'pipes', 'hashi', 'nonograms', 'skeedlemath', 'skeedle-marathon', '2048'];
 export function validArchiveDate(date, today) {
   return typeof date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(date)
     && Number.isFinite(Date.parse(`${date}T00:00:00Z`))
@@ -36,6 +37,8 @@ export function gameStorage(archive) {
 
 export function resultSummary(counts) {
   const starts = counts?.starts || 0, wins = counts?.wins || 0, losses = counts?.losses || 0;
+  const timedWins = counts?.timedWins || 0, winSeconds = counts?.winSeconds || 0;
   return { starts, wins, losses, unfinished: Math.max(0, starts - wins - losses),
-    winRate: starts ? Math.round(wins / starts * 100) : null };
+    winRate: starts ? Math.round(wins / starts * 100) : null,
+    averageSeconds: timedWins ? Math.round(winSeconds / timedWins) : null };
 }

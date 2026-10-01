@@ -1,36 +1,26 @@
-import { useDailyDate } from '../../components/DailyBoundary';
+import { useDailyDate, useArchive } from '../../components/DailyBoundary';
 import DailyResults from '../../components/DailyResults';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Navbar from '../../components/Navbar';
 import { checkSolution, dailyPuzzle, generatePuzzle, getCounts, getEdges } from './puzzle.js';
 import './Stitches.css';
+import { puzzleSnapshot } from '../../utils/archive.js';
+import { readLocal, writeLocal } from '../../utils/dailyStats.js';
+import { storageKey, restoreProgress } from './progress.js';
 
 const COLORS = ['#ff2a85', '#00f0ff', '#ffb703', '#00ff87', '#b568ff', '#398cff', '#ff7538', '#ffff00', '#f251ff'];
-const storageKey = date => `stitches-daily-v2-${date}`;
 const timeText = seconds => `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
 
-function newGame(date, mode, size = 7) {
-  const puzzle = mode === 'daily' ? dailyPuzzle(date) : generatePuzzle(size);
-  const game = { mode, date, puzzle, selected: [], marks: [], seconds: 0, started: false, history: [] };
-  if (mode === 'daily') {
-    try {
-      const saved = JSON.parse(localStorage.getItem(storageKey(date)));
-      const validIds = new Set(getEdges(puzzle.regions).map(edge => edge.id));
-      if (saved && saved.fingerprint === JSON.stringify(puzzle)
-        && Array.isArray(saved.selected) && saved.selected.every(id => validIds.has(id))
-        && Array.isArray(saved.marks) && saved.marks.every(cell => Number.isInteger(cell) && cell >= 0 && cell < puzzle.regions.length ** 2)) {
-        game.selected = [...new Set(saved.selected)];
-        game.marks = [...new Set(saved.marks)];
-        game.seconds = Number.isInteger(saved.seconds) && saved.seconds >= 0 ? saved.seconds : 0;
-      }
-    } catch { /* Storage can be unavailable or contain an old, invalid save. */ }
-  }
-  return game;
+function newGame(date, mode, size = 7, archive = false) {
+  const puzzle = mode === 'daily' ? puzzleSnapshot('stitches', date, () => dailyPuzzle(date)) : generatePuzzle(size);
+  const progress = restoreProgress(puzzle, mode === 'daily' ? readLocal(storageKey(date, archive), null) : null);
+  return { mode, date, puzzle, ...progress, history: [] };
 }
 
 export default function Stitches({ onWin }) {
   const date = useDailyDate();
-  const [game, setGame] = useState(() => newGame(date, 'daily'));
+  const archive = !!useArchive()?.archive;
+  const [game, setGame] = useState(() => newGame(date, 'daily', 7, archive));
   const [tool, setTool] = useState('stitch');
   const [message, setMessage] = useState('');
   const notified = useRef(false);
@@ -53,15 +43,15 @@ export default function Stitches({ onWin }) {
   useEffect(() => {
     if (game.mode !== 'daily') return;
     try {
-      localStorage.setItem(storageKey(game.date), JSON.stringify({
-        fingerprint: JSON.stringify(game.puzzle), selected: game.selected, marks: game.marks, seconds: game.seconds,
-      }));
+      writeLocal(storageKey(game.date, archive), {
+        fingerprint: JSON.stringify(game.puzzle), selected: game.selected, marks: game.marks, seconds: game.seconds, started: game.started,
+      });
     } catch { /* Playing remains available without browser storage. */ }
-  }, [game]);
+  }, [game, archive]);
 
   const changeGame = (mode, nextSize = size) => {
     markDrag.current = null;
-    setGame(newGame(date, mode, nextSize));
+    setGame(newGame(date, mode, nextSize, archive));
     setMessage('');
     setTool('stitch');
     notified.current = false;
@@ -168,7 +158,7 @@ export default function Stitches({ onWin }) {
   return (
     <>
       <Navbar />
-      <DailyResults gameId="stitches" title="Skitches" daily={game.mode === 'daily'} date={game.date} finished={won} seconds={game.seconds} />
+      <DailyResults gameId="stitches" title="Skitches" daily={game.mode === 'daily'} date={game.date} finished={won} started={game.started} seconds={game.seconds} />
       <main className="stitches-page">
         <header className="stitches-heading">
           <h1>SKITCHES</h1>
@@ -177,7 +167,7 @@ export default function Stitches({ onWin }) {
 
         <div className="stitches-toolbar">
           <div className="stitches-mode" aria-label="Game mode">
-            <button aria-pressed={game.mode === 'daily'} onClick={() => changeGame('daily')}>Daily</button>
+            <button aria-pressed={game.mode === 'daily'} onClick={() => changeGame('daily')}>{archive ? 'Archive puzzle' : 'Daily'}</button>
             <button aria-pressed={game.mode === 'random'} onClick={() => changeGame('random')}>Random</button>
           </div>
           {game.mode === 'random' ? <>

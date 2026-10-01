@@ -1,4 +1,4 @@
-import { useDailyDate } from '../../components/DailyBoundary';
+import { useDailyDate, useArchive } from '../../components/DailyBoundary';
 import DailyResults from '../../components/DailyResults';
 import React, { useState, useEffect, useRef } from 'react';
 import Board from './components/Board';
@@ -9,12 +9,17 @@ import { getDailyTargetWords,
 } from './constants/wordBank';
 import './Quordle.css';
 import Navbar from '../../components/Navbar';
+import { puzzleSnapshot } from '../../utils/archive.js';
+import { readLocal, writeLocal } from '../../utils/dailyStats.js';
 
 const WORD_LENGTH = 5;
 const MAX_ATTEMPTS = 9;
 
 export default function Quordle({ onWin }) {
   const sessionDate = useDailyDate();
+  const archive = !!useArchive()?.archive;
+  const progressKey = `${archive ? 'archive:v1:' : ''}quordle_daily_${sessionDate}`;
+  const [loadedMode, setLoadedMode] = useState(null);
   // Mode state: 'daily' (default) or 'practice'
   const [gameMode, setGameMode] = useState('daily');
 
@@ -43,20 +48,16 @@ export default function Quordle({ onWin }) {
 
     if (mode === 'daily') {
       const todayStr = sessionDate;
-      const todayKey = `quordle_daily_${todayStr}`;
-      Object.keys(localStorage).forEach((key) => {
-        if (key.startsWith('quordle_daily_') && key !== todayKey) {
-          localStorage.removeItem(key);
-        }
-      });
-
-      const dailyWords = getDailyTargetWords(todayStr);
+      const dailyWords = puzzleSnapshot('quordle', todayStr, () => getDailyTargetWords(todayStr));
       setTargetWords(dailyWords);
 
       // Check if player has saved progress for today
-      const saved = localStorage.getItem(todayKey);
-      if (saved) {
-        const { guesses: savedGuesses, gameOver: savedGameOver } = JSON.parse(saved);
+      const saved = readLocal(progressKey, null);
+      if (Array.isArray(saved?.guesses) && saved.guesses.length <= MAX_ATTEMPTS
+        && saved.guesses.every(word => typeof word === 'string' && /^[A-Z]{5}$/.test(word) && isValidWord(word))) {
+        const savedGuesses = saved.guesses;
+        const savedGameOver = dailyWords.every(word => savedGuesses.includes(word)) || savedGuesses.length === MAX_ATTEMPTS;
+        setHasStarted(savedGuesses.length > 0);
         setGuesses(savedGuesses);
         setGameOver(savedGameOver);
       } else {
@@ -69,6 +70,7 @@ export default function Quordle({ onWin }) {
       setGuesses([]);
       setGameOver(false);
     }
+    setLoadedMode(mode);
   };
 
   // DailyBoundary remounts the game when the shared UTC date changes.
@@ -84,18 +86,10 @@ export default function Quordle({ onWin }) {
 
   // Save Daily Progress cleanly under today's date key
   useEffect(() => {
-    if (gameMode === 'daily') {
-      const todayKey = `quordle_daily_${sessionDate}`;
-      
-      // Only write to localStorage if user has made at least one guess
-      if (guesses.length > 0) {
-        localStorage.setItem(
-          todayKey,
-          JSON.stringify({ guesses, gameOver })
-        );
-      }
+    if (gameMode === 'daily' && loadedMode === gameMode && targetWords.length === 4 && guesses.length > 0) {
+      writeLocal(progressKey, { guesses, gameOver });
     }
-  }, [guesses, gameOver, gameMode]);
+  }, [guesses, gameOver, gameMode, loadedMode, progressKey, targetWords]);
 
   // Handle Input (from physical or virtual keyboard)
   const handleInput = (key) => {

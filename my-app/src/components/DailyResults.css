@@ -16,3 +16,8 @@
 .daily-results-content .daily-results-done { margin-top: 20px; width: 100%; padding: 12px; background: #ff2a85; color: #fff; font-size: 17px; font-weight: bold; border-radius: 8px; cursor: pointer; }
 .daily-results-dialog button:focus-visible, .daily-results-legacy summary:focus-visible { outline: 2px solid #00f0ff; outline-offset: 3px; }
 @media (max-width: 400px) { .daily-results-content { padding: 30px 14px 18px; } .daily-results-grid strong { font-size: 21px; } }
+.daily-results-community { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 10px; }
+.daily-results-community > div { background: #221a2e; border: 1px solid #3b2f4b; padding: 10px 4px; border-radius: 9px; display: grid; gap: 4px; }
+.daily-results-community strong { font-size: 20px; color: #00f0ff; font-variant-numeric: tabular-nums; }
+.daily-results-community span { font-size: 13px; color: #c5b6d5; }
+.daily-results-community + p { margin-top: 12px; }

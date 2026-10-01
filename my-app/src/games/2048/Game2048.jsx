@@ -1,7 +1,8 @@
-import { useDailyDate } from '../../components/DailyBoundary';
+import { useDailyDate, useArchive } from '../../components/DailyBoundary';
+import { puzzleSnapshot } from '../../utils/archive.js';
 import DailyResults from '../../components/DailyResults';
 // src/pages/Game2048.jsx
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import Navbar from '../../components/Navbar';
 import './Game2048.css';
 
@@ -29,8 +30,57 @@ function getDailySeed(dateStr) {
   return Math.abs(hash);
 }
 
+/* The seeded opening board for the daily challenge and unlimited puzzles. */
+function seededStart(seed) {
+  const rng = mulberry32(seed);
+  const totalTilesCount = 8 + Math.floor(rng() * 3);
+
+  const allPositions = [];
+  for (let r = 0; r < GRID_SIZE; r++) {
+    for (let c = 0; c < GRID_SIZE; c++) {
+      allPositions.push({ r, c });
+    }
+  }
+
+  for (let i = allPositions.length - 1; i > 0; i--) {
+    const j = Math.floor(rng() * (i + 1));
+    [allPositions[i], allPositions[j]] = [allPositions[j], allPositions[i]];
+  }
+
+  const highTierValues = [256, 512, 1024];
+  const midTierValues = [32, 64, 128];
+  const lowTierValues = [2, 4, 8, 16];
+
+  const assignedValues = [];
+  assignedValues.push(highTierValues[Math.floor(rng() * highTierValues.length)]);
+
+  for (let i = 0; i < 3; i++) {
+    assignedValues.push(midTierValues[Math.floor(rng() * midTierValues.length)]);
+  }
+
+  while (assignedValues.length < totalTilesCount) {
+    const roll = rng();
+    if (roll < 0.6) {
+      assignedValues.push(lowTierValues[Math.floor(rng() * lowTierValues.length)]);
+    } else {
+      assignedValues.push(midTierValues[Math.floor(rng() * midTierValues.length)]);
+    }
+  }
+
+  for (let i = assignedValues.length - 1; i > 0; i--) {
+    const j = Math.floor(rng() * (i + 1));
+    [assignedValues[i], assignedValues[j]] = [assignedValues[j], assignedValues[i]];
+  }
+
+  return assignedValues.map((value, i) => ({ r: allPositions[i].r, c: allPositions[i].c, value }));
+}
+
 export default function Game2048({ onWin }) {
   const todayStr = useDailyDate();
+  const archive = !!useArchive()?.archive;
+  // Archive runs are saved under their own key and never touch the live daily save.
+  const saveKey = `${archive ? 'archive:v1:' : ''}2048-daily-${todayStr}`;
+  const dailyStart = useMemo(() => puzzleSnapshot('2048', todayStr, () => seededStart(getDailySeed(todayStr + '-2048'))), [todayStr]);
   const nextId = useRef(1);
   const [gameMode, setGameMode] = useState('daily'); // 'daily', 'classic', or 'unlimited'
   const [unlimitedSeed, setUnlimitedSeed] = useState(() => Math.floor(Math.random() * 1000000));
@@ -109,16 +159,19 @@ export default function Game2048({ onWin }) {
     setGameWon(false);
     setWinTimeFormatted('');
 
-    // 1. Purge old daily challenge keys from localStorage to prevent data leaks
-    Object.keys(localStorage).forEach((key) => {
-      if (key.startsWith('2048-daily-') && key !== `2048-daily-${todayStr}`) {
-        localStorage.removeItem(key);
-      }
-    });
+    // 1. Purge old live daily keys. Never purge while showing an archive date,
+    // or today's live daily would be deleted. Archive keys use their own prefix.
+    if (!archive) {
+      Object.keys(localStorage).forEach((key) => {
+        if (key.startsWith('2048-daily-') && key !== `2048-daily-${todayStr}`) {
+          localStorage.removeItem(key);
+        }
+      });
+    }
 
     // 2. Restore today's daily challenge state if it exists
     if (gameMode === 'daily') {
-      const saved = localStorage.getItem(`2048-daily-${todayStr}`);
+      const saved = localStorage.getItem(saveKey);
       if (saved) {
         try {
           const parsed = JSON.parse(saved);
@@ -136,7 +189,7 @@ export default function Game2048({ onWin }) {
           }
           return;
         } catch (e) {
-          localStorage.removeItem(`2048-daily-${todayStr}`);
+          localStorage.removeItem(saveKey);
         }
       }
     }
@@ -152,54 +205,13 @@ export default function Game2048({ onWin }) {
           ? getDailySeed(todayStr + '-2048')
           : getDailySeed(unlimitedSeed.toString() + '-unlimited-2048');
 
-      const rng = mulberry32(currentSeed);
-      const totalTilesCount = 8 + Math.floor(rng() * 3);
-
-      const allPositions = [];
-      for (let r = 0; r < GRID_SIZE; r++) {
-        for (let c = 0; c < GRID_SIZE; c++) {
-          allPositions.push({ r, c });
-        }
-      }
-
-      for (let i = allPositions.length - 1; i > 0; i--) {
-        const j = Math.floor(rng() * (i + 1));
-        [allPositions[i], allPositions[j]] = [allPositions[j], allPositions[i]];
-      }
-
-      const highTierValues = [256, 512, 1024];
-      const midTierValues = [32, 64, 128];
-      const lowTierValues = [2, 4, 8, 16];
-
-      const assignedValues = [];
-      assignedValues.push(highTierValues[Math.floor(rng() * highTierValues.length)]);
-
-      for (let i = 0; i < 3; i++) {
-        assignedValues.push(midTierValues[Math.floor(rng() * midTierValues.length)]);
-      }
-
-      while (assignedValues.length < totalTilesCount) {
-        const roll = rng();
-        if (roll < 0.6) {
-          assignedValues.push(lowTierValues[Math.floor(rng() * lowTierValues.length)]);
-        } else {
-          assignedValues.push(midTierValues[Math.floor(rng() * midTierValues.length)]);
-        }
-      }
-
-      for (let i = assignedValues.length - 1; i > 0; i--) {
-        const j = Math.floor(rng() * (i + 1));
-        [assignedValues[i], assignedValues[j]] = [assignedValues[j], assignedValues[i]];
-      }
-
+      const start = gameMode === 'daily' ? dailyStart : seededStart(currentSeed);
       const initialTiles = [];
       let initialScore = 0;
 
-      for (let i = 0; i < assignedValues.length; i++) {
-        const pos = allPositions[i];
-        const val = assignedValues[i];
-        initialTiles.push(createTile(pos.r, pos.c, val, 0));
-        initialScore += val;
+      for (const { r, c, value } of start) {
+        initialTiles.push(createTile(r, c, value, 0));
+        initialScore += value;
       }
 
       setTiles(initialTiles);
@@ -221,7 +233,7 @@ export default function Game2048({ onWin }) {
 
       setTiles([first, second]);
     }
-  }, [gameMode, todayStr, unlimitedSeed, createTile, stopTimer]);
+  }, [gameMode, todayStr, archive, saveKey, dailyStart, unlimitedSeed, createTile, stopTimer]);
 
   useEffect(() => {
     initGame();
@@ -238,9 +250,9 @@ export default function Game2048({ onWin }) {
         elapsedTime,
         completionTimeKnown,
       };
-      localStorage.setItem(`2048-daily-${todayStr}`, JSON.stringify(dailyPayload));
+      localStorage.setItem(saveKey, JSON.stringify(dailyPayload));
     }
-  }, [tiles, score, history, undoCount, gameWon, gameMode, todayStr, elapsedTime, completionTimeKnown]);
+  }, [tiles, score, history, undoCount, gameWon, gameMode, saveKey, elapsedTime, completionTimeKnown]);
 
   const handleUndo = () => {
     if (history.length === 0 || isTestMode) return;
@@ -536,7 +548,7 @@ export default function Game2048({ onWin }) {
                 className="game2048-btn reset-btn"
                 onClick={() => {
                   if (gameMode === 'daily') {
-                    localStorage.removeItem(`2048-daily-${todayStr}`);
+                    localStorage.removeItem(saveKey);
                   } else if (gameMode === 'unlimited') {
                     setUnlimitedSeed(Math.floor(Math.random() * 1000000));
                   }

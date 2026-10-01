@@ -1,8 +1,11 @@
-import { useDailyDate } from '../../components/DailyBoundary';
+import { useDailyDate, useArchive } from '../../components/DailyBoundary';
+import { puzzleSnapshot } from '../../utils/archive.js';
+import { readLocal, writeLocal } from '../../utils/dailyStats.js';
+import { mathProgressKey, restoreMathGuesses } from './progress.js';
 import { generateEquation } from './equations.js';
 import DailyResults from '../../components/DailyResults';
 // src/games/skeedlemath/Skeedlemath.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import './Skeedlemath.css';
 import Navbar from '../../components/Navbar';
 
@@ -64,6 +67,10 @@ const hasValidParentheses = (expr, strictCheck = true) => {
 
 export default function Skeedlemath({ onWin }) {
   const date = useDailyDate();
+  const archive = !!useArchive()?.archive;
+  const progressKey = mathProgressKey(date, archive);
+  // The daily (and each archive date) keeps the exact equation it was played with.
+  const dailyEquation = useMemo(() => puzzleSnapshot('skeedlemath', date, () => generateEquation(true, date)), [date]);
   const [isDailyMode, setIsDailyMode] = useState(true);
   const [targetEquation, setTargetEquation] = useState('');
   const [guesses, setGuesses] = useState([]);
@@ -74,14 +81,24 @@ export default function Skeedlemath({ onWin }) {
   const [message, setMessage] = useState('');
 
   const startNewGame = (daily = isDailyMode) => {
-    const targetEq = generateEquation(daily, date);
+    const targetEq = daily ? dailyEquation : generateEquation(false, date);
+    const progress = daily ? restoreMathGuesses(targetEq, readLocal(progressKey, null), MAX_ATTEMPTS)
+      : { guesses: [], status: 'IN_PROGRESS', hasStarted: false };
     setTargetEquation(targetEq);
-    setHasStarted(false);
-    setGuesses([]);
+    setHasStarted(progress.hasStarted);
+    setGuesses(progress.guesses.map(guess => ({ guess, colors: evaluateGuess(guess, targetEq) })));
     setCurrentGuess(Array(EQUATION_LENGTH).fill(''));
     setActiveCellIndex(0);
-    setGameStatus('IN_PROGRESS');
+    setGameStatus(progress.status);
+    setMessage(progress.status === 'WON' ? '🎉 Great job! You solved Skeedle+!'
+      : progress.status === 'LOST' ? `Game Over! The target was: ${targetEq}` : '');
   };
+
+  // Save submitted daily/archive guesses so a reload resumes the same game.
+  useEffect(() => {
+    if (!isDailyMode || targetEquation !== dailyEquation) return;
+    writeLocal(progressKey, { target: dailyEquation, guesses: guesses.map(entry => entry.guess), hasStarted });
+  }, [isDailyMode, targetEquation, dailyEquation, progressKey, guesses, hasStarted]);
 
   useEffect(() => {
     startNewGame(true);

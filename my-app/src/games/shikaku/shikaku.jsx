@@ -1,13 +1,19 @@
-import { useDailyDate } from '../../components/DailyBoundary';
+import { useDailyDate, useArchive } from '../../components/DailyBoundary';
 import DailyResults from '../../components/DailyResults';
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import './shikaku.css';
 import Navbar from '../../components/Navbar';
+import { puzzleSnapshot } from '../../utils/archive.js';
+import { readLocal, writeLocal } from '../../utils/dailyStats.js';
+import { restoreProgress } from './progress.js';
 
 import { mulberry32, getDailySeed, getDailyGridSize, generateUniquePuzzle } from './puzzle.js';
 
 export default function Shikaku({ onWin }) {
   const todayStr = useDailyDate();
+  const archive = !!useArchive()?.archive;
+  const progressKey = `${archive ? 'archive:v1:' : ''}shikaku-daily-state-v4-${todayStr}`;
+  const [loadedMode, setLoadedMode] = useState(null);
 
   const [gameMode, setGameMode] = useState('daily');
   const [gridSize, setGridSize] = useState(() => getDailyGridSize(todayStr));
@@ -47,32 +53,23 @@ export default function Shikaku({ onWin }) {
 
   const startNewGame = useCallback((overrideMode = gameMode, overrideSize = gridSize) => {
     setStatus('');
+    setLoadedMode(overrideMode);
 
     let clues;
     if (overrideMode === 'daily') {
-      const dailySize = getDailyGridSize(todayStr);
-      setGridSize(dailySize);
-      const seed = getDailySeed(todayStr);
-      const rng = mulberry32(seed);
-      clues = generateUniquePuzzle(dailySize, rng).clues;
+      clues = puzzleSnapshot('shikaku', todayStr, () => {
+        const size = getDailyGridSize(todayStr);
+        return generateUniquePuzzle(size, mulberry32(getDailySeed(todayStr))).clues;
+      });
+      setGridSize(clues.length);
       setCluesGrid(clues);
-
-      const saved = localStorage.getItem(`shikaku-daily-state-v4-${todayStr}`);
-      if (saved) {
-        try {
-          const { placedRects: savedRects, seconds: savedSeconds, isWin: savedWin } = JSON.parse(saved);
-          setPlacedRects(savedRects || []);
-          setSeconds(savedSeconds || 0);
-          setIsWin(!!savedWin);
-          setIsTimerActive(false);
-          if (savedWin) {
-            setStatus(`🎉 Daily Puzzle Solved in ${formatTime(savedSeconds || 0)}!`);
-          }
-          return;
-        } catch (err) {
-          // Fall through on error
-        }
-      }
+      const progress = restoreProgress(clues, readLocal(progressKey, null));
+      setPlacedRects(progress.placedRects);
+      setSeconds(progress.seconds);
+      setIsWin(progress.isWin);
+      setIsTimerActive(!progress.isWin && (progress.seconds > 0 || progress.placedRects.length > 0));
+      if (progress.isWin) setStatus(`Puzzle solved in ${formatTime(progress.seconds)}!`);
+      return;
     } else {
       clues = generateUniquePuzzle(overrideSize, Math.random).clues;
       setCluesGrid(clues);
@@ -82,22 +79,23 @@ export default function Shikaku({ onWin }) {
     setSeconds(0);
     setIsWin(false);
     setIsTimerActive(false);
-  }, [gameMode, gridSize, todayStr]);
+  }, [gameMode, gridSize, todayStr, progressKey]);
 
   useEffect(() => {
     startNewGame();
   }, [gameMode, startNewGame]);
 
   useEffect(() => {
-    if (gameMode === 'daily' && cluesGrid.length > 0) {
+    if (gameMode === 'daily' && loadedMode === gameMode && cluesGrid.length > 0) {
       const dailyState = {
+        fingerprint: JSON.stringify(cluesGrid),
         placedRects,
         seconds,
         isWin,
       };
-      localStorage.setItem(`shikaku-daily-state-v4-${todayStr}`, JSON.stringify(dailyState));
+      writeLocal(progressKey, dailyState);
     }
-  }, [placedRects, seconds, isWin, gameMode, cluesGrid, todayStr]);
+  }, [placedRects, seconds, isWin, gameMode, cluesGrid, todayStr, progressKey, loadedMode]);
 
   const handleModeChange = (mode) => {
     setGameMode(mode);
@@ -426,7 +424,7 @@ export default function Shikaku({ onWin }) {
           className="shikaku-btn"
           onClick={() => {
             if (gameMode === 'daily') {
-              localStorage.removeItem(`shikaku-daily-state-v4-${todayStr}`);
+              writeLocal(progressKey, null);
             }
             setPlacedRects([]);
             setStatus('');

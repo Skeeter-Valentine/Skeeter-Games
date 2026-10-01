@@ -5,6 +5,7 @@ import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 
 import LandingPage from './pages/LandingPage';
+import AdminArchive from './pages/AdminArchive';
 import Seo from './seo/Seo';
 import GameFeedback from './components/GameFeedback';
 import Minesweeper from './games/minesweeper/Minesweeper';
@@ -46,6 +47,8 @@ export default function App() {
         {/* <Route path="/nurikabe" element={<Nurikabe />} /> */}
         <Route path="/map" element={<DailyBoundary><Map /></DailyBoundary>} />
         <Route path="/skeedle-marathon" element={<DailyBoundary><SkeedleMarathon /></DailyBoundary>} />
+        {/* Hidden owner-only difficulty archive: unlinked, not prerendered, noindex. */}
+        <Route path="/admin/archive" element={<AdminArchive />} />
         <Route path="*" element={<div>404 - Game Not Found</div>} />
       </Routes>
       <GameFeedback />

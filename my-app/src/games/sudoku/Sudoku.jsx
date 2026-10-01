@@ -1,4 +1,7 @@
-import { useDailyDate } from '../../components/DailyBoundary';
+import { useDailyDate, useArchive } from '../../components/DailyBoundary';
+import { puzzleSnapshot } from '../../utils/archive.js';
+import { readLocal, writeLocal } from '../../utils/dailyStats.js';
+import { sudokuProgressKey, saveSudoku, restoreSudoku } from './progress.js';
 import DailyResults from '../../components/DailyResults';
 // src/games/sudoku/Skeedoku.jsx
 import React, { useState, useEffect, useRef } from 'react';
@@ -26,6 +29,9 @@ function mulberry32(seed) {
 
 export default function Skeedoku({ onWin }) {
   const todayStr = useDailyDate();
+  const archive = !!useArchive()?.archive;
+  const progressKey = sudokuProgressKey(todayStr, archive);
+  const loadedRef = useRef(false);
   const [configKey, setConfigKey] = useState('daily');
   const cfg = CONFIGS[configKey];
   const size = cfg.size;
@@ -175,23 +181,30 @@ export default function Skeedoku({ onWin }) {
       return board;
     };
 
-    const newSolution = buildSolvedBoard();
-    const newPuzzle = [...newSolution];
-    const target = activeCfg.clues;
     const totalCells = boardSize * boardSize;
-    const order = shuffle([...Array(totalCells).keys()]);
-    let clues = totalCells;
+    const build = () => {
+      const builtSolution = buildSolvedBoard();
+      const builtPuzzle = [...builtSolution];
+      const target = activeCfg.clues;
+      const order = shuffle([...Array(totalCells).keys()]);
+      let clues = totalCells;
 
-    for (const idx of order) {
-      if (clues <= target) break;
-      const backup = newPuzzle[idx];
-      newPuzzle[idx] = 0;
-      if (countSolutions(newPuzzle, boardSize, rCount, cCount, 2) !== 1) {
-        newPuzzle[idx] = backup;
-      } else {
-        clues--;
+      for (const idx of order) {
+        if (clues <= target) break;
+        const backup = builtPuzzle[idx];
+        builtPuzzle[idx] = 0;
+        if (countSolutions(builtPuzzle, boardSize, rCount, cCount, 2) !== 1) {
+          builtPuzzle[idx] = backup;
+        } else {
+          clues--;
+        }
       }
-    }
+      return { solution: builtSolution, puzzle: builtPuzzle };
+    };
+    // The daily (and each archive date) is saved as a snapshot so it can be replayed exactly.
+    const generated = level === 'daily' ? puzzleSnapshot('sudoku', todayStr, build) : build();
+    const newSolution = generated.solution;
+    const newPuzzle = generated.puzzle;
 
     setConfigKey(level);
     setSolution(newSolution);
@@ -205,7 +218,23 @@ export default function Skeedoku({ onWin }) {
     setElapsed(0);
     setHasStarted(false);
     setMessage({ text: '', type: '' });
+    loadedRef.current = level === 'daily';
+    if (level !== 'daily') return;
+    const progress = restoreSudoku(newPuzzle, newSolution, readLocal(progressKey, null));
+    if (!progress) return;
+    setGrid(progress.grid);
+    setNotes(progress.notes);
+    setMistakes(progress.mistakes);
+    setElapsed(progress.elapsed);
+    setHasStarted(progress.hasStarted);
+    setCompleted(progress.completed);
+    if (progress.completed) setMessage({ text: 'Puzzle complete.', type: 'good' });
   };
+
+  useEffect(() => {
+    if (configKey !== 'daily' || !loadedRef.current || !puzzle.length || grid.length !== puzzle.length) return;
+    writeLocal(progressKey, saveSudoku({ puzzle, grid, notes, mistakes, elapsed, completed, hasStarted }));
+  }, [configKey, progressKey, puzzle, grid, notes, mistakes, elapsed, completed, hasStarted]);
 
   useEffect(() => {
     if (timerRef.current) clearInterval(timerRef.current);
@@ -386,7 +415,7 @@ export default function Skeedoku({ onWin }) {
   return (
     <>
     <Navbar />
-      <DailyResults gameId="sudoku" title="Skeedoku" daily={configKey === 'daily'} finished={completed} seconds={elapsed} ready={grid.length > 0} legacyStats={stats} />
+      <DailyResults gameId="sudoku" title="Skeedoku" daily={configKey === 'daily'} finished={completed} seconds={elapsed} ready={grid.length > 0} legacyStats={archive ? undefined : stats} />
     <div className="sudoku-app-wrapper">
       <div className="app">
         <section className="card game-card">

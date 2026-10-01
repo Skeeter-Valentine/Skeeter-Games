@@ -51,3 +51,9 @@ test('keyboard cannot leak hidden feedback, and retains strongest revealed evide
     if (color !== 'hidden') assert.ok(rank[combined[guess[i]]] >= rank[color]);
   }));
 });
+
+test('saved archive masks control both visible and keyboard feedback', () => {
+  const masks = [[0, 1, 2, 3, 4], [], [], [], [], []];
+  assert.deepEqual(visibleFeedback('CRANE', 'CRANE', 'changed-generator-seed', 0, masks), Array(5).fill('hidden'));
+  assert.deepEqual(keyboardFeedback(['CRANE'], 'CRANE', 'changed-generator-seed', masks), {});
+});

@@ -1,8 +1,10 @@
-import { useDailyDate } from '../../components/DailyBoundary';
-import { getDailyBoardConfig } from './dailyConfig.js';
+import { useDailyDate, useArchive } from '../../components/DailyBoundary';
+import { dailyLayout, boardFromLayout, restoreMinesweeper, validLayout } from './puzzle.js';
+import { puzzleSnapshot } from '../../utils/archive.js';
+import { readLocal, writeLocal } from '../../utils/dailyStats.js';
 import DailyResults from '../../components/DailyResults';
 // src/games/minesweeper/Minesweeper.jsx
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import './Minesweeper.css';
 import Navbar from '../../components/Navbar';
 
@@ -12,28 +14,16 @@ const DIFFICULTY_CONFIGS = {
   expert: { rows: 16, cols: 30, mines: 99 },
 };
 
-function mulberry32(seed) {
-  return function () {
-    let t = (seed += 0x6d2b79f5);
-    t = Math.imul(t ^ (t >>> 15), t | 1);
-    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
-
-function getDailySeed(dateStr) {
-  let hash = 0;
-  for (let i = 0; i < dateStr.length; i++) {
-    hash = (hash << 5) - hash + dateStr.charCodeAt(i);
-    hash |= 0;
-  }
-  return Math.abs(hash);
-}
-
-
-
 export default function Minesweeper({ onWin }) {
   const todayStr = useDailyDate();
+  const archive = !!useArchive()?.archive;
+  // Archive progress lives under its own key so it never touches the live daily.
+  const saveKey = `${archive ? 'archive:v1:' : ''}minesweeper-daily-${todayStr}`;
+  const layout = useMemo(() => {
+    const saved = puzzleSnapshot('minesweeper', todayStr, () => dailyLayout(todayStr));
+    return validLayout(saved) ? saved : dailyLayout(todayStr);
+  }, [todayStr]);
+  const loadedRef = useRef(false);
 
   const [gameMode, setGameMode] = useState('daily');
   const [difficulty, setDifficulty] = useState('beginner');
@@ -58,7 +48,7 @@ export default function Minesweeper({ onWin }) {
 
   const activeConfig =
     gameMode === 'daily'
-      ? getDailyBoardConfig(todayStr)
+      ? layout
       : DIFFICULTY_CONFIGS[difficulty];
   const { rows, cols, mines } = activeConfig;
   const isExpertLayout = gameMode === 'classic' && difficulty === 'expert';
@@ -118,26 +108,24 @@ export default function Minesweeper({ onWin }) {
     startTimeRef.current = null;
     setScale(1);
 
+    loadedRef.current = false;
     if (gameMode === 'daily') {
-      const saved = localStorage.getItem(`minesweeper-daily-${todayStr}`);
-      if (saved) {
-        try {
-          const parsed = JSON.parse(saved);
-          if (!Array.isArray(parsed.board) || parsed.board.length !== rows
-            || !parsed.board.every(row => Array.isArray(row) && row.length === cols)) {
-            throw new Error('Saved board does not match today’s size');
-          }
-          setBoard(parsed.board);
-          setGameStatus(parsed.gameStatus);
-          setFlagsLeft(parsed.flagsLeft);
-          setTimer(parsed.timer);
-          return;
-        } catch (e) {}
+      const progress = restoreMinesweeper(layout, readLocal(saveKey, null));
+      if (progress) {
+        setBoard(progress.board);
+        setGameStatus(progress.gameStatus);
+        setFlagsLeft(progress.flagsLeft);
+        setTimer(progress.timer);
+      } else {
+        setBoard(boardFromLayout(layout));
+        setGameStatus('playing');
+        setFlagsLeft(layout.mines);
       }
+      loadedRef.current = true;
+      return;
     }
 
-    const rng =
-      gameMode === 'daily' ? mulberry32(getDailySeed(todayStr)) : Math.random;
+    const rng = Math.random;
 
     let newBoard = Array(rows)
       .fill(null)
@@ -154,42 +142,7 @@ export default function Minesweeper({ onWin }) {
           }))
       );
 
-    if (gameMode === 'daily') {
-      const startR = Math.floor(rng() * rows);
-      const startC = Math.floor(rng() * cols);
-      const safeZone = new Set();
-      for (let dr = -1; dr <= 1; dr++) {
-        for (let dc = -1; dc <= 1; dc++) {
-          const nr = startR + dr;
-          const nc = startC + dc;
-          if (nr >= 0 && nr < rows && nc >= 0 && nc < cols) {
-            safeZone.add(`${nr}-${nc}`);
-          }
-        }
-      }
-
-      let placedMines = 0;
-      while (placedMines < mines) {
-        const r = Math.floor(rng() * rows);
-        const c = Math.floor(rng() * cols);
-        if (!safeZone.has(`${r}-${c}`) && !newBoard[r][c].isMine) {
-          newBoard[r][c].isMine = true;
-          placedMines++;
-        }
-      }
-
-      for (let r = 0; r < rows; r++) {
-        for (let c = 0; c < cols; c++) {
-          if (newBoard[r][c].isMine) continue;
-          let count = 0;
-          getNeighbors(r, c).forEach(([nr, nc]) => {
-            if (newBoard[nr][nc].isMine) count++;
-          });
-          newBoard[r][c].neighborMines = count;
-        }
-      }
-      revealTile(startR, startC, newBoard);
-    } else {
+    {
       let placedMines = 0;
       while (placedMines < mines) {
         const r = Math.floor(rng() * rows);
@@ -215,7 +168,13 @@ export default function Minesweeper({ onWin }) {
     setBoard(newBoard);
     setGameStatus('playing');
     setFlagsLeft(mines);
-  }, [gameMode, todayStr, rows, cols, mines, getNeighbors, revealTile, stopTimer]);
+  }, [gameMode, layout, saveKey, rows, cols, mines, getNeighbors, stopTimer]);
+
+  // Persist the daily board (live or archive) after every change.
+  useEffect(() => {
+    if (gameMode !== 'daily' || !loadedRef.current || board.length !== layout.rows) return;
+    writeLocal(saveKey, { board, gameStatus, flagsLeft, timer });
+  }, [gameMode, board, gameStatus, flagsLeft, timer, saveKey, layout]);
 
   useEffect(() => {
     initBoard();
@@ -501,7 +460,7 @@ export default function Minesweeper({ onWin }) {
             className="ms-face-btn"
             onClick={() => {
               if (gameMode === 'daily') {
-                localStorage.removeItem(`minesweeper-daily-${todayStr}`);
+                writeLocal(saveKey, null);
               }
               initBoard();
             }}
