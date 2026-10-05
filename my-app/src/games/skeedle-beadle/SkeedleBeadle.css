@@ -1,0 +1,59 @@
+.beadle-page { max-width: 720px; margin: auto; padding: 24px 16px 48px; }
+.beadle-heading { text-align: center; margin-bottom: 20px; }
+.beadle-eyebrow { color: #ff9f1c; letter-spacing: 0.3em; font-size: 13px; }
+.beadle-heading h1 { font-size: clamp(40px, 9vw, 62px); margin: 0; color: #fff1dc; }
+.beadle-heading p:last-child, .beadle-date, .beadle-help { color: #c5bed2; text-align: center; }
+.beadle-date { font-size: 14px; margin: 14px 0; }
+.beadle-controls { display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: 8px; }
+.beadle-controls button, .beadle-controls select { color: #f5f0fb; background: #272134; border: 1px solid #5b4e70; border-radius: 8px; min-height: 40px; padding: 8px 12px; cursor: pointer; font: inherit; }
+.beadle-controls button[aria-pressed="true"] { background: #4a2f12; color: #ffd9a3; border-color: #ff9f1c; }
+.beadle-controls button:disabled { opacity: 0.4; cursor: default; }
+.beadle-controls :focus-visible { outline: 2px solid #ffd9a3; outline-offset: 3px; }
+.beadle-panel { padding: 18px; border: 1px solid #50435f; border-radius: 16px; background: #191525; }
+.beadle-progress { display: flex; justify-content: space-between; margin-bottom: 8px; color: #ded4e8; font-variant-numeric: tabular-nums; }
+.beadle-progress strong { color: #ffd9a3; }
+
+/* Sticks and beads */
+.beadle-rack { --stick: clamp(40px, 12vw, 64px); --gap: clamp(6px, 2.4vw, 12px); --bead: calc(var(--stick) * 0.82);
+  display: flex; flex-wrap: wrap; justify-content: center; gap: 26px var(--gap);
+  max-width: calc(var(--columns) * var(--stick) + (var(--columns) - 1) * var(--gap)); margin: 0 auto; padding: 12px 0 8px; }
+.beadle-stick { width: var(--stick); display: grid; justify-items: center; gap: 6px; padding: 0; background: none; border: 0; cursor: pointer; color: #b9b0c8; font: inherit; -webkit-tap-highlight-color: transparent; }
+/* One bead of headroom above the stick so picked-up beads can lift off. */
+.beadle-post { position: relative; width: 100%; height: calc(var(--bead) * (var(--capacity) + 1) + 14px); display: flex; flex-direction: column; justify-content: flex-end; align-items: center; }
+.beadle-rod { position: absolute; left: 50%; bottom: 8px; width: 6px; height: calc(var(--bead) * var(--capacity) + 18px); transform: translateX(-50%); border-radius: 3px 3px 0 0; background: linear-gradient(90deg, #8a6440, #d9b07f 45%, #8a6440); }
+.beadle-base { position: relative; width: 100%; height: 12px; border-radius: 6px; background: linear-gradient(#b8875a, #7a5634); box-shadow: 0 3px 0 #00000055; }
+.beadle-beads { position: relative; display: flex; flex-direction: column-reverse; align-items: center; margin-bottom: -2px; }
+.beadle-bead { width: var(--bead); height: var(--bead); display: block; transition: transform 0.18s ease; }
+.beadle-bead-shape { width: 100%; height: 100%; display: block; overflow: visible; filter: drop-shadow(0 3px 2px #0000006b); }
+.beadle-defs { position: absolute; width: 0; height: 0; overflow: hidden; }
+.beadle-bead.rising { transform: translateY(calc(var(--bead) * -0.9)); }
+.beadle-stick.selected .beadle-rod { background: linear-gradient(90deg, #b57a2c, #ffd9a3 45%, #b57a2c); box-shadow: 0 0 10px #ff9f1c88; }
+.beadle-stick.done .beadle-base { background: linear-gradient(#5fe39c, #2a9c5e); }
+.beadle-stick.done .beadle-rod { box-shadow: 0 0 10px #3ddc8466; }
+.beadle-stick.hint-from .beadle-base, .beadle-stick.hint-to .beadle-base { background: linear-gradient(#ffe98a, #c9a31a); }
+.beadle-stick.hint-from .beadle-rod { box-shadow: 0 0 12px #ffe14d99; }
+.beadle-stick.hint-to .beadle-base { outline: 2px dashed #ffe14d; outline-offset: 3px; }
+.beadle-stick:focus-visible { outline: none; }
+.beadle-stick:focus-visible .beadle-base { outline: 3px solid #ffd9a3; outline-offset: 3px; }
+.beadle-bead.fresh { animation: beadle-drop 0.3s ease-out; }
+.beadle-stick.shake { animation: beadle-shake 0.32s ease; }
+.beadle-rack.won .beadle-bead { animation: beadle-bounce 0.6s ease-in-out 2; }
+@keyframes beadle-drop { from { transform: translateY(calc(var(--bead) * -1.6)); opacity: 0.3; } to { transform: none; opacity: 1; } }
+@keyframes beadle-shake { 0%, 100% { transform: none; } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
+@keyframes beadle-bounce { 50% { transform: translateY(-6px); } }
+
+.beadle-message { text-align: center; color: #d5cada; line-height: 1.5; min-height: 3em; margin: 16px 0 0; }
+.beadle-message.won { color: #ffd9a3; font-weight: bold; }
+.beadle-message.stuck { color: #ffb0af; }
+.beadle-tools { margin-top: 14px; }
+.beadle-help { font-size: 14px; line-height: 1.7; margin-top: 20px; }
+@media (max-width: 420px) {
+  .beadle-page { padding: 16px 10px 36px; }
+  .beadle-panel { padding: 12px 8px; }
+  .beadle-controls { gap: 6px; }
+  .beadle-controls button { padding: 8px 10px; font-size: 14px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .beadle-bead { transition: none; }
+  .beadle-bead.fresh, .beadle-stick.shake, .beadle-rack.won .beadle-bead { animation: none; }
+}

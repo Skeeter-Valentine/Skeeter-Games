@@ -36,7 +36,12 @@ export default function AdminArchive() {
     let active = true;
     setDocs(null); setError('');
     readGameRates(game).then(value => { if (active) setDocs(value); })
-      .catch(() => { if (active) setError('Could not load community results. Check your connection and try again.'); });
+      .catch(failure => {
+        console.error('Admin archive load failed', failure);
+        if (active) setError(`Could not load community results${failure?.code ? ` (${failure.code})` : ''}. ${failure?.code === 'permission-denied'
+          ? 'Firestore refused the read: publish firestore.rules (firebase deploy --only firestore:rules) and check the project ID.'
+          : failure?.code === 'unavailable' ? 'Check your connection and try again.' : failure?.message || 'Check your connection and try again.'}`);
+      });
     return () => { active = false; };
   }, [allowed, game]);
 

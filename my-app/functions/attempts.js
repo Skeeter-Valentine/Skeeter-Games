@@ -1,4 +1,4 @@
-export const games = ['map', '2048', 'akari', 'hashi', 'minesweeper', 'nonograms', 'parshle', 'pipes', 'quordle', 'shikaku', 'skeedle-marathon', 'skeedlemath', 'stitches', 'sudoku', 'word500'];
+export const games = ['map', '2048', 'akari', 'hashi', 'minesweeper', 'nonograms', 'parshle', 'pipes', 'quordle', 'shikaku', 'skeedle-marathon', 'skeedlemath', 'stitches', 'sudoku', 'word500', 'skeedle-beadle'];
 
 export function validateAttempt(data, today) {
   if (!data || data.version !== 'v1' || !games.includes(data.game) || !['daily', 'archive'].includes(data.mode)

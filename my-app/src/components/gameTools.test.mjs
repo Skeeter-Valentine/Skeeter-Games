@@ -20,7 +20,7 @@ test('all active games render accessible statistics and instructions icons', asy
       ['2048/Game2048', '2048'], ['hashi/Hashi', 'hashi'], ['minesweeper/Minesweeper', 'minesweeper'],
       ['skeedlemath/Skeedlemath', 'skeedlemath'], ['nonograms/Nonograms', 'nonograms'], ['pipes/pipes', 'pipes'],
       ['quordle/Quordle', 'quordle'], ['shikaku/shikaku', 'shikaku'], ['skeedle-marathon/SkeedleMarathon', 'skeedle-marathon'],
-      ['stitches/Stitches', 'stitches'], ['sudoku/Sudoku', 'sudoku'], ['word500/Word500', 'word500'], ['map/Map', 'map'],
+      ['stitches/Stitches', 'stitches'], ['skeedle-beadle/SkeedleBeadle', 'skeedle-beadle'], ['sudoku/Sudoku', 'sudoku'], ['word500/Word500', 'word500'], ['map/Map', 'map'],
     ];
     for (const [path, id] of games) {
       assert.ok(gameInstructions[id]?.length >= 4, `${id} needs complete game directions`);

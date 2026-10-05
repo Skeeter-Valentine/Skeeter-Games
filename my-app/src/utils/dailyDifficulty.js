@@ -14,6 +14,7 @@ export function dailyDifficulty(game, date) {
   switch (game) {
     case 'map': return scheduledDifficulty('map', date);
     case 'akari': return scheduledDifficulty('akari', date);
+    case 'skeedle-beadle': return scheduledDifficulty('skeedle-beadle', date);
     case 'parshle': {
       const hiddenCount = Array.from({ length: 5 }, (_, row) =>
         hiddenPositions(`parshle:${date}`, row).length).reduce((sum, count) => sum + count, 0);
