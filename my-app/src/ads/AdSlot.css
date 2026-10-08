@@ -1,0 +1,20 @@
+/* Reserved ad space. The fixed minimum height stops the page from jumping when
+   an ad arrives, and the top margin keeps ads clear of game controls and
+   on-screen keyboards to avoid accidental taps. */
+.ad-slot { box-sizing: border-box; width: min(970px, calc(100% - 32px)); min-height: 280px; margin: 40px auto 24px; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.ad-slot-label { color: #8f86a5; font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; }
+.ad-slot ins.adsbygoogle { width: 100%; min-height: 250px; }
+.ad-slot-preview { box-sizing: border-box; width: 100%; height: 250px; display: grid; place-items: center; border: 2px dashed #5a486e; border-radius: 12px; color: #8f86a5; font-size: 15px; }
+.ad-slot-guide { width: 100%; margin: 28px 0; }
+/* No ad available: give the space back. */
+.ad-slot:has(ins[data-ad-status="unfilled"]) { display: none; }
+@media (max-width: 480px) { .ad-slot { min-height: 270px; margin-top: 32px; } }
+
+/* Side rails (wide screens only; PageAds decides when they fit). They stay in
+   view while the page scrolls. z-index 150 keeps them above sticky game bars
+   (Skeedle Marathon's header is 50 and its keyboard 100), so an ad is never
+   partly hidden, and below game pop-ups (200 and up) and dialogs. */
+.ad-slot-side { position: fixed; top: 50%; z-index: 150; width: auto; min-height: 0; margin: 0; transform: translateY(-50%); }
+.ad-slot-side-left { left: 16px; }
+.ad-slot-side-right { right: 16px; }
+.ad-slot-side .ad-slot-preview { height: auto; }

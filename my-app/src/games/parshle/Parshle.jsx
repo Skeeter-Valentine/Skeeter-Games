@@ -7,6 +7,7 @@ import { getParshleDailyTargetWord, getRandomTargetWord, isValidWord } from '../
 import { hiddenPositions, keyboardFeedback, visibleFeedback } from './logic';
 import './Parshle.css';
 import { puzzleSnapshot } from '../../utils/archive.js';
+import { useColorblind } from '../../components/colorblind.js';
 
 export default function Parshle() {
   const [mode, setMode] = useState('daily');
@@ -25,6 +26,7 @@ export default function Parshle() {
 }
 
 function Session({ daily, date }) {
+  const [colorblind] = useColorblind();
   const archive = !!useArchive()?.archive;
   const storageKey = `${archive ? 'archive:v1:' : ''}parshle:v2:${date}`;
   const [puzzle] = useState(() => {
@@ -101,6 +103,6 @@ function Session({ daily, date }) {
         {i === 2 && <button disabled={finished} aria-label="Backspace" onClick={() => press('Backspace')}>⌫</button>}
       </div>)}
     </div>
-    <p className="parshle-legend">Green: right spot · Yellow: wrong spot<br />Pink: absent · Black: hidden feedback</p>
+    <p className="parshle-legend">{colorblind ? <>Orange: right spot · Blue: wrong spot<br />Gray: absent · Black: hidden feedback</> : <>Green: right spot · Yellow: wrong spot<br />Pink: absent · Black: hidden feedback</>}</p>
   </>;
 }

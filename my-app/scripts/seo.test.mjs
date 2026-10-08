@@ -6,7 +6,8 @@ import { pages } from '../src/seo/pages.js';
 test('every public route has initial HTML, unique metadata, canonical and sitemap entry', async () => {
   const sitemap = await readFile('dist/sitemap.xml', 'utf8');
   const app = (await readFile('src/App.jsx', 'utf8')).replace(/\{\/\*[\s\S]*?\*\/\}/g, '');
-  const routes = [...app.matchAll(/<Route path="([^"]+)"/g)].map(match => match[1]).filter(path => path !== '*' && path !== '/nerdle' && !path.startsWith('/admin/'));
+  // Skip redirect-only routes (/nerdle, /light-up), the 404 route and hidden admin pages.
+  const routes = [...app.matchAll(/<Route path="([^"]+)" element=\{(<\w+)/g)].filter(match => match[2] !== '<Navigate').map(match => match[1]).filter(path => path !== '*' && !path.startsWith('/admin/'));
   assert.deepEqual(routes.sort(), Object.keys(pages).sort());
   assert.equal(new Set(Object.values(pages).map(page => page.title)).size, routes.length);
   assert.equal(new Set(Object.values(pages).map(page => page.description)).size, routes.length);
@@ -18,7 +19,8 @@ test('every public route has initial HTML, unique metadata, canonical and sitema
     assert.ok(html.includes('<h1>'), page.path);
     assert.ok(!html.includes('noindex'), page.path);
     assert.ok(sitemap.includes(`<loc>https://skeetergames.org${page.path}</loc>`), page.path);
-    if (page.path !== '/') {
+    if (page.kind === 'info') assert.ok(html.includes('href="/privacy"') && html.includes('href="/about"'), page.path);
+    else if (page.path !== '/') {
       assert.ok(html.includes('How to play') && html.includes('A quick example'), page.path);
       assert.ok(page.rules.length >= 4);
     }

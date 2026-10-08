@@ -9,6 +9,10 @@ import AdminArchive from './pages/AdminArchive';
 import SkeedleBeadle from './games/skeedle-beadle/SkeedleBeadle';
 import Seo from './seo/Seo';
 import GameFeedback from './components/GameFeedback';
+import Navbar from './components/Navbar';
+import SiteFooter from './components/SiteFooter';
+import PageAds from './ads/PageAds';
+import { ads, openPrivacyChoices } from './ads/ads';
 import Minesweeper from './games/minesweeper/Minesweeper';
 import Quordle from './games/quordle/Quordle';
 import Word500 from './games/word500/Word500';
@@ -47,14 +51,19 @@ export default function App() {
         <Route path="/nonograms" element={<DailyBoundary><Nonograms /></DailyBoundary>} />
         {/* <Route path="/nurikabe" element={<Nurikabe />} /> */}
         <Route path="/skeedle-beadle" element={<DailyBoundary><SkeedleBeadle /></DailyBoundary>} />
+        {/* About and Privacy: the page text comes from the SEO guide below (src/pages/info). */}
+        <Route path="/about" element={<Navbar />} />
+        <Route path="/privacy" element={<Navbar />} />
         <Route path="/map" element={<DailyBoundary><Map /></DailyBoundary>} />
         <Route path="/skeedle-marathon" element={<DailyBoundary><SkeedleMarathon /></DailyBoundary>} />
         {/* Hidden owner-only difficulty archive: unlinked, not prerendered, noindex. */}
         <Route path="/admin/archive" element={<AdminArchive />} />
         <Route path="*" element={<div>404 - Game Not Found</div>} />
       </Routes>
+      <PageAds />
       <GameFeedback />
       <Seo />
+      <SiteFooter onPrivacyChoices={ads.adsense ? openPrivacyChoices : null} />
     </BrowserRouter>
   );
 }

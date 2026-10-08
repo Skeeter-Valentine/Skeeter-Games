@@ -2,7 +2,7 @@ import { gameInstructions } from '../components/gameInstructions.js';
 
 const entries = [
   ['skeedle-beadle', 'Skeedle Beadle', 'Daily Bead Sort Puzzle', 'Slide shaped beads between sticks until every stick holds one kind of bead in this daily sorting logic puzzle.', 'If one stick has a star bead on top and another stick ends in a star with room to spare, slide the star across. Keep an empty stick free for beads you need to move out of the way.'],
-  ['akari', 'Akari', 'Daily Light Up Puzzle', 'Place bulbs, light every white square, and satisfy numbered walls in this daily Akari logic puzzle.', 'A wall marked 0 forbids bulbs in its neighboring squares. A bulb lights every square along its row and column until it reaches a wall.'],
+  ['akari', 'Skeeluminate', 'Daily Light Up Puzzle', 'Place bulbs, light every white square, and satisfy numbered walls in this daily Akari (Light Up) logic puzzle.', 'A wall marked 0 forbids bulbs in its neighboring squares. A bulb lights every square along its row and column until it reaches a wall.'],
   ['parshle', 'Parshle', 'Word Puzzle with Hidden Clues', 'Guess a five-letter word in six tries with 5–12 hidden-feedback cells spread across the first five guesses.', 'A black tile hides its color, not its letter. Use the visible colors and earlier guesses to narrow down the answer.'],
   ['stitches', 'Skitches', 'Daily Stitches Puzzle', 'Connect jagged blocks with stitches while matching the hole counts around the grid.', 'If two neighboring blocks share three boundary edges, choose just one stitch between them. That stitch adds one hole at each endpoint.'],
   ['nonograms', 'Skeedograms', 'Daily Nonogram Puzzles', 'Use row and column clues to reveal a hidden pixel pattern in this nonogram logic game.', 'In a five-cell row, the clue 3, 1 fills the first three cells, leaves one empty, then fills the last cell.'],
@@ -22,4 +22,8 @@ export const pages = Object.fromEntries(entries.map(([id, name, topic, descripti
   path: `/${id}`, name, title: `${name} — ${topic} | Skeeter Games`, topic, description, example, rules: gameInstructions[id],
 }]));
 pages['/'] = { path: '/', name: 'Skeeter Games', title: 'Free Logic, Word & Number Puzzles | Skeeter Games', topic: 'Free online logic, word, and number puzzles', description: 'Play Sudoku, nonograms, Hashi, Stitches, word puzzles, and more at Skeeter Games. Explore daily challenges and sharpen your puzzle-solving skills.' };
+// Site information pages. kind: 'info' keeps them out of the game lists.
+pages['/about'] = { path: '/about', kind: 'info', name: 'About Skeeter Games', title: 'About | Skeeter Games', topic: 'About the site', description: 'Skeeter Games is a free puzzle site with new daily logic, word and number puzzles, archives, difficulty ratings and practice modes.' };
+pages['/privacy'] = { path: '/privacy', kind: 'info', name: 'Privacy Policy', title: 'Privacy Policy | Skeeter Games', topic: 'Privacy policy', description: 'How Skeeter Games uses local storage, anonymous puzzle results, analytics and advertising cookies, and the privacy choices available to you.' };
+export const gamePages = () => Object.values(pages).filter(page => page.path !== '/' && page.kind !== 'info');
 export function pageFor(pathname) { return pages[pathname.replace(/\/+$/, '') || '/']; }

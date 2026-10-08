@@ -6,7 +6,7 @@ import './GameFeedback.css';
 export default function GameFeedback() {
   const { pathname } = useLocation();
   const page = pageFor(pathname);
-  if (!page || page.path === '/') return null;
+  if (!page || page.path === '/' || page.kind === 'info') return null;
   return <section className="game-feedback" aria-label={`${page.name} feedback`}
     onKeyDown={event => event.stopPropagation()} onKeyUp={event => event.stopPropagation()}>
     <FeedbackForm key={page.path} pageName={page.name} pagePath={page.path} />

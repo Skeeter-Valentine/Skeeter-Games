@@ -13,7 +13,7 @@ export const gameInstructions = {
     'A number on a black wall tells you exactly how many bulbs touch it above, below, left, or right. Diagonal bulbs do not count. Unnumbered walls have no bulb-count requirement.',
     'Tap or click to add or remove a bulb. Select Mark ×, shift-click, or right-click to note a square without a bulb. Notes are optional and can still be lit.',
     'Use arrow keys to move between white cells, B to toggle a bulb, X to toggle a note, or Delete to erase. Undo and Redo let you revisit moves; Reset clears the board and can be undone.',
-    'Daily puzzles reset at midnight UTC and save progress in this browser. Mild is 5×5, Medium is 7×7, and Picante is 9×9. Practice lets you choose a size and generate another puzzle.',
+    'Daily puzzles reset at midnight UTC and save progress in this browser. Mild is 5×5, Medium is 7×7, and Picante is 11×11. Practice lets you choose any size from 5×5 to 13×13 and generate another puzzle.',
   ],
   parshle: [
     'Guess the hidden five-letter word in six attempts. Every guess must be a word in the word list.',
@@ -22,6 +22,7 @@ export const gameInstructions = {
     'The keyboard only tracks revealed feedback. Black tiles do not provide any information about whether a letter belongs in the answer.',
     'Type with your keyboard or tap the on-screen keys. Enter submits and Backspace erases.',
     'Daily mode gives everyone the same word and hidden positions. Random mode lets you practice with new puzzles.',
+    'Colorblind switch (next to the statistics button): swaps to orange for the right spot, blue for the wrong spot and gray for not in the word. The setting applies to all word games and is remembered in this browser.',
   ],
   '2048': [
     'Slide the tiles with the arrow keys or swipe across the board.',
@@ -48,6 +49,7 @@ export const gameInstructions = {
     'Use digits, arithmetic operators, parentheses, and the square/cube keys to build your equation.',
     'Green means the character is in the correct position. Yellow means it appears elsewhere. Other characters are absent or used too many times.',
     'Select a cell to edit it, use Delete to erase, and Enter to submit. Match the exact target equation to win.',
+    'Colorblind switch (next to the statistics button): swaps to orange for the right spot, blue for the wrong spot and gray for not in the word. The setting applies to all word games and is remembered in this browser.',
   ],
   nonograms: [
     'Fill cells to reveal the hidden pattern. Numbers beside a row or above a column describe its consecutive runs of filled cells, in order.',
@@ -66,6 +68,7 @@ export const gameInstructions = {
     'Green letters are in the correct position; yellow letters belong elsewhere in that word. Absent letters do not belong, or appear too many times.',
     'Type using your keyboard or the on-screen keys. Use Enter to submit and Backspace to edit.',
     'A solved board keeps its solution while you continue working on the others. Solve all four before your guesses run out.',
+    'Colorblind switch (next to the statistics button): swaps to orange for the right spot, blue for the wrong spot and gray for not in the word. The setting applies to all word games and is remembered in this browser.',
   ],
   shikaku: [
     'Divide the entire grid into non-overlapping rectangles.',
@@ -79,6 +82,7 @@ export const gameInstructions = {
     'Use the keyboard to type and Enter to submit. Select an unsolved board to focus on its feedback.',
     'Solved boards hide automatically. Solve every board before you run out of guesses.',
     'If fewer guesses remain than unsolved words, the attempt is lost. You can continue with extra guesses for practice, but the result remains a loss.',
+    'Colorblind switch (next to the statistics button): swaps to orange for the right spot, blue for the wrong spot and gray for not in the word. The setting applies to all word games and is remembered in this browser.',
   ],
   stitches: [
     'Connect every pair of blocks sharing an edge with exactly one stitch. Blocks touching only at a corner are not neighbors.',
@@ -98,6 +102,7 @@ export const gameInstructions = {
     'The feedback gives totals: green counts letters in the correct position, yellow counts correct letters elsewhere, and pink counts absent or excess letters.',
     'The totals do not identify which letters match. Click submitted tiles to cycle your own color notes as you reason it out.',
     'Type a valid five-letter word and press Enter to submit. Match the target exactly to win.',
+    'Colorblind switch (next to the statistics button): swaps to orange for the right spot, blue for the wrong spot and gray for not in the word. The setting applies to all word games and is remembered in this browser.',
   ],
   map: [
     'Daily maps reset at midnight UTC and save progress in this browser. Mild has 12 regions, Medium 24, and Picante 35. Choose Archive for an earlier date, or New practice map to choose your own size.',

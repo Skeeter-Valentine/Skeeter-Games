@@ -1,0 +1,44 @@
+/* Colorblind mode for the word games (Skeedle+, Skeedle Marathon, Ske4dle,
+   Parshle, Skeedle500). The palette is the high-contrast pair used widely in
+   word games: orange for the right spot, blue for the wrong spot, and gray
+   for letters not in the word. All three stay distinct for red-green and
+   blue-yellow color vision deficiencies. */
+:root { --cb-correct: #f5793a; --cb-present: #85c0f9; --cb-absent: #a7abb3; }
+
+/* --- The switch --- */
+.game-utility-bar .colorblind-switch { display: inline-flex; align-items: center; gap: 7px; height: 40px; min-height: 40px; margin: 0; padding: 0 9px; border: 1px solid #5a486e; border-radius: 9px; background: #21192f; color: #d9cfe6; font: inherit; font-size: 13px; cursor: pointer; box-shadow: none; }
+.game-utility-bar .colorblind-switch:hover { border-color: #85c0f9; }
+.game-utility-bar .colorblind-switch:focus-visible { outline: 2px solid #00f0ff; outline-offset: 3px; }
+.colorblind-switch-track { position: relative; flex: 0 0 30px; width: 30px; height: 17px; border-radius: 9px; background: #3b3150; transition: background 0.15s ease; }
+.colorblind-switch-thumb { position: absolute; top: 2px; left: 2px; width: 13px; height: 13px; border-radius: 50%; background: #c9bddf; transition: transform 0.15s ease, background 0.15s ease; }
+.colorblind-switch[aria-checked="true"] .colorblind-switch-track { background: linear-gradient(90deg, var(--cb-correct), var(--cb-present)); }
+.colorblind-switch[aria-checked="true"] .colorblind-switch-thumb { transform: translateX(13px); background: #fff; }
+@media (max-width: 420px) { .colorblind-switch-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; } }
+@media (prefers-reduced-motion: reduce) { .colorblind-switch-track, .colorblind-switch-thumb { transition: none; } }
+
+/* --- Ske4dle: tiles and keyboard quadrants use these variables --- */
+html[data-colorblind="on"] { --color-correct: var(--cb-correct); --color-present: var(--cb-present); }
+html[data-colorblind="on"] .board.solved { border-color: var(--cb-correct); box-shadow: 0 0 10px rgba(245, 121, 58, 0.4); }
+
+/* --- Skeedle Marathon: solid tiles and keys --- */
+html[data-colorblind="on"] .marathon-tile.correct { border-color: var(--cb-correct); background: var(--cb-correct); }
+html[data-colorblind="on"] .marathon-tile.present { border-color: var(--cb-present); background: var(--cb-present); }
+html[data-colorblind="on"] button.keyboard-key.correct { background: var(--cb-correct) !important; }
+html[data-colorblind="on"] button.keyboard-key.present { background: var(--cb-present) !important; }
+
+/* --- Skeedle+, Skeedle500 and Parshle: glowing outlined tiles and keys --- */
+html[data-colorblind="on"] :is(.word500-tile.note-green, .word500-key.note-green, .parshle .correct) {
+  background-color: rgba(245, 121, 58, 0.22); border-color: var(--cb-correct); color: var(--cb-correct); box-shadow: 0 0 6px rgba(245, 121, 58, 0.35);
+}
+html[data-colorblind="on"] :is(.word500-tile.note-yellow, .word500-key.note-yellow, .parshle .present) {
+  background-color: rgba(133, 192, 249, 0.2); border-color: var(--cb-present); color: var(--cb-present); box-shadow: 0 0 6px rgba(133, 192, 249, 0.35);
+}
+html[data-colorblind="on"] :is(.word500-tile.note-pink, .parshle .absent) {
+  background-color: rgba(167, 171, 179, 0.16); border-color: var(--cb-absent); color: var(--cb-absent); box-shadow: none;
+}
+html[data-colorblind="on"] .parshle .correct.formerly-hidden { background-color: rgba(245, 121, 58, 0.11); box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.35), 0 0 6px rgba(245, 121, 58, 0.25); }
+
+/* Skeedle500 score boxes (right spot / wrong spot / not in word counts) */
+html[data-colorblind="on"] .score-box.q-green.active { background-color: rgba(245, 121, 58, 0.15); border-color: var(--cb-correct); color: var(--cb-correct); box-shadow: 0 0 10px rgba(245, 121, 58, 0.4), inset 0 0 4px rgba(245, 121, 58, 0.2); }
+html[data-colorblind="on"] .score-box.q-yellow.active { background-color: rgba(133, 192, 249, 0.15); border-color: var(--cb-present); color: var(--cb-present); box-shadow: 0 0 10px rgba(133, 192, 249, 0.4), inset 0 0 4px rgba(133, 192, 249, 0.2); }
+html[data-colorblind="on"] .score-box.q-pink.active { background-color: rgba(167, 171, 179, 0.12); border-color: var(--cb-absent); color: var(--cb-absent); box-shadow: none; }

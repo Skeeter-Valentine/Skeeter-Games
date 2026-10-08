@@ -1,6 +1,13 @@
 import { scheduledDifficulty } from '../../utils/dailySchedule.js';
 
-export const dailySize = date => [5, 7, 9][scheduledDifficulty('akari', date) - 1];
+// Daily board side by spice level: Mild 5, Medium 7, Picante 11. Picante was
+// 9 × 9 before PICANTE_11_FROM; earlier dates keep 9 × 9 so archive puzzles and
+// their community results never change.
+export const PICANTE_11_FROM = '2026-10-11';
+export const dailySize = date => {
+  const level = scheduledDifficulty('akari', date);
+  return level === 3 ? (date >= PICANTE_11_FROM ? 11 : 9) : [5, 7][level - 1];
+};
 
 export function seededRandom(seed) {
   let state = 2166136261;
@@ -120,8 +127,11 @@ function shuffled(items, rng) {
   return result;
 }
 
+// Board sides offered in practice. Daily sizes are set by dailySize above.
+export const PRACTICE_SIZES = [5, 7, 9, 11, 13];
+
 export function generatePuzzle(size, seed) {
-  if (![5, 7, 9].includes(size)) throw new RangeError('Akari supports 5, 7, and 9 cell sides.');
+  if (!PRACTICE_SIZES.includes(size)) throw new RangeError(`Akari supports ${PRACTICE_SIZES.join(', ')} cell sides.`);
   const rng = seededRandom(seed);
   for (let attempt = 0; attempt < 100; attempt++) {
     const cells = Array.from({ length: size * size }, () => rng() < 0.28 ? -1 : null);

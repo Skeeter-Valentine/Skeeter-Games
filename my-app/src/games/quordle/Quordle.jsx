@@ -207,26 +207,7 @@ export default function Quordle({ onWin }) {
     initGame(newMode);
   };
 
-  useEffect(() => {
-      // 1. Create and inject the external gtag script
-      const gtagScript = document.createElement('script');
-      gtagScript.src = 'https://www.googletagmanager.com/gtag/js?id=G-9TBQNYQE6V';
-      gtagScript.async = true;
-      document.head.appendChild(gtagScript);
- 
-      // 2. Initialize dataLayer and gtag config
-      window.dataLayer = window.dataLayer || [];
-      function gtag() {
-        window.dataLayer.push(arguments);
-      }
-      gtag('js', new Date());
-      gtag('config', 'G-9TBQNYQE6V');
- 
-      // Cleanup script on unmount
-      return () => {
-        document.head.removeChild(gtagScript);
-      };
-    }, []);
+  // Google Analytics is loaded once for the whole site in index.html.
 
   return (
     <div className="game-container quordle-game-container" onClick={focusHiddenInput}>

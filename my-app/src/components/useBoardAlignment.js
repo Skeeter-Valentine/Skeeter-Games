@@ -47,10 +47,20 @@ export default function useBoardAlignment(gameId) {
       }
       const bounds = board.getBoundingClientRect();
       if (!bounds.width) return;
-      const width = `${bounds.width}px`;
+      // A narrow board (e.g. Parshle on a phone) may not fit the timer and tool
+      // buttons on one line. Then the bar grows leftward, up to the screen
+      // width, while staying aligned with the board's right edge.
+      const gap = parseFloat(getComputedStyle(bar).columnGap) || 0;
+      const items = [...bar.children];
+      const needed = Math.ceil(items.reduce((sum, item) => sum + item.getBoundingClientRect().width, 0)
+        + gap * Math.max(0, items.length - 1));
+      const room = document.documentElement.clientWidth - 20;
+      const barWidth = Math.max(bounds.width, Math.min(needed, room));
+      const width = `${barWidth}px`;
       if (bar.style.width !== width) bar.style.width = width;
       const current = bar.getBoundingClientRect();
-      const nextShift = shift + bounds.left - current.left;
+      const targetLeft = barWidth > bounds.width ? Math.max(10, bounds.right - barWidth) : bounds.left;
+      const nextShift = shift + targetLeft - current.left;
       if (Math.abs(nextShift - shift) > 0.25) {
         shift = nextShift;
         bar.style.translate = `${shift}px 0`;

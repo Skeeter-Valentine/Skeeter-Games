@@ -3,7 +3,7 @@ import { combineRates, rankPuzzles } from './difficulty.js';
 import { dailyDifficulty } from './dailyDifficulty.js';
 
 export const GAME_TITLES = {
-  map: 'Cartograskeet', akari: 'Akari', stitches: 'Skitches', parshle: 'Parshle', word500: 'Skeedle500',
+  map: 'Cartograskeet', akari: 'Skeeluminate', stitches: 'Skitches', parshle: 'Parshle', word500: 'Skeedle500',
   quordle: 'Ske4dle', shikaku: 'Shikaku', minesweeper: 'Mineskeeter', sudoku: 'Skeedoku', pipes: 'Skeeter Piper',
   hashi: 'Hashi', nonograms: 'Skeedograms', skeedlemath: 'Skeedle+', 'skeedle-marathon': 'Skeedle Marathon', 2048: '2048', 'skeedle-beadle': 'Skeedle Beadle',
 };

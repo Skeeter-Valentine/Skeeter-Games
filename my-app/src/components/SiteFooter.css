@@ -1,0 +1,5 @@
+.site-footer { box-sizing: border-box; width: min(960px, calc(100% - 32px)); margin: 24px auto 0; padding: 24px 0 40px; border-top: 1px solid #3a2f4d; color: #a39bbe; text-align: center; font-size: 16px; }
+.site-footer nav { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px 22px; margin-bottom: 10px; }
+.site-footer a, .site-footer button { color: #00f0ff; background: none; padding: 4px 0; font: inherit; font-size: 16px; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+.site-footer a:focus-visible, .site-footer button:focus-visible { outline: 2px solid #ffb703; outline-offset: 3px; }
+.site-footer p { font-size: 15px; }

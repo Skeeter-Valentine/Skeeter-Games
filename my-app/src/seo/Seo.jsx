@@ -1,15 +1,26 @@
 import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
-import { pages, pageFor } from './pages.js';
+import { pages, pageFor, gamePages } from './pages.js';
+import InfoContent from '../pages/info/InfoContent.jsx';
+import AdSlot from '../ads/AdSlot.jsx';
 import './seo.css';
 
-export function Guide({ page }) {
+// `ad` is an optional ad slot placed after the example. The prerender script
+// leaves it out, so static pages never contain ad markup.
+export function Guide({ page, ad = null }) {
   if (!page) return null;
+  const explore = <nav aria-label="Explore puzzle games"><h3>{page.path === '/' ? 'Choose a puzzle' : 'Explore more puzzles'}</h3><ul>{Object.values(pages).filter(other => other.path !== page.path && other.kind !== 'info').map(other => <li key={other.path}><a href={other.path}>{other.name}{other.path !== '/' && ` — ${other.topic}`}</a></li>)}</ul></nav>;
+  if (page.kind === 'info') return <article className="game-guide info-page" aria-label={page.name}>
+    <h1>{page.name}</h1>
+    <InfoContent id={page.path.slice(1)} games={gamePages()} />
+    {explore}
+  </article>;
   return <section className="game-guide" aria-label={`${page.name} guide`}>
     {page.path === '/' ? <h1>{page.topic}</h1> : <h2>{page.name}: {page.topic}</h2>}
     <p>{page.description}</p>
     {page.rules && <><h3>How to play</h3><ol>{page.rules.map(rule => <li key={rule}>{rule}</li>)}</ol><h3>A quick example</h3><p>{page.example}</p></>}
-    <nav aria-label="Explore puzzle games"><h3>{page.path === '/' ? 'Choose a puzzle' : 'Explore more puzzles'}</h3><ul>{Object.values(pages).filter(other => other.path !== page.path && !(page.path === '/' && other.path === '/akari')).map(other => <li key={other.path}><a href={other.path}>{other.name}{other.path !== '/' && ` — ${other.topic}`}</a></li>)}</ul></nav>
+    {ad}
+    {explore}
   </section>;
 }
 export default function Seo() {
@@ -31,5 +42,5 @@ export default function Seo() {
       canonical.href = new URL(page.path, origin).href;
     } else canonical?.remove();
   }, [page]);
-  return <Guide page={page} />;
+  return <Guide page={page} ad={page && page.kind !== 'info' ? <AdSlot placement="guide" /> : null} />;
 }

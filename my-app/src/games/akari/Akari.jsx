@@ -3,7 +3,7 @@ import Navbar from '../../components/Navbar';
 import DailyResults from '../../components/DailyResults';
 import { useDailyDate, useArchive } from '../../components/DailyBoundary';
 import { readLocal, writeLocal } from '../../utils/dailyStats.js';
-import { dailyPuzzle, evaluateBoard, generatePuzzle } from './puzzle.js';
+import { PRACTICE_SIZES, dailyPuzzle, evaluateBoard, generatePuzzle } from './puzzle.js';
 import './Akari.css';
 import { puzzleSnapshot } from '../../utils/archive.js';
 
@@ -103,20 +103,20 @@ export default function Akari() {
 
   return <main className="akari-page">
     <Navbar />
-    <header className="akari-heading"><p className="akari-eyebrow">LIGHT UP</p><h1>Akari</h1><p>A little light goes a long way.</p></header>
-    <DailyResults gameId="akari" title="Akari" daily={game.mode === 'daily'} date={date} finished={won} seconds={game.seconds} started={game.started} />
+    <header className="akari-heading"><p className="akari-eyebrow">LIGHT UP</p><h1>Skeeluminate</h1><p>A little light goes a long way.</p></header>
+    <DailyResults gameId="akari" title="Skeeluminate" daily={game.mode === 'daily'} date={date} finished={won} seconds={game.seconds} started={game.started} />
     <div className="akari-controls">
       <button aria-pressed={game.mode === 'daily'} onClick={() => changeMode('daily')}>{archive ? 'Archive puzzle' : 'Daily'}</button>
       <button aria-pressed={game.mode === 'practice'} onClick={() => changeMode('practice')}>Practice</button>
       {game.mode === 'practice' && <>
         <select aria-label="Practice board size" value={practiceSize} onChange={event => { const size = Number(event.target.value); setPracticeSize(size); changeMode('practice', size); }}>
-          {[5, 7, 9].map(size => <option key={size} value={size}>{size} × {size}</option>)}
+          {PRACTICE_SIZES.map(size => <option key={size} value={size}>{size} × {size}</option>)}
         </select>
         <button onClick={() => changeMode('practice')}>New puzzle</button>
       </>}
     </div>
     <p className="akari-date">{game.mode === 'daily' ? `${date} · ${archive ? 'Archive' : 'Daily'}` : 'Practice'} · {puzzle.size} × {puzzle.size}</p>
-    <section className="akari-panel" aria-label="Akari puzzle">
+    <section className="akari-panel" aria-label="Skeeluminate puzzle">
       <div className="akari-progress"><span><strong>{lit.size}</strong> / {whiteCount} lit</span><span>{Math.floor(game.seconds / 60)}:{String(game.seconds % 60).padStart(2, '0')}</span></div>
       <div className="akari-board" ref={boardRef} style={{ '--size': puzzle.size }} aria-label="Light Up board">
         {puzzle.cells.map((cell, id) => {

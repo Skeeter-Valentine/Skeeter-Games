@@ -371,7 +371,14 @@ body {
 /* Include the feedback form in the page height before the guide below it. */
 .quordle-game-container {
   height: auto;
-  gap: 12px;
+  gap: 8px;
+  /* Stack from the top instead of spreading spare screen height between sections. */
+  justify-content: flex-start;
+}
+
+/* The shared toolbar has its own 12px margins; the container gap already spaces it. */
+.quordle-game-container > .game-utility-bar {
+  margin: 0 auto;
 }
 
 .quordle-game-container > * {

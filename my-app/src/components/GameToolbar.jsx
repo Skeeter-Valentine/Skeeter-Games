@@ -4,6 +4,8 @@ import { gameInstructions } from './gameInstructions.js';
 import './GameToolbar.css';
 import useBoardAlignment from './useBoardAlignment';
 import PuzzleArchive from './PuzzleArchive';
+import ColorblindToggle from './ColorblindToggle';
+import { COLORBLIND_GAMES } from './colorblind.js';
 
 export default function GameToolbar({ gameId, title, onStats, children }) {
   const [instructionsOpen, setInstructionsOpen] = useState(false);
@@ -11,6 +13,7 @@ export default function GameToolbar({ gameId, title, onStats, children }) {
   return <>
     <div ref={toolbarRef} className="game-utility-bar" aria-label={`${title} game tools`}>
       {children && <span className="game-utility-time">{children}</span>}
+      {COLORBLIND_GAMES.includes(gameId) && <ColorblindToggle />}
       <PuzzleArchive gameId={gameId} title={title} />
       <button type="button" className="game-utility-icon" aria-label={`${title} statistics`} title="Statistics"
         aria-haspopup="dialog" onClick={onStats}>

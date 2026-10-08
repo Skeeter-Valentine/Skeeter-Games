@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { dailyPuzzle, dailySize, evaluateBoard, generatePuzzle, seededRandom, solvePuzzle, visibleCells } from './puzzle.js';
+import { PICANTE_11_FROM, dailyPuzzle, dailySize, evaluateBoard, generatePuzzle, seededRandom, solvePuzzle, visibleCells } from './puzzle.js';
 import { dailyDifficulty } from '../../utils/dailyDifficulty.js';
 
 test('walls block light and bulbs illuminate only their row and column', () => {
@@ -63,8 +63,8 @@ test('solver matches exhaustive enumeration for 150 small boards', () => {
 });
 
 test('generated puzzles are unique, valid, and repeatable at every size', () => {
-  for (const size of [5, 7, 9]) {
-    for (let seed = 0; seed < 60; seed++) {
+  for (const size of [5, 7, 9, 11, 13]) {
+    for (let seed = 0; seed < (size > 9 ? 25 : 60); seed++) {
       const puzzle = generatePuzzle(size, `sample:${seed}`);
       assert.equal(puzzle.cells.length, size * size);
       const result = solvePuzzle(puzzle);
@@ -87,5 +87,17 @@ test('daily puzzles follow the shared spice schedule and remain deterministic', 
     sizes.add(puzzle.size);
   }
   assert.equal(sizes.size, 3);
+  // Picante moves to 11 x 11 from PICANTE_11_FROM; earlier Picante days stay 9 x 9.
+  assert.equal(PICANTE_11_FROM, '2026-10-11');
+  assert.equal(dailyDifficulty('akari', '2026-10-09'), 3);
+  assert.equal(dailyPuzzle('2026-10-09').size, 9);
+  for (const date of ['2026-10-11', '2026-10-16']) {
+    assert.equal(dailyDifficulty('akari', date), 3);
+    const puzzle = dailyPuzzle(date);
+    assert.equal(puzzle.size, 11);
+    assert.equal(solvePuzzle(puzzle).solutions.length, 1);
+  }
+  assert.equal(dailyPuzzle('2026-10-12').size, 7);
+  assert.equal(dailyPuzzle('2026-10-15').size, 5);
   assert.equal(solvePuzzle({ size: 2, cells: [null, null, null, null] }, { maxNodes: 0 }).complete, false);
 });
