@@ -2,7 +2,7 @@
    an ad arrives, and the top margin keeps ads clear of game controls and
    on-screen keyboards to avoid accidental taps. */
 .ad-slot { box-sizing: border-box; width: min(970px, calc(100% - 32px)); min-height: 280px; margin: 40px auto 24px; display: flex; flex-direction: column; align-items: center; gap: 6px; }
-.ad-slot-label { color: #8f86a5; font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; }
+.ad-slot-label { color: #8f86a5; font-size: 15px; letter-spacing: 0.12em; text-transform: uppercase; }
 .ad-slot ins.adsbygoogle { width: 100%; min-height: 250px; }
 .ad-slot-preview { box-sizing: border-box; width: 100%; height: 250px; display: grid; place-items: center; border: 2px dashed #5a486e; border-radius: 12px; color: #8f86a5; font-size: 15px; }
 .ad-slot-guide { width: 100%; margin: 28px 0; }

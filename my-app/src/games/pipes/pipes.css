@@ -29,7 +29,7 @@
 
 .pipes-instructions {
   margin: 0 0 16px 0;
-  font-size: 0.9rem;
+  font-size: 15px;
   color: #8b949e;
   text-align: center;
   line-height: 1.4;
@@ -153,7 +153,7 @@
   }
 
   .pipes-instructions {
-    font-size: 0.825rem;
+    font-size: 15px;
     margin-bottom: 12px;
     padding: 0 8px;
   }
@@ -171,16 +171,16 @@
   }
 
   .pipes-instructions {
-    font-size: 0.775rem;
+    font-size: 15px;
   }
 
   .pipes-config {
-    font-size: 0.85rem;
+    font-size: 15px;
   }
 
   .pipes-config select {
     padding: 4px 8px;
-    font-size: 0.85rem;
+    font-size: 15px;
   }
 
   .pipes-status {

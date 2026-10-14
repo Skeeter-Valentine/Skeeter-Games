@@ -15,6 +15,14 @@ export function readLocal(key, fallback) {
   return memory.get(key) ?? fallback;
 }
 
+// Removes every saved value whose key matches, from storage and the in-memory copy.
+export function forgetLocal(matches) {
+  for (const key of [...memory.keys()]) if (matches(key)) memory.delete(key);
+  try {
+    for (const key of Object.keys(globalThis.localStorage)) if (matches(key)) globalThis.localStorage.removeItem(key);
+  } catch { /* Blocked storage: the in-memory copy is already cleared. */ }
+}
+
 export function writeLocal(key, value) {
   memory.set(key, value);
   try { globalThis.localStorage.setItem(key, JSON.stringify(value)); } catch { /* Session-only fallback. */ }

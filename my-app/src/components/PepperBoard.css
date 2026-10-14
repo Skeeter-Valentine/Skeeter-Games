@@ -1,0 +1,36 @@
+/* Weekly pepper leaderboard ticker at the top of the homepage. Entries are as
+   wide as their names (never cut off), so about five show at once on desktop;
+   the track slides left by one full list and then repeats. */
+.pepper-board { margin: 0 0 1.5rem; padding: 12px 0 14px; border: 1px solid #5a486e; border-radius: 16px; background: linear-gradient(120deg, rgba(237, 56, 63, 0.14), rgba(84, 166, 75, 0.08)), #171222; text-align: center; overflow: hidden; }
+.pepper-board h2 { display: flex; align-items: center; justify-content: center; gap: 8px; margin: 0 0 12px; color: #fff; font-size: 1.5rem; letter-spacing: 0.5px; }
+.pepper-board h2 .pepper-chili { width: 21px; height: 26px; }
+.pepper-window { --entry: 20%; overflow: hidden; -webkit-mask-image: linear-gradient(to right, transparent, #000 4%, #000 96%, transparent); mask-image: linear-gradient(to right, transparent, #000 4%, #000 96%, transparent); }
+.pepper-track { display: flex; width: max-content; animation: pepper-scroll calc(var(--pepper-count) * 3s) linear infinite; }
+.pepper-board:hover .pepper-track, .pepper-board:focus-within .pepper-track { animation-play-state: paused; }
+.pepper-list { display: flex; margin: 0; padding: 0; list-style: none; }
+.pepper-entry { box-sizing: border-box; display: flex; align-items: center; gap: 8px; padding: 0 22px; border-right: 1px solid #3e3150; color: #f3ecfb; font-size: 18px; white-space: nowrap; }
+.pepper-rank { flex: 0 0 30px; display: inline-grid; place-items: center; height: 30px; border-radius: 50%; background: #2c2240; color: #00f0ff; font-size: 15px; font-weight: bold; }
+.pepper-top-1 .pepper-rank { background: #f5c542; color: #2a1c00; }
+.pepper-top-2 .pepper-rank { background: #cfd6e0; color: #1c2230; }
+.pepper-top-3 .pepper-rank { background: #d08a4e; color: #2a1406; }
+.pepper-name { font-weight: bold; }
+.pepper-count { display: inline-flex; align-items: center; gap: 3px; color: #d8ff00; font-weight: 900; font-variant-numeric: tabular-nums; }
+.pepper-chili { width: 17px; height: 22px; flex-shrink: 0; }
+.pepper-still { -webkit-mask-image: none; mask-image: none; }
+.pepper-still .pepper-track { width: auto; justify-content: center; animation: none; }
+.pepper-still .pepper-list { flex-wrap: wrap; justify-content: center; row-gap: 8px; }
+.pepper-still .pepper-entry:last-child { border-right: 0; }
+.pepper-empty { margin: 0; padding: 0 16px; color: #cfc4e0; font-size: 16px; }
+@keyframes pepper-scroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+/* Phones: slightly smaller, about two players at a time. */
+@media (max-width: 600px) {
+  .pepper-board { margin-bottom: 1.25rem; }
+  .pepper-board h2 { font-size: 1.2rem; }
+  .pepper-entry { padding: 0 16px; font-size: 16px; }
+}
+/* No motion: a row you can swipe or scroll instead. */
+@media (prefers-reduced-motion: reduce) {
+  .pepper-window { overflow-x: auto; -webkit-mask-image: none; mask-image: none; }
+  .pepper-track { animation: none; }
+  .pepper-list[aria-hidden="true"] { display: none; }
+}

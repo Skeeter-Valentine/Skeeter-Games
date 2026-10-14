@@ -22,6 +22,10 @@ export const pages = Object.fromEntries(entries.map(([id, name, topic, descripti
   path: `/${id}`, name, title: `${name} — ${topic} | Skeeter Games`, topic, description, example, rules: gameInstructions[id],
 }]));
 pages['/'] = { path: '/', name: 'Skeeter Games', title: 'Free Logic, Word & Number Puzzles | Skeeter Games', topic: 'Free online logic, word, and number puzzles', description: 'Play Sudoku, nonograms, Hashi, Stitches, word puzzles, and more at Skeeter Games. Explore daily challenges and sharpen your puzzle-solving skills.' };
+pages['/gauntlet'] = { path: '/gauntlet', name: 'Skeeter Gauntlet', title: 'Skeeter Gauntlet — Daily Six-Puzzle Challenge | Skeeter Games', topic: 'Daily Six-Puzzle Challenge',
+  description: 'Race through six logic and word puzzles back to back on one clock. A new Skeeter Gauntlet every day, one attempt each.',
+  example: 'If today’s lineup starts with Skitches, Ske4dle and Hashkeet, solve each in turn. If Ske4dle’s average solve time is five minutes, giving up after two minutes adds a three-minute penalty; after five minutes there is no penalty left.',
+  rules: gameInstructions.gauntlet };
 // Site information pages. kind: 'info' keeps them out of the game lists.
 pages['/about'] = { path: '/about', kind: 'info', name: 'About Skeeter Games', title: 'About | Skeeter Games', topic: 'About the site', description: 'Skeeter Games is a free puzzle site with new daily logic, word and number puzzles, archives, difficulty ratings and practice modes.' };
 pages['/privacy'] = { path: '/privacy', kind: 'info', name: 'Privacy Policy', title: 'Privacy Policy | Skeeter Games', topic: 'Privacy policy', description: 'How Skeeter Games uses local storage, anonymous puzzle results, analytics and advertising cookies, and the privacy choices available to you.' };

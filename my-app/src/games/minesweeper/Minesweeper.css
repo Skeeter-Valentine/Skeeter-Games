@@ -43,7 +43,7 @@
   padding: 6px 14px;
   border-radius: 6px;
   font-weight: bold;
-  font-size: 0.85rem;
+  font-size: 15px;
   font-family: 'Poor Richard', 'Georgia', serif;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -229,7 +229,7 @@
   color: #856404;
   padding: 8px 12px;
   text-align: center;
-  font-size: 0.9rem;
+  font-size: 15px;
   font-weight: bold;
   border-radius: 4px;
   margin-bottom: 12px;
@@ -265,7 +265,7 @@
     width: auto;
     height: auto;
     aspect-ratio: 1 / 1;
-    font-size: clamp(8px, 2.2vw, 1.3rem);
+    font-size: clamp(12px, 3.8vw, 1.3rem);
     min-width: 0;
   }
 }

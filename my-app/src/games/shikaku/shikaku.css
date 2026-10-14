@@ -218,7 +218,7 @@
   }
 
   .shikaku-instructions {
-    font-size: 0.9rem;
+    font-size: 15px;
     max-width: 90%;
     margin-bottom: 14px;
   }
@@ -234,7 +234,7 @@
 
   .shikaku-config select {
     padding: 6px 10px;
-    font-size: 0.9rem;
+    font-size: 15px;
   }
 
   .shikaku-board-wrapper {
@@ -267,7 +267,7 @@
   }
 
   .shikaku-instructions {
-    font-size: 0.85rem;
+    font-size: 15px;
     line-height: 1.3;
   }
 

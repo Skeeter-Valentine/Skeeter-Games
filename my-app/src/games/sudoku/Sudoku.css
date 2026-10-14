@@ -65,7 +65,7 @@ h1{
   align-items:center;
   gap:10px;
   color:var(--muted);
-  font-size:14px;
+  font-size:15px;
 }
 .notes-toggle{
   display:flex;
@@ -233,7 +233,7 @@ button, select{
 .section-title{
   margin:0 0 10px;
   color:#d7dee7;
-  font-size:13px;
+  font-size:15px;
   text-transform:uppercase;
   letter-spacing:.12em;
 }
@@ -245,7 +245,7 @@ button, select{
   display:grid;
   gap:6px;
 }
-label{font-size:13px;color:var(--muted)}
+label{font-size:15px;color:var(--muted)}
 select{
   width:100%;
   min-height:44px;
@@ -268,12 +268,12 @@ select{
   border-radius:14px;
   background:#10161f;
 }
-.stat small{display:block;color:var(--muted);margin-bottom:4px}
+.stat small{display:block;color:var(--muted);margin-bottom:4px;font-size:15px}
 .stat strong{font-size:20px}
 .message{
   min-height:24px;
   color:var(--muted);
-  font-size:14px;
+  font-size:15px;
   margin-top:12px;
 }
 .message.good{color:var(--good)}
@@ -283,7 +283,7 @@ select{
   padding-top:16px;
   border-top:1px solid #2a3440;
   color:var(--muted);
-  font-size:13px;
+  font-size:15px;
   line-height:1.55;
 }
 kbd{

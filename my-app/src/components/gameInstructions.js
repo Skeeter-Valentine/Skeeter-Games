@@ -1,4 +1,12 @@
 export const gameInstructions = {
+  gauntlet: [
+    'Each day brings six puzzles drawn from every Skeeter Games puzzle except Skeedoku. Everyone gets the same lineup, and the puzzles are separate from the regular dailies.',
+    'Play them back to back. Each game’s solve time counts toward one total, and the clock pauses between games until you start the next one.',
+    'Stuck? Give up to move on. Giving up (or losing) adds a penalty: the average solve time for that game at its spice level, rounded to the minute. The penalty shown under Give up counts down as you play and disappears once you have spent that long, so it always pays to keep going.',
+    'The clock keeps running if you leave in the middle of a game, so finish what you start.',
+    'You get one attempt per day. A new gauntlet opens every day at 4 a.m. Mountain Time. Share your time and come back tomorrow to build a streak.',
+    'Skeeter plays every gauntlet too. Once Skeeter’s time is posted, it appears on the page as the time to beat, with your pace against it after each game.',
+  ],
   'skeedle-beadle': [
     'Sort the beads so every stick holds a single kind. Each color has its own shape: a finished stick is four matching beads, and empty sticks are fine too.',
     'Tap a stick to pick up its top beads, then tap another stick to slide them across. Beads only go onto the same shape or onto an empty stick.',

@@ -4,6 +4,8 @@ import parshleImg from '../assets/parshle-blend.webp';
 import skeedleBeadleImg from '../assets/skeedle-beadle3.webp';
 import skeeluminateImg from '../assets/skeeluminate.webp';
 import ChiliRating from '../components/ChiliRating';
+import AccountMenu from '../components/AccountMenu';
+import PepperBoard from '../components/PepperBoard';
 // src/pages/LandingPage.jsx
 import React, { useEffect, useState } from 'react';
 import { dailyDate, dailyDifficulty } from '../utils/dailyDifficulty.js';
@@ -22,79 +24,53 @@ import skeedlemathImg from '../assets/skeedlemath2-blend.webp';
 import nonogramsImg from '../assets/skeedograms2-blend.webp';
 import skeedlemarathonImg from '../assets/skeedlemarathon-blend.webp';
 import stitchesImg from '../assets/skitches.webp';
-import Stitches from '../games/stitches/Stitches';
+import gauntletBannerImg from '../assets/gauntlet-banner.webp';
+import gauntletBannerNarrowImg from '../assets/gauntlet-banner-narrow.webp';
 
-// Import Skeeter Gauntlet and your game components
-import SkeeterGauntlet from '../components/SkeeterGauntlet';
-import Minesweeper from '../games/minesweeper/Minesweeper';
-import Quordle from '../games/quordle/Quordle';
-import Word500 from '../games/word500/Word500';
-import Game2048 from '../games/2048/Game2048';
-import Shikaku from '../games/shikaku/shikaku';
-import Pipes from '../games/pipes/pipes';
-import Hashi from '../games/hashi/Hashi';
-import Skeedlemath from '../games/skeedlemath/Skeedlemath';
-import Nonograms from '../games/nonograms/Nonograms';
+import { PAR_NAME, gauntletLaunched, STORAGE_PREFIX, formatClock, gauntletDay, restoreRun, runTotal, validPar } from '../gauntlet/gauntlet.js';
+import { readPar } from '../services/gauntletPar.js';
+import { readLocal } from '../utils/dailyStats.js';
 
 const GAMES = [
-  { id: 'akari', title: 'Skeeluminate', path: '/akari', image: skeeluminateImg, isNew: true, excludeFromGauntlet: true },
-  { id: 'skeedle-beadle', title: 'Skeedle Beadle', path: '/skeedle-beadle', image: skeedleBeadleImg, isNew: true, excludeFromGauntlet: true },
-  { id: 'map', title: 'Cartograskeet', path: '/map', image: cartograskeetImg, isNew: true, excludeFromGauntlet: true },
-  { id: 'parshle', title: 'Parshle', path: '/parshle', image: parshleImg, excludeFromGauntlet: true },
-  { id: 'stitches', title: 'Skitches', path: '/stitches', image: stitchesImg, component: Stitches },
-  { id: 'skeedlemarathon', title: 'Skeedlemarathon', path: '/skeedle-marathon', image: skeedlemarathonImg, excludeFromGauntlet: true },
-  { id: 'nonograms', title: 'Skeedograms', path: '/nonograms', image: nonogramsImg, component: Nonograms },
-  { id: 'skeedlemath', title: 'Skeedle+', path: '/skeedlemath', image: skeedlemathImg, component: Skeedlemath },
-  { id: 'pipes', title: 'Skeeter Piper (net)', path: '/pipes', image: pipesImg, component: Pipes },
-  { id: 'shikaku', title: 'Shikaku', path: '/shikaku', image: shikakuImg, component: Shikaku },
-  { id: 'quordle', title: 'Ske4dle', path: '/quordle', image: ske4dleImg, component: Quordle },
-  { id: 'word500', title: 'Skeedle500', path: '/word500', image: skeedle500Img, component: Word500 },
-  { id: 'minesweeper', title: 'Mineskeeter', path: '/minesweeper', image: mineskeeterImg, component: Minesweeper },
-  { id: '2048', title: '2048', path: '/2048', image: game2048Img, component: Game2048 },
-  { id: 'hashi', title: 'Hashi', path: '/hashi', image: hashiImg, component: Hashi },
-  // Sudoku stays on the landing page, but we flag it to be excluded from the gauntlet
-  { id: 'sudoku', title: 'Skeedoku', path: '/sudoku', image: sudokuImg, excludeFromGauntlet: true },
+  { id: 'akari', title: 'Skeeluminate', path: '/akari', image: skeeluminateImg, isNew: true },
+  { id: 'skeedle-beadle', title: 'Skeedle Beadle', path: '/skeedle-beadle', image: skeedleBeadleImg, isNew: true },
+  { id: 'map', title: 'Cartograskeet', path: '/map', image: cartograskeetImg, isNew: true },
+  { id: 'parshle', title: 'Parshle', path: '/parshle', image: parshleImg },
+  { id: 'stitches', title: 'Skitches', path: '/stitches', image: stitchesImg },
+  { id: 'skeedlemarathon', title: 'Skeedlemarathon', path: '/skeedle-marathon', image: skeedlemarathonImg },
+  { id: 'nonograms', title: 'Skeedograms', path: '/nonograms', image: nonogramsImg },
+  { id: 'skeedlemath', title: 'Skeedle+', path: '/skeedlemath', image: skeedlemathImg },
+  { id: 'pipes', title: 'Skeeter Piper (net)', path: '/pipes', image: pipesImg },
+  { id: 'shikaku', title: 'Shikaku', path: '/shikaku', image: shikakuImg },
+  { id: 'quordle', title: 'Ske4dle', path: '/quordle', image: ske4dleImg },
+  { id: 'word500', title: 'Skeedle500', path: '/word500', image: skeedle500Img },
+  { id: 'minesweeper', title: 'Mineskeeter', path: '/minesweeper', image: mineskeeterImg },
+  { id: '2048', title: '2048', path: '/2048', image: game2048Img },
+  { id: 'hashi', title: 'Hashi', path: '/hashi', image: hashiImg },
+  { id: 'sudoku', title: 'Skeedoku', path: '/sudoku', image: sudokuImg },
 ];
 
 export default function LandingPage() {
-  const [inGauntletMode, setInGauntletMode] = useState(false);
   const [date, setDate] = useState(dailyDate);
 
   useEffect(() => watchDailyDate(setDate), []);
 
-  // Filter out games that have excludeFromGauntlet set to true
-  const gauntletGames = GAMES.filter(game => !game.excludeFromGauntlet);
-
-  if (inGauntletMode) {
-    return (
-      <div className="landing-container">
-        <header className="landing-header">
-          <div className="landing-header-content" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', padding: '0 10px' }}>
-            <Link to="/" className="landing-logo">
-              <img src={logoImg} alt="Skeeter Games Logo" width="40" height="40" className="landing-logo-image" />
-              <span className="landing-logo-text">Skeeter Games</span>
-            </Link>
-            <button 
-              onClick={() => setInGauntletMode(false)}
-              style={{ 
-                background: 'transparent', 
-                border: '1px solid #ff2a85', 
-                color: '#ff2a85', 
-                padding: '6px 14px', 
-                borderRadius: '6px', 
-                cursor: 'pointer', 
-                fontWeight: '900',
-                letterSpacing: '0.05em'
-              }}
-            >
-              EXIT GAUNTLET
-            </button>
-          </div>
-        </header>
-        <SkeeterGauntlet allGames={gauntletGames} />
-      </div>
-    );
-  }
+  // Skeeter Gauntlet banner: today's progress and the owner's time to beat.
+  // Gauntlet days start at 4am Mountain Time, not at the puzzles' UTC midnight.
+  const gauntletDate = gauntletDay();
+  const gauntletOpen = gauntletLaunched(gauntletDate);
+  const gauntletRun = gauntletOpen ? restoreRun(readLocal(`${STORAGE_PREFIX}run:${gauntletDate}`, null), gauntletDate) : null;
+  const [par, setPar] = useState(null);
+  useEffect(() => {
+    if (!gauntletOpen) return;
+    let active = true;
+    readPar(gauntletDate).then(value => { if (active) setPar(validPar(value, gauntletDate)); }).catch(() => {});
+    return () => { active = false; };
+  }, [gauntletOpen, gauntletDate]);
+  const parText = par ? `${PAR_NAME}'s time: ${formatClock(par.total)}` : '';
+  const gauntletStatus = !gauntletOpen ? 'Coming soon' : !gauntletRun ? (parText ? `${parText} · Can you beat it?` : 'Six puzzles. One clock. One attempt a day.')
+    : gauntletRun.finishedAt ? `Done today · ${formatClock(runTotal(gauntletRun))}${parText ? ` · ${parText}` : ''}`
+    : `In progress · game ${gauntletRun.index + 1} of ${gauntletRun.lineup.length}`;
 
   return (
     <div className="landing-container">
@@ -113,28 +89,21 @@ export default function LandingPage() {
               <span><ChiliRating level={3} /> Picante</span>
             </div>
           </section>
-
-          {/* <button
-            onClick={() => setInGauntletMode(true)}
-            className="gauntlet-launch-btn"
-            style={{
-              background: 'linear-gradient(135deg, #ff2a85, #d8ff00)',
-              color: '#121212',
-              border: 'none',
-              padding: '10px 18px',
-              borderRadius: '8px',
-              fontWeight: '900',
-              cursor: 'pointer',
-              letterSpacing: '1px',
-              boxShadow: '0 0 15px rgba(216, 255, 0, 0.3)'
-            }}
-          >
-            ⚡ SKEETER GAUNTLET
-          </button> */}
+          <AccountMenu inline />
         </div>
       </header>
 
       <main className="landing-main">
+        <PepperBoard />
+        {/* Until launch the banner opens the test gauntlets. */}
+        <Link to={gauntletOpen ? '/gauntlet' : '/gauntlet?test=1'} className="gauntlet-feature"
+          aria-label={`The Skeeter Gauntlet: the daily six game obstacle course for fame, fortune, and glory. ${gauntletStatus}`}>
+          <picture>
+            <source media="(max-width: 600px)" srcSet={gauntletBannerNarrowImg} width="1280" height="760" />
+            <img src={gauntletBannerImg} alt="" width="2022" height="640" loading="eager" decoding="async" className="gauntlet-feature-image" />
+          </picture>
+          <span className="gauntlet-feature-status" aria-hidden="true">{gauntletStatus} · <strong>{!gauntletOpen ? 'Try a test gauntlet' : !gauntletRun ? 'Play today’s gauntlet' : gauntletRun.finishedAt ? 'See results' : 'Continue'} →</strong></span>
+        </Link>
         <div className="landing-grid">
           {GAMES.map((game, index) => (
             <Link key={game.id} to={game.path} className="landing-card" aria-label={`${game.title}, daily difficulty ${dailyDifficulty(game.id, date)} of 3 chilis`}>

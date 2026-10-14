@@ -81,7 +81,7 @@
   padding: 6px 14px;
   border-radius: 6px;
   font-weight: bold;
-  font-size: 0.8rem;
+  font-size: 15px;
   cursor: pointer;
   transition: all 0.2s ease;
 }
@@ -104,7 +104,7 @@
   padding: 6px 14px;
   border-radius: 8px;
   font-weight: bold;
-  font-size: 0.8rem;
+  font-size: 15px;
   letter-spacing: 1px;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -138,7 +138,7 @@
   padding: 6px 14px;
   border-radius: 6px;
   font-weight: bold;
-  font-size: 0.85rem;
+  font-size: 15px;
   cursor: pointer;
   transition: all 0.2s ease;
   box-shadow: 0 0 8px rgba(255, 42, 133, 0.2);
@@ -308,7 +308,7 @@
 
 .word500-key.wide {
   flex: 1.5;
-  font-size: 0.75rem;
+  font-size: 14px;
 }
 
 .word500-key.used {
@@ -379,7 +379,7 @@
 }
 
 .stat-label {
-  font-size: 0.7rem;
+  font-size: 15px;
   color: #8b949e;
   text-transform: uppercase;
   margin-top: 4px;
@@ -401,7 +401,7 @@
 .dist-num {
   font-weight: bold;
   width: 12px;
-  font-size: 0.85rem;
+  font-size: 15px;
 }
 
 .dist-bar-container {
@@ -414,7 +414,7 @@
 .dist-bar {
   background-color: var(--neon-pink);
   color: #ffffff;
-  font-size: 0.75rem;
+  font-size: 15px;
   font-weight: bold;
   padding: 2px 6px;
   text-align: right;
@@ -447,6 +447,6 @@
 
   .word500-key {
     height: 44px;
-    font-size: 0.85rem;
+    font-size: 15px;
   }
 }

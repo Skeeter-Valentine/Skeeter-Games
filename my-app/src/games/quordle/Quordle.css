@@ -83,7 +83,7 @@ body {
   color: var(--neon-green);
   border: 1px solid var(--neon-green);
   padding: 4px 10px;
-  font-size: 0.85rem;
+  font-size: 15px;
   font-weight: bold;
   border-radius: 4px;
   cursor: pointer;
@@ -193,7 +193,7 @@ body {
   border: 1px solid var(--surface-border);
   border-radius: 4px;
   font-weight: bold;
-  font-size: clamp(0.65rem, 1.5vh, 0.85rem);
+  font-size: clamp(15px, 1.9vh, 17px);
   height: clamp(28px, 4vh, 38px);
   flex: 1;
   display: flex;
@@ -208,7 +208,7 @@ body {
 
 .key.wide {
   flex: 1.5;
-  font-size: clamp(0.65rem, 1.4vh, 0.85rem);
+  font-size: clamp(14px, 1.6vh, 15px);
 }
 
 /* 2x2 Grid for Letter Quadrants */
@@ -280,7 +280,7 @@ body {
   color: var(--text-muted);
   border: none;
   padding: 4px 12px;
-  font-size: 0.85rem;
+  font-size: 15px;
   font-weight: bold;
   border-radius: 4px;
   cursor: pointer;
@@ -302,7 +302,7 @@ body {
 /* Badge shown in Daily Mode instead of New Game button */
 .daily-badge {
   color: var(--neon-green);
-  font-size: 0.85rem;
+  font-size: 15px;
   font-weight: bold;
   text-transform: uppercase;
   letter-spacing: 1px;

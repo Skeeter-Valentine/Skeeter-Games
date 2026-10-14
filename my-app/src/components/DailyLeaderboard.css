@@ -1,0 +1,15 @@
+/* "Fastest today" list, shown in the results pop-up and the leaderboard pop-up. */
+.daily-board { margin: 16px 0 6px; text-align: left; }
+.daily-board h3 { margin: 0 0 8px; color: #fff; font-size: 18px; text-align: center; }
+.daily-board-list { list-style: none; margin: 0; padding: 0; }
+.daily-board-list li { display: flex; align-items: center; gap: 10px; padding: 7px 8px; border-bottom: 1px solid #2a2139; color: #f3ecfb; font-size: 16px; }
+.daily-board-list li.mine { background: rgba(216, 255, 0, 0.08); color: #d8ff00; font-weight: bold; }
+.daily-board-list li.daily-board-gap { border-top: 2px dashed #3e3150; }
+.daily-board-rank { flex: 0 0 28px; display: inline-grid; place-items: center; height: 28px; border-radius: 50%; background: #2c2240; color: #00f0ff; font-size: 15px; font-weight: bold; }
+.daily-board-rank.top-1 { background: #f5c542; color: #2a1c00; }
+.daily-board-rank.top-2 { background: #cfd6e0; color: #1c2230; }
+.daily-board-rank.top-3 { background: #d08a4e; color: #2a1406; }
+.daily-board-name { flex: 1; min-width: 0; overflow-wrap: anywhere; font-weight: bold; }
+.daily-board-time { font-variant-numeric: tabular-nums; font-weight: 900; color: #d8ff00; }
+.daily-board-note { margin: 8px 0 0; color: #cfc4e0; font-size: 15px; text-align: center; }
+.daily-board-link { padding: 0; border: 0; background: none; color: #00f0ff; font: inherit; text-decoration: underline; cursor: pointer; }

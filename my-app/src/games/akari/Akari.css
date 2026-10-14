@@ -1,9 +1,9 @@
 .akari-page { max-width: 670px; margin: auto; padding: 24px 16px 48px; }
 .akari-heading { text-align: center; margin-bottom: 20px; }
-.akari-eyebrow { color: #f6c75a; letter-spacing: 0.3em; font-size: 13px; }
+.akari-eyebrow { color: #f6c75a; letter-spacing: 0.3em; font-size: 15px; }
 .akari-heading h1 { font-size: clamp(44px, 9vw, 64px); margin: 0; color: #fff2bb; }
 .akari-heading p:last-child, .akari-date, .akari-help { color: #c5bed2; text-align: center; }
-.akari-date { font-size: 14px; margin: 14px 0; }
+.akari-date { font-size: 15px; margin: 14px 0; }
 .akari-controls { display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: 8px; }
 .akari-controls button, .akari-controls select { color: #f5f0fb; background: #272134; border: 1px solid #5b4e70; border-radius: 8px; min-height: 40px; padding: 8px 12px; cursor: pointer; font: inherit; }
 .akari-controls button[aria-pressed="true"] { background: #483818; color: #ffe390; border-color: #e6b950; }
@@ -24,5 +24,5 @@
 .akari-controls :focus-visible { outline: 2px solid #ffe390; outline-offset: 3px; }
 .akari-message { text-align: center; color: #d5cada; line-height: 1.5; min-height: 3em; margin: 16px 0 0; }
 .akari-message.won { color: #ffe390; font-weight: bold; }
-.akari-help { font-size: 14px; line-height: 1.7; margin-top: 20px; }
-@media (max-width: 420px) { .akari-page { padding: 16px 10px 36px; } .akari-panel { padding: 10px; } .akari-controls { gap: 6px; } .akari-controls button { padding: 8px 10px; font-size: 14px; } }
+.akari-help { font-size: 15px; line-height: 1.7; margin-top: 20px; }
+@media (max-width: 420px) { .akari-page { padding: 16px 10px 36px; } .akari-panel { padding: 10px; } .akari-controls { gap: 6px; } .akari-controls button { padding: 8px 10px; font-size: 15px; } }

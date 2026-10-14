@@ -6,10 +6,12 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 
 import LandingPage from './pages/LandingPage';
 import AdminArchive from './pages/AdminArchive';
+import Gauntlet from './pages/Gauntlet';
 import SkeedleBeadle from './games/skeedle-beadle/SkeedleBeadle';
 import Seo from './seo/Seo';
 import GameFeedback from './components/GameFeedback';
 import Navbar from './components/Navbar';
+import { SiteAccount } from './components/AccountMenu';
 import SiteFooter from './components/SiteFooter';
 import PageAds from './ads/PageAds';
 import { ads, openPrivacyChoices } from './ads/ads';
@@ -32,12 +34,14 @@ import SkeedleMarathon from './games/skeedle-marathon/SkeedleMarathon';
 export default function App() {
   return (
     <BrowserRouter>
+      <SiteAccount />
       <Routes>
         <Route path="/akari" element={<DailyBoundary><Akari /></DailyBoundary>} />
         <Route path="/light-up" element={<Navigate to="/akari" replace />} />
         <Route path="/nerdle" element={<Navigate to="/skeedlemath" replace />} />
         <Route path="/parshle" element={<DailyBoundary><Parshle /></DailyBoundary>} />
         <Route path="/" element={<LandingPage />} />
+        <Route path="/gauntlet" element={<Gauntlet />} />
         <Route path="/minesweeper" element={<DailyBoundary><Minesweeper /></DailyBoundary>} />
         <Route path="/quordle" element={<DailyBoundary><Quordle /></DailyBoundary>} />
         <Route path="/word500" element={<DailyBoundary><Word500 /></DailyBoundary>} />

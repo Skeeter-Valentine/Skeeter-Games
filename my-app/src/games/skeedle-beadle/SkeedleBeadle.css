@@ -1,9 +1,9 @@
 .beadle-page { max-width: 720px; margin: auto; padding: 24px 16px 48px; }
 .beadle-heading { text-align: center; margin-bottom: 20px; }
-.beadle-eyebrow { color: #ff9f1c; letter-spacing: 0.3em; font-size: 13px; }
+.beadle-eyebrow { color: #ff9f1c; letter-spacing: 0.3em; font-size: 15px; }
 .beadle-heading h1 { font-size: clamp(40px, 9vw, 62px); margin: 0; color: #fff1dc; }
 .beadle-heading p:last-child, .beadle-date, .beadle-help { color: #c5bed2; text-align: center; }
-.beadle-date { font-size: 14px; margin: 14px 0; }
+.beadle-date { font-size: 15px; margin: 14px 0; }
 .beadle-controls { display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: 8px; }
 .beadle-controls button, .beadle-controls select { color: #f5f0fb; background: #272134; border: 1px solid #5b4e70; border-radius: 8px; min-height: 40px; padding: 8px 12px; cursor: pointer; font: inherit; }
 .beadle-controls button[aria-pressed="true"] { background: #4a2f12; color: #ffd9a3; border-color: #ff9f1c; }
@@ -46,12 +46,12 @@
 .beadle-message.won { color: #ffd9a3; font-weight: bold; }
 .beadle-message.stuck { color: #ffb0af; }
 .beadle-tools { margin-top: 14px; }
-.beadle-help { font-size: 14px; line-height: 1.7; margin-top: 20px; }
+.beadle-help { font-size: 15px; line-height: 1.7; margin-top: 20px; }
 @media (max-width: 420px) {
   .beadle-page { padding: 16px 10px 36px; }
   .beadle-panel { padding: 12px 8px; }
   .beadle-controls { gap: 6px; }
-  .beadle-controls button { padding: 8px 10px; font-size: 14px; }
+  .beadle-controls button { padding: 8px 10px; font-size: 15px; }
 }
 @media (prefers-reduced-motion: reduce) {
   .beadle-bead { transition: none; }

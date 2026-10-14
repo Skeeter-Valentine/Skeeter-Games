@@ -258,7 +258,7 @@
 }
 
 .stat-label {
-  font-size: 0.7rem;
+  font-size: 15px;
   color: #a39bbe;
   font-weight: 700;
   letter-spacing: 0.5px;
@@ -364,7 +364,7 @@
     padding: 0.35rem 0.5rem;
   }
   .stat-label {
-    font-size: 0.6rem;
+    font-size: 15px;
   }
   .stat-value {
     font-size: 1.1rem;
@@ -372,7 +372,7 @@
   .diff-btn,
   .game2048-btn {
     padding: 0.5rem 0.75rem;
-    font-size: 0.85rem;
+    font-size: 15px;
   }
 }
 
@@ -385,7 +385,7 @@
 }
 
 .theme-switch-container .theme-label {
-  font-size: 0.9rem;
+  font-size: 15px;
   font-weight: bold;
 }
 

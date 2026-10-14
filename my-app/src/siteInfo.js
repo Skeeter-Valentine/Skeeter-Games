@@ -6,4 +6,4 @@ export const SITE_NAME = 'Skeeter Games';
 export const SITE_DOMAIN = 'skeetergames.org';
 export const CONTACT_EMAIL = '';
 export const LAUNCHED = 'August 2026';
-export const PRIVACY_UPDATED = 'October 6, 2026';
+export const PRIVACY_UPDATED = 'October 13, 2026';

@@ -1,3 +1,6 @@
 /nerdle /skeedlemath 301
 /nerdle/ /skeedlemath 301
+# Firebase sign-in pages served from this domain (see AUTH-SETUP.md, optional step).
+/__/auth/*  https://skeetergames.firebaseapp.com/__/auth/:splat  200
+/__/firebase/*  https://skeetergames.firebaseapp.com/__/firebase/:splat  200
 /*   /404.html   404

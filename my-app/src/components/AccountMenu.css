@@ -1,0 +1,39 @@
+/* Sign-in button and account menu. On game pages it sits in the top-right
+   corner of the page (scrolling away with it); on the homepage it is part of
+   the header. */
+.account { position: relative; z-index: 120; font-size: 15px; }
+.account-corner { position: absolute; top: 12px; right: 16px; }
+.account-inline { flex-shrink: 0; }
+.account:empty { width: 0; height: 0; }
+.account-button { display: inline-flex; align-items: center; gap: 8px; min-height: 38px; max-width: 200px; padding: 5px 12px 5px 8px; border: 1px solid #5a486e; border-radius: 999px; background: rgba(23, 18, 34, 0.92); color: #f3ecfb; font: inherit; font-weight: bold; cursor: pointer; }
+.account-button:hover { border-color: #00f0ff; }
+.account-button:focus-visible { outline: 2px solid #00f0ff; outline-offset: 2px; }
+.account-button:disabled { opacity: 0.6; cursor: default; }
+.account-google { flex-shrink: 0; }
+.account-avatar { width: 26px; height: 26px; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
+.account-initial { display: inline-grid; place-items: center; background: linear-gradient(135deg, #ff2a85, #d8ff00); color: #121212; font-size: 15px; }
+.account-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.account-dot { width: 9px; height: 9px; border-radius: 50%; background: #ff2a85; box-shadow: 0 0 6px #ff2a85; }
+.account-menu { position: absolute; top: calc(100% + 8px); right: 0; box-sizing: border-box; width: 260px; padding: 14px; border: 1px solid #5a486e; border-radius: 12px; background: #171222; color: #cfc4e0; text-align: left; box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5); }
+.account-menu p { margin: 0 0 10px; }
+.account-who strong { color: #d8ff00; }
+.account-form { display: grid; gap: 6px; margin-bottom: 10px; }
+.account-form label { color: #f3ecfb; font-size: 15px; }
+.account-form input { box-sizing: border-box; width: 100%; min-height: 36px; padding: 5px 10px; border: 1px solid #5a486e; border-radius: 8px; background: #0f0c1b; color: #fff; font: inherit; }
+.account-action { display: block; width: 100%; margin-top: 6px; min-height: 36px; border: 1px solid #5a486e; border-radius: 8px; background: #21192f; color: #f3ecfb; font: inherit; cursor: pointer; }
+.account-action:hover { border-color: #00f0ff; }
+.account-action:disabled { opacity: 0.55; cursor: default; }
+.account-error { color: #ff8fbd; font-size: 15px; }
+.account-error:empty { display: none; }
+@media (max-width: 600px) {
+  .account { font-size: 15px; }
+  .account-corner { top: 8px; right: 8px; }
+  .account-button { min-height: 34px; padding: 4px 10px 4px 6px; gap: 6px; }
+  /* On phones the signed-in button is just the avatar. */
+  .account-button:not(.account-signin) .account-name { display: none; }
+  .account-button:has(.account-avatar) { padding: 4px; }
+  .account-menu { width: min(260px, calc(100vw - 16px)); }
+  /* The homepage header is tight on phones: the Google mark alone. */
+  .account-inline .account-signin .account-name { display: none; }
+  .account-inline .account-signin { padding: 7px; }
+}

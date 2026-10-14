@@ -6,7 +6,7 @@
 :root { --cb-correct: #f5793a; --cb-present: #85c0f9; --cb-absent: #a7abb3; }
 
 /* --- The switch --- */
-.game-utility-bar .colorblind-switch { display: inline-flex; align-items: center; gap: 7px; height: 40px; min-height: 40px; margin: 0; padding: 0 9px; border: 1px solid #5a486e; border-radius: 9px; background: #21192f; color: #d9cfe6; font: inherit; font-size: 13px; cursor: pointer; box-shadow: none; }
+.game-utility-bar .colorblind-switch { display: inline-flex; align-items: center; gap: 7px; height: 40px; min-height: 40px; margin: 0; padding: 0 9px; border: 1px solid #5a486e; border-radius: 9px; background: #21192f; color: #d9cfe6; font: inherit; font-size: 15px; cursor: pointer; box-shadow: none; }
 .game-utility-bar .colorblind-switch:hover { border-color: #85c0f9; }
 .game-utility-bar .colorblind-switch:focus-visible { outline: 2px solid #00f0ff; outline-offset: 3px; }
 .colorblind-switch-track { position: relative; flex: 0 0 30px; width: 30px; height: 17px; border-radius: 9px; background: #3b3150; transition: background 0.15s ease; }

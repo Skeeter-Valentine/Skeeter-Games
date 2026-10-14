@@ -188,7 +188,7 @@ html, body {
   .landing-logo-image { width: 30px; height: 30px; }
   .landing-logo-text { max-width: 75px; }
   .difficulty-guide h2 { font-size: 1rem; }
-  .difficulty-scale { gap: 0.35rem; font-size: 0.85rem; }
+  .difficulty-scale { gap: 0.35rem; font-size: 15px; }
   .difficulty-guide .chili-icon { width: 12px; height: 15px; }
   .difficulty-guide .chili-rating { gap: 1px; }
   .landing-header {
@@ -203,4 +203,26 @@ html, body {
     grid-template-columns: 1fr;
     gap: 1.25rem;
   }
+}
+
+/* Skeeter Gauntlet banner logo: as wide as the three-card row and as tall
+   as one card, sitting above the grid. */
+.gauntlet-feature { display: block; margin: 0 0 1.5rem; color: #cfc4e0; text-align: center; text-decoration: none; }
+.gauntlet-feature picture { display: block; border-radius: 16px; overflow: hidden; transition: transform 0.2s ease, box-shadow 0.2s ease; }
+.gauntlet-feature:hover picture { transform: translateY(-4px); box-shadow: 0 0 25px rgba(255, 42, 133, 0.4); }
+.gauntlet-feature:focus-visible { outline: none; }
+.gauntlet-feature:focus-visible picture { outline: 2px solid #00f0ff; outline-offset: 3px; }
+.gauntlet-feature-image {
+  display: block; width: 100%; height: auto;
+  /* Same soft outer edge as the game cards (about 12px on each side). */
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 12px, #000 calc(100% - 12px), transparent), linear-gradient(to bottom, transparent, #000 12px, #000 calc(100% - 12px), transparent);
+  -webkit-mask-composite: source-in;
+  mask-image: linear-gradient(to right, transparent, #000 12px, #000 calc(100% - 12px), transparent), linear-gradient(to bottom, transparent, #000 12px, #000 calc(100% - 12px), transparent);
+  mask-composite: intersect;
+}
+.gauntlet-feature-status { display: block; margin-top: 0.6rem; font-size: 1rem; }
+.gauntlet-feature-status strong { color: #d8ff00; white-space: nowrap; }
+@media (max-width: 600px) {
+  .gauntlet-feature { margin-bottom: 1.25rem; }
+  .gauntlet-feature-status { font-size: 15px; }
 }

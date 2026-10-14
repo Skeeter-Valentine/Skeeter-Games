@@ -7,7 +7,7 @@ import PuzzleArchive from './PuzzleArchive';
 import ColorblindToggle from './ColorblindToggle';
 import { COLORBLIND_GAMES } from './colorblind.js';
 
-export default function GameToolbar({ gameId, title, onStats, children }) {
+export default function GameToolbar({ gameId, title, onStats, onBoard, children }) {
   const [instructionsOpen, setInstructionsOpen] = useState(false);
   const toolbarRef = useBoardAlignment(gameId);
   return <>
@@ -15,6 +15,10 @@ export default function GameToolbar({ gameId, title, onStats, children }) {
       {children && <span className="game-utility-time">{children}</span>}
       {COLORBLIND_GAMES.includes(gameId) && <ColorblindToggle />}
       <PuzzleArchive gameId={gameId} title={title} />
+      {onBoard && <button type="button" className="game-utility-icon" aria-label={`${title} fastest times today`} title="Fastest today"
+        aria-haspopup="dialog" onClick={onBoard}>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4h8v5a4 4 0 0 1-8 0V4Z" /><path d="M8 6H5a3 3 0 0 0 3 4M16 6h3a3 3 0 0 1-3 4M12 13v4M9 20h6M10 17h4" /></svg>
+      </button>}
       <button type="button" className="game-utility-icon" aria-label={`${title} statistics`} title="Statistics"
         aria-haspopup="dialog" onClick={onStats}>
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h16" /><rect x="5" y="12" width="3" height="6" rx=".5" /><rect x="10.5" y="5" width="3" height="13" rx=".5" /><rect x="16" y="9" width="3" height="9" rx=".5" /></svg>

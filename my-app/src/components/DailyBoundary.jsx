@@ -23,6 +23,17 @@ export function useDailyMode(daily) {
   useEffect(() => { setDaily?.(!!daily); }, [daily, setDaily]);
 }
 
+// Skeeter Gauntlet: runs one game on the gauntlet's own puzzle date (never a
+// daily or archive date) and hands its finish to the gauntlet instead of the
+// daily statistics. Games read the date through useDailyDate as usual.
+const noop = () => {};
+export const useGauntlet = () => useContext(DailyContext)?.gauntlet ?? null;
+export function GauntletBoundary({ date, onResult, children }) {
+  const value = useMemo(() => ({ date, today: date, archive: false, archiveEnabled: false, setDaily: noop, selectDate: noop,
+    gauntlet: { onResult } }), [date, onResult]);
+  return <DailyContext.Provider value={value}>{children}</DailyContext.Provider>;
+}
+
 export default function DailyBoundary({ children }) {
   const [params, setParams] = useSearchParams();
   const { pathname } = useLocation();

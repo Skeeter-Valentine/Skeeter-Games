@@ -353,7 +353,7 @@ export default function Hashi({ onWin }) {
       <DailyResults gameId="hashi" title="Hashi" daily={isDailyMode} date={todayStr} finished={isSolved} seconds={seconds} ready={gameState.islands.length > 0} manualOpen={isStatsOpen} onClose={() => setIsStatsOpen(false)} legacyStats={archive ? undefined : stats} />
             <div className="hashi-container">
                 <div className="skeedle-header">
-                    <h2>Hashkeet {isDailyMode && <span style={{ fontSize: '14px', color: '#58a6ff' }}>(Daily)</span>}</h2>
+                    <h2>Hashkeet {isDailyMode && <span style={{ fontSize: '15px', color: '#58a6ff' }}>(Daily)</span>}</h2>
                 </div>
                 
                 <div className="hashi-status-bar">
@@ -381,7 +381,7 @@ export default function Hashi({ onWin }) {
 
                 {!isDailyMode && (
                     <div className="hashi-controls" style={{ marginBottom: '15px' }}>
-                        <label style={{ color: '#f0f6fc', fontWeight: 'bold', fontSize: '14px' }}>Board Size:</label>
+                        <label style={{ color: '#f0f6fc', fontWeight: 'bold', fontSize: '15px' }}>Board Size:</label>
                         <select 
                             value={gridSize} 
                             onChange={(e) => {

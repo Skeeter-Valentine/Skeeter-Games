@@ -1,6 +1,7 @@
 import { useDailyDate, useArchive } from '../../components/DailyBoundary';
 import DailyResults from '../../components/DailyResults';
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import './shikaku.css';
 import Navbar from '../../components/Navbar';
 import { puzzleSnapshot } from '../../utils/archive.js';
@@ -122,8 +123,10 @@ export default function Shikaku({ onWin }) {
     const clientX = e.touches ? e.touches[0].clientX : e.clientX;
     const clientY = e.touches ? e.touches[0].clientY : e.clientY;
 
-    const x = clientX - rect.left;
-    const y = clientY - rect.top;
+    // Undo any CSS scaling (the gauntlet scales games to fit its frame).
+    const scale = rect.width / (gridRef.current.offsetWidth || rect.width);
+    const x = (clientX - rect.left) / scale;
+    const y = (clientY - rect.top) / scale;
 
     const c = Math.max(0, Math.min(gridSize - 1, Math.floor(x / cellSize)));
     const r = Math.max(0, Math.min(gridSize - 1, Math.floor(y / cellSize)));
@@ -354,7 +357,7 @@ export default function Shikaku({ onWin }) {
                 key={`${r}-${c}`}
                 className="shikaku-cell"
                 style={{
-                  fontSize: gridSize >= 20 ? '0.75rem' : gridSize >= 15 ? '0.85rem' : '1.2rem'
+                  fontSize: gridSize >= 20 ? '0.75rem' : gridSize >= 15 ? '15px' : '1.2rem'
                 }}
               >
                 {val > 0 ? val : ''}
@@ -395,7 +398,8 @@ export default function Shikaku({ onWin }) {
         </div>
       </div>
 
-      {isDragging && showCounter && dragOverlayBounds && (
+      {/* Rendered on the page body so it follows the pointer even when the game is scaled. */}
+      {isDragging && showCounter && dragOverlayBounds && createPortal(
         <div
           style={{
             position: 'fixed',
@@ -405,7 +409,7 @@ export default function Shikaku({ onWin }) {
             color: '#fff',
             padding: '4px 8px',
             borderRadius: '6px',
-            fontSize: '13px',
+            fontSize: '15px',
             fontWeight: 'bold',
             pointerEvents: 'none',
             zIndex: 9999,
@@ -414,7 +418,8 @@ export default function Shikaku({ onWin }) {
           }}
         >
           {highlightedArea}
-        </div>
+        </div>,
+        document.body
       )}
 
       <div className={`shikaku-status ${isWin ? 'win' : ''}`}>{status}</div>
@@ -444,4 +449,4 @@ export default function Shikaku({ onWin }) {
 
     </div>
   );
-}
+}

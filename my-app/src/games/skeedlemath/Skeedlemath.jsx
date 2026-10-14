@@ -263,7 +263,7 @@ export default function Skeedlemath({ onWin }) {
   const getModeBtnStyle = (isActive) => ({
     padding: '6px 12px',
     borderRadius: '6px',
-    fontSize: '0.85rem',
+    fontSize: '15px',
     fontWeight: 'bold',
     cursor: 'pointer',
     border: '2px solid var(--neon-pink)',
@@ -276,7 +276,7 @@ export default function Skeedlemath({ onWin }) {
     <>
       <Navbar />
       <DailyResults started={hasStarted} gameId="skeedlemath" title="Skeedle+" daily={isDailyMode} finished={gameStatus !== 'IN_PROGRESS'} won={gameStatus === 'WON'} ready={!!targetEquation} />
-      <div className="word500-container">
+      <div className="word500-container skeedlemath-game">
         <div className="skeedle-header">
           <h1 className="skeedle-title-btn" style={{ cursor: 'default' }}>SKEEDLE+</h1>
           <div className="header-actions" style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
@@ -301,7 +301,7 @@ export default function Skeedlemath({ onWin }) {
           </div>
         </div>
 
-        <div style={{ minHeight: '24px', fontSize: '0.9rem', fontWeight: 'bold', color: 'var(--neon-yellow)', marginBottom: '12px', textAlign: 'center' }}>
+        <div style={{ minHeight: '24px', fontSize: '15px', fontWeight: 'bold', color: 'var(--neon-yellow)', marginBottom: '12px', textAlign: 'center' }}>
           {message}
         </div>
 

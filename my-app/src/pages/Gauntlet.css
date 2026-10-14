@@ -1,0 +1,165 @@
+/* Skeeter Gauntlet page. Colors follow the site's neon arcade palette. */
+.gauntlet-page { padding: 0 0 32px; color: #f3ecfb; }
+.gauntlet-page.playing { min-height: 100vh; }
+.gauntlet-card { box-sizing: border-box; width: min(640px, calc(100% - 32px)); margin: 24px auto; padding: 28px; border: 1px solid #5a486e; border-radius: 18px; background: #171222; text-align: center; box-shadow: 0 0 40px rgba(255, 42, 133, 0.08); }
+.gauntlet-card h1 { margin: 4px 0 10px; color: #fff; font-size: clamp(34px, 8vw, 52px); letter-spacing: 1px; line-height: 1.1; }
+.gauntlet-eyebrow { color: #ff2a85; font-size: 15px; letter-spacing: 0.3em; text-transform: uppercase; }
+.gauntlet-lede { color: #d8ff00; font-size: 20px; margin-bottom: 20px; }
+.gauntlet-lineup { list-style: none; display: grid; gap: 8px; margin: 0 auto 20px; padding: 0; max-width: 380px; text-align: left; }
+.gauntlet-lineup li { display: flex; align-items: center; gap: 12px; padding: 10px 14px; border: 1px solid #3e3150; border-radius: 10px; background: #1f1830; font-size: 18px; }
+.gauntlet-lineup li span:nth-child(2) { flex: 1; }
+.gauntlet-lineup .chili-rating, .gauntlet-up-next .chili-rating, .gauntlet-hud .chili-rating { position: static; }
+.gauntlet-lineup-number { display: inline-grid; place-items: center; flex: 0 0 26px; width: 26px; height: 26px; margin-right: 8px; border-radius: 50%; background: #2c2240; color: #00f0ff; font-size: 15px; }
+.gauntlet-lineup li .gauntlet-lineup-number { margin-right: 0; }
+.gauntlet-rules { margin: 0 auto 24px; padding-left: 22px; max-width: 520px; text-align: left; color: #cfc4e0; line-height: 1.55; }
+.gauntlet-rules li { margin-bottom: 8px; }
+.gauntlet-btn { display: inline-flex; align-items: center; justify-content: center; min-height: 40px; padding: 8px 14px; border: 1px solid #5a486e; border-radius: 9px; background: #21192f; color: #f3ecfb; font: inherit; font-size: 15px; text-decoration: none; cursor: pointer; }
+.gauntlet-btn:hover { border-color: #00f0ff; }
+.gauntlet-btn:focus-visible { outline: 2px solid #00f0ff; outline-offset: 3px; }
+.gauntlet-btn-primary { min-height: 48px; padding: 10px 26px; border: 0; background: linear-gradient(135deg, #ff2a85, #d8ff00); color: #121212; font-size: 18px; font-weight: 900; letter-spacing: 1px; box-shadow: 0 0 15px rgba(216, 255, 0, 0.3); }
+.gauntlet-btn-danger { border-color: #ff2a85; color: #ff8fbd; }
+.gauntlet-card > .gauntlet-btn + .gauntlet-btn, .gauntlet-card > .gauntlet-btn:last-child { margin-top: 12px; }
+.gauntlet-note { color: #a39bbe; font-size: 15px; margin: 12px 0 0; }
+
+/* Progress pips */
+.gauntlet-pips { list-style: none; display: flex; justify-content: center; gap: 6px; margin: 0 0 14px; padding: 0; }
+.gauntlet-pips li { display: grid; place-items: center; width: 26px; height: 26px; border-radius: 7px; border: 1px solid #5a486e; background: #1f1830; color: #8f86a5; font-size: 15px; }
+.gauntlet-pips li.won { background: #1d6b45; border-color: #3ddc84; color: #eafff3; }
+.gauntlet-pips li.lost { background: #6b1d3c; border-color: #ff2a85; color: #ffe3ee; }
+.gauntlet-pips li.current { border-color: #d8ff00; color: #d8ff00; box-shadow: 0 0 8px rgba(216, 255, 0, 0.45); }
+
+/* Between games */
+.gauntlet-result { font-size: 22px; margin: 6px 0 10px; }
+.gauntlet-result.won { color: #3ddc84; }
+.gauntlet-result.lost { color: #ff8fbd; }
+.gauntlet-total { color: #cfc4e0; margin-bottom: 18px; }
+.gauntlet-total strong { color: #fff; font-size: 22px; font-variant-numeric: tabular-nums; }
+.gauntlet-up-next { display: flex; justify-content: center; align-items: center; gap: 10px; font-size: 20px; margin-bottom: 20px; }
+
+/* Playing: header bar above the game */
+.gauntlet-hud { position: sticky; top: 0; z-index: 60; display: grid; grid-template-columns: 1fr auto auto auto; align-items: center; gap: 8px 16px; box-sizing: border-box; width: min(980px, calc(100% - 16px)); margin: 8px auto 0; padding: 10px 14px; border: 1px solid #5a486e; border-radius: 14px; background: rgba(23, 18, 34, 0.96); backdrop-filter: blur(6px); }
+.gauntlet-hud-game { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; min-width: 0; }
+.gauntlet-hud-game span { color: #a39bbe; font-size: 15px; }
+.gauntlet-hud-game strong { color: #fff; font-size: 18px; }
+.gauntlet-hud .gauntlet-pips { margin: 0; }
+.gauntlet-hud-clock { color: #d8ff00; font-size: 26px; font-weight: 900; font-variant-numeric: tabular-nums; text-align: right; min-width: 84px; }
+.gauntlet-hud-actions { display: flex; justify-content: flex-end; align-items: center; flex-wrap: wrap; gap: 8px; }
+.gauntlet-hud-actions .colorblind-switch { display: inline-flex; align-items: center; gap: 7px; height: 40px; padding: 0 9px; border: 1px solid #5a486e; border-radius: 9px; background: #21192f; color: #d9cfe6; font: inherit; font-size: 15px; cursor: pointer; }
+.gauntlet-confirm { display: inline-flex; align-items: center; flex-wrap: wrap; gap: 8px; color: #ffb0cf; font-size: 15px; }
+@media (max-width: 860px) {
+  .gauntlet-hud { grid-template-columns: 1fr auto auto; }
+  .gauntlet-hud-actions { grid-column: 1 / -1; }
+}
+@media (max-width: 560px) {
+  .gauntlet-hud { grid-template-columns: 1fr auto; padding: 8px 10px; }
+  .gauntlet-hud .gauntlet-pips { grid-column: 1 / -1; grid-row: 2; justify-content: flex-start; }
+  .gauntlet-hud .gauntlet-pips li { width: 22px; height: 22px; font-size: 15px; }
+  .gauntlet-hud-clock { font-size: 22px; min-width: 0; }
+  .gauntlet-hud-actions .gauntlet-btn { min-height: 36px; padding: 6px 10px; font-size: 15px; }
+  .gauntlet-card { padding: 20px 16px; }
+}
+
+/* Results */
+.gauntlet-done h1 { color: #d8ff00; font-variant-numeric: tabular-nums; }
+.gauntlet-table { width: 100%; border-collapse: collapse; margin: 6px 0 18px; text-align: left; }
+.gauntlet-table th { color: #a39bbe; font-size: 15px; letter-spacing: 0.08em; text-transform: uppercase; padding: 6px 8px; border-bottom: 1px solid #3e3150; }
+.gauntlet-table td { padding: 9px 8px; border-bottom: 1px solid #2a2139; font-variant-numeric: tabular-nums; }
+.gauntlet-table td:first-child { display: flex; align-items: center; }
+.gauntlet-table tr.won td:nth-child(2) { color: #3ddc84; }
+.gauntlet-table tr.lost td:nth-child(2) { color: #ff8fbd; }
+.gauntlet-table small { color: #a39bbe; }
+.gauntlet-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 20px; }
+.gauntlet-stats div { padding: 10px 4px; border: 1px solid #3e3150; border-radius: 10px; background: #1f1830; }
+.gauntlet-stats strong { display: block; color: #fff; font-size: 22px; }
+.gauntlet-stats span { color: #a39bbe; font-size: 15px; }
+.gauntlet-share-text { margin: 14px auto 0; padding: 10px 14px; width: fit-content; max-width: 100%; border-radius: 8px; background: #0f0c1b; color: #cfc4e0; font-size: 15px; text-align: left; white-space: pre-wrap; user-select: all; }
+
+/* Inside the gauntlet, each game shows only its board: no mode switches,
+   practice options, archive dates or the gauntlet's own puzzle date. */
+.gauntlet-stage { margin-top: 4px; }
+.gauntlet-stage .akari-controls:not(.akari-tools), .gauntlet-stage .akari-date,
+.gauntlet-stage .beadle-controls:not(.beadle-tools), .gauntlet-stage .beadle-date,
+.gauntlet-stage .skeedomap-session-controls, .gauntlet-stage .skeedomap-board-top > span, .gauntlet-stage .skeedomap-board-top > label,
+.gauntlet-stage .parshle-controls,
+.gauntlet-stage .stitches-mode, .gauntlet-stage .stitches-date,
+.gauntlet-stage .marathon-mode-selector,
+.gauntlet-stage .nonogram-wrapper > .mode-toolbar,
+.gauntlet-stage .skeedle-header > .header-actions:has(> button), .gauntlet-stage .header-actions > .mode-toggle,
+.gauntlet-stage .pipes-container > div:has(+ .pipes-config), .gauntlet-stage .pipes-config > div:first-child,
+.gauntlet-stage .shikaku-container > div:has(+ .shikaku-config), .gauntlet-stage .shikaku-config > div:first-child,
+.gauntlet-stage .quordle-game-container .mode-toggle,
+.gauntlet-stage .minesweeper-container > .diff-toggle,
+.gauntlet-stage .game2048-header > .diff-toggle,
+.gauntlet-stage .hashi-controls > .hashi-btn:not(:last-child) { display: none !important; }
+/* Games sized for a full page sit a little closer under the gauntlet bar. */
+.gauntlet-stage .game-container, .gauntlet-stage .minesweeper-container { min-height: 0; }
+/* Skeekaku centres itself in a full screen height; start it at the top instead. */
+.gauntlet-stage .shikaku-container { min-height: 0; justify-content: flex-start; padding-top: 12px; }
+
+/* The owner's time to beat */
+.gauntlet-par { color: #00f0ff; margin: -8px 0 18px; }
+.gauntlet-par strong { color: #fff; font-variant-numeric: tabular-nums; }
+.gauntlet-par .gauntlet-btn { margin-left: 6px; }
+.gauntlet-par-verdict { color: #ff8fbd; font-size: 20px; margin: -4px 0 14px; }
+.gauntlet-par-verdict.won { color: #3ddc84; }
+.gauntlet-par-verdict span { color: #a39bbe; font-size: 15px; }
+.gauntlet-pace { color: #00f0ff; margin: -10px 0 18px; }
+.gauntlet-hud-clock small { display: block; color: #a39bbe; font-size: 15px; font-weight: normal; letter-spacing: 0.04em; }
+
+/* Test gauntlet bar */
+.gauntlet-test-bar { box-sizing: border-box; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; width: min(980px, calc(100% - 16px)); margin: 8px auto 0; padding: 10px 14px; border: 1px dashed #d8ff00; border-radius: 12px; background: rgba(216, 255, 0, 0.06); color: #e9f7a8; font-size: 15px; }
+.gauntlet-test-bar strong { color: #d8ff00; font-size: 16px; }
+.gauntlet-test-bar nav { display: flex; gap: 10px; margin-left: auto; }
+.gauntlet-test-bar a { color: #00f0ff; }
+.gauntlet-test-bar a[aria-current] { color: #fff; font-weight: bold; text-decoration: none; }
+
+/* Give up button with the shrinking penalty underneath */
+.gauntlet-giveup { display: inline-flex; flex-direction: column; align-items: center; gap: 2px; }
+.gauntlet-giveup small { color: #ff8fbd; font-size: 15px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+/* Leaderboard: sign-in, nickname and the daily board */
+.gauntlet-player { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px 12px; margin: 0 auto 18px; padding: 12px 14px; max-width: 520px; border: 1px solid #3e3150; border-radius: 12px; background: #1f1830; color: #cfc4e0; font-size: 15px; }
+.gauntlet-player strong { color: #d8ff00; }
+.gauntlet-player label { flex-basis: 100%; color: #f3ecfb; }
+.gauntlet-player input { box-sizing: border-box; flex: 1 1 180px; min-height: 40px; padding: 6px 12px; border: 1px solid #5a486e; border-radius: 9px; background: #120e1c; color: #fff; font: inherit; }
+.gauntlet-player input:focus { outline: 2px solid #00f0ff; outline-offset: 1px; }
+.gauntlet-player-error { flex-basis: 100%; margin: 0; color: #ff8fbd; font-size: 15px; }
+.gauntlet-google { background: #fff; border-color: #fff; color: #1f1f1f; font-weight: bold; }
+.gauntlet-google:hover { border-color: #00f0ff; }
+.gauntlet-link { padding: 0; border: 0; background: none; color: #00f0ff; font: inherit; font-size: 15px; text-decoration: underline; cursor: pointer; }
+.gauntlet-btn:disabled { opacity: 0.55; cursor: default; }
+.gauntlet-sync { color: #ffb0cf; }
+.gauntlet-sync-bar { box-sizing: border-box; width: min(980px, calc(100% - 16px)); margin: 8px auto 0; padding: 8px 14px; border: 1px solid #ff2a85; border-radius: 10px; background: rgba(255, 42, 133, 0.08); color: #ffb0cf; font-size: 15px; text-align: center; }
+.gauntlet-board { margin: 24px auto 4px; text-align: left; }
+.gauntlet-board h2 { margin: 0 0 6px; color: #fff; font-size: 20px; text-align: center; }
+.gauntlet-board .gauntlet-note { text-align: center; }
+.gauntlet-standing { margin: 0 0 8px; color: #cfc4e0; text-align: center; }
+.gauntlet-standing strong { color: #d8ff00; font-size: 20px; }
+.gauntlet-board-table td:first-child { display: table-cell; width: 2.5em; color: #a39bbe; }
+.gauntlet-board-table td:nth-child(2) { overflow-wrap: anywhere; }
+.gauntlet-board-table td:nth-child(3), .gauntlet-board-table th:nth-child(3) { text-align: center; }
+.gauntlet-board-table td:last-child, .gauntlet-board-table th:last-child { text-align: right; }
+.gauntlet-board-table tr.mine td { background: rgba(216, 255, 0, 0.08); color: #d8ff00; font-weight: bold; }
+.gauntlet-board-table tr.gauntlet-board-gap td { border-top: 2px dashed #3e3150; }
+
+/* Fixed game frame on desktop (see FittedStage): same place and size for
+   every game, with the game scaled to fit inside it. */
+.gauntlet-frame { width: 100%; margin-top: 6px; }
+.gauntlet-frame.fitted { position: relative; overflow: hidden; }
+.gauntlet-frame.fitted .gauntlet-stage { position: absolute; top: 0; left: 50%; margin: 0; transform-origin: top center; }
+/* Games built to fill a whole page just take the space they need here. */
+.gauntlet-frame.fitted .game-container, .gauntlet-frame.fitted .shikaku-container, .gauntlet-frame.fitted .nonogram-wrapper,
+.gauntlet-frame.fitted .word500-container { min-height: 0 !important; }
+.gauntlet-frame.fitted .word500-container { width: 100%; }
+/* Inside the frame, drop each game's own page background and the long help
+   text under the board (the bar's How to play button has the rules), so the
+   boards get more room. */
+.gauntlet-frame.fitted .gauntlet-stage > * { background: transparent !important; box-shadow: none; }
+.gauntlet-frame.fitted .stitches-rules, .gauntlet-frame.fitted .skeedomap-footer,
+.gauntlet-frame.fitted .akari-help, .gauntlet-frame.fitted .beadle-help { display: none !important; }
+
+/* Paused while How to play is open: the clock dims and the board is hidden. */
+.gauntlet-pausable { position: relative; }
+.gauntlet-pausable.paused .gauntlet-stage { visibility: hidden; }
+.gauntlet-paused-note { position: absolute; top: 120px; left: 0; right: 0; margin: 0; color: #d8ff00; font-size: 22px; text-align: center; }
+.gauntlet-hud-clock.paused { opacity: 0.55; }

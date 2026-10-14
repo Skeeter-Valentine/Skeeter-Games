@@ -12,7 +12,7 @@
 .stitches-mode { display: flex; gap: 5px; }
 .stitches-size-control { display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; color: #eee9fa; font-size: 15px; }
 .stitches-size-control select { width: auto; height: 40px; flex: 0 0 auto; }
-.stitches-date { color: #b9b1cb; font-size: 14px; margin-left: 6px; }
+.stitches-date { color: #b9b1cb; font-size: 15px; margin-left: 6px; }
 .stitches-panel { background: #191527; border: 1px solid #393049; border-radius: 16px; padding: 18px 18px 8px; box-shadow: 0 18px 50px #0003; }
 .stitches-progress { display: flex; justify-content: space-between; color: #b9b1cb; padding: 0 4px; font-size: 16px; font-variant-numeric: tabular-nums; }
 .stitches-progress strong { color: #80f4d9; }
@@ -42,12 +42,12 @@
 .stitches-rules summary { color: #eee6fa; cursor: pointer; font-size: 18px; }
 .stitches-rules ol { margin: 12px 0 12px 22px; }
 .stitches-rules li { padding-left: 4px; margin-bottom: 5px; }
-.stitches-rules p { font-size: 13px; }
+.stitches-rules p { font-size: 15px; }
 @media (max-width: 480px) {
   .stitches-page { padding: 20px 10px 36px; }
   .stitches-panel { padding: 12px 7px 6px; }
   .stitches-heading { margin-bottom: 18px; }
-  .stitches-page button, .stitches-page select { padding: 8px 10px; font-size: 14px; }
+  .stitches-page button, .stitches-page select { padding: 8px 10px; font-size: 15px; }
   .stitches-tools { gap: 6px; }
-  .stitches-progress { font-size: 14px; padding: 0 9px; }
+  .stitches-progress { font-size: 15px; padding: 0 9px; }
 }

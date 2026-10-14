@@ -13,7 +13,7 @@ function Contact() {
 
 function About({ games }) {
   return <>
-    <p>{SITE_NAME} is a free puzzle site with new logic, word and number puzzles every day. Everything runs in your browser: there is nothing to install and no account to create.</p>
+    <p>{SITE_NAME} is a free puzzle site with new logic, word and number puzzles every day. Everything runs in your browser: there is nothing to install and you don't need an account. Signing in is optional and lets you pick a nickname for the Skeeter Gauntlet leaderboard.</p>
     <h2>How it works</h2>
     <ul>
       <li><strong>A new daily puzzle for every game.</strong> Puzzles change at midnight UTC, and everyone gets the same puzzle on the same day.</li>
@@ -41,6 +41,12 @@ function Privacy() {
 
     <h2>Anonymous puzzle results</h2>
     <p>When you play a daily or archive puzzle, the site records the game, the puzzle date, whether the puzzle was finished, given up or lost, and the solve time. Each result is linked to a random, anonymous ID created by Firebase Authentication (a Google service) so that each player counts once per puzzle. It is not linked to your name or email address. We use these results to show completion rates and average times, and to rate puzzle difficulty.</p>
+
+    <h2>Accounts and the leaderboard</h2>
+    <p>Signing in is optional. If you sign in, Firebase Authentication (a Google service) keeps your account: the sign-in method you chose (Google, Apple, Microsoft, Facebook, GitHub or email and password) and the email address, name and profile picture that service shares. Passwords are handled by Firebase and are never visible to us. We use your account only to keep your nickname and your Skeeter Gauntlet runs together across devices.</p>
+    <p>The nickname you choose is public: it appears on the Skeeter Gauntlet leaderboard next to your number of puzzles solved and your total time, on the weekly pepper leaderboard next to the peppers you earned that week, and on each game's daily leaderboard next to your solve time. Your email address and real name are never shown to other players. For leaderboard runs, the server records when each game started and finished so times are fair.</p>
+    <h3 id="delete-account">Deleting your account</h3>
+    <p>To delete your account, nickname and leaderboard entries, <Contact /> from the email address you signed in with, or include your nickname. We delete the account and its data within 30 days.</p>
 
     <h2>Feedback</h2>
     <p>If you send feedback, we receive your message, the page you sent it from and, if you provide one, your email address. Messages are delivered through EmailJS and used only to reply to you and improve the site.</p>

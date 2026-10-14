@@ -1,6 +1,6 @@
 .cloud-runs { width: 100%; box-sizing: border-box; margin: 16px auto; padding: 16px; background: #161a22; border: 1px solid #ff2a85; border-radius: 8px; color: #f0f6fc; }
 .cloud-runs h2 { font-size: 18px; margin: 0 0 8px; }
-.cloud-runs p { font-size: 14px; overflow-wrap: anywhere; }
+.cloud-runs p { font-size: 15px; overflow-wrap: anywhere; }
 .cloud-runs label { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .cloud-runs input { min-width: 0; flex: 1; padding: 8px; color: #fff; background: #0d0f12; border: 1px solid #8b949e; border-radius: 4px; }
 .cloud-runs-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }

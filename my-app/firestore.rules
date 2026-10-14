@@ -5,6 +5,55 @@ service cloud.firestore {
       allow read: if true;
       allow write: if false;
     }
+    // Skeeter Gauntlet: the owner's daily time to beat. Anyone can read it;
+    // only the owner's Google account can publish it.
+    match /gauntletPar/{day} {
+      allow read: if true;
+      allow create, update: if request.auth != null
+        && request.auth.uid in ['QtQwYuCN4vWR1XNyz9K6fe9G7jl1']
+        && day.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
+        && request.resource.data.keys().hasOnly(['day', 'total', 'solved', 'games', 'results', 'publishedAt'])
+        && request.resource.data.day == day
+        && request.resource.data.total is int
+        && request.resource.data.total >= 0 && request.resource.data.total < 360000
+        && request.resource.data.solved is int
+        && request.resource.data.solved >= 0 && request.resource.data.solved <= 6
+        && request.resource.data.games is list && request.resource.data.games.size() == 6
+        && request.resource.data.results is list && request.resource.data.results.size() == 6
+        && request.resource.data.publishedAt == request.time;
+      allow delete: if false;
+    }
+    // Skeeter Gauntlet leaderboard. Everything is written by the gauntletEvent
+    // and setNickname Cloud Functions (which time the runs); players can only
+    // read their own run and nickname, and everyone can read the board.
+    // Fastest times for each game's daily puzzle, written by the functions.
+    match /dailyBoard/{boardId}/entries/{userId} {
+      allow read: if true;
+      allow write: if false;
+    }
+    // Weekly pepper totals ("top pepper pickers"), written by the functions.
+    match /pepperWeeks/{week}/players/{userId} {
+      allow read: if true;
+      allow write: if false;
+    }
+    match /gauntletBoard/{day}/entries/{userId} {
+      allow read: if true;
+      allow write: if false;
+    }
+    match /gauntletRuns/{runId} {
+      // Run ids are {day}_{uid}, so a player can check for their own run
+      // even before it exists.
+      allow read: if request.auth != null
+        && runId.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}_' + request.auth.uid + '$');
+      allow write: if false;
+    }
+    match /players/{userId} {
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow write: if false;
+    }
+    match /nicknames/{key} {
+      allow read, write: if false;
+    }
     match /puzzleAttempts/{puzzleId}/players/{userId} {
       allow read, write: if false;
     }

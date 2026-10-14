@@ -3,13 +3,14 @@ import { useLocation } from 'react-router-dom';
 import { pages, pageFor, gamePages } from './pages.js';
 import InfoContent from '../pages/info/InfoContent.jsx';
 import AdSlot from '../ads/AdSlot.jsx';
+import { GAUNTLET_START } from '../gauntlet/gauntlet.js';
 import './seo.css';
 
 // `ad` is an optional ad slot placed after the example. The prerender script
 // leaves it out, so static pages never contain ad markup.
 export function Guide({ page, ad = null }) {
   if (!page) return null;
-  const explore = <nav aria-label="Explore puzzle games"><h3>{page.path === '/' ? 'Choose a puzzle' : 'Explore more puzzles'}</h3><ul>{Object.values(pages).filter(other => other.path !== page.path && other.kind !== 'info').map(other => <li key={other.path}><a href={other.path}>{other.name}{other.path !== '/' && ` — ${other.topic}`}</a></li>)}</ul></nav>;
+  const explore = <nav aria-label="Explore puzzle games"><h3>{page.path === '/' ? 'Choose a puzzle' : 'Explore more puzzles'}</h3><ul>{Object.values(pages).filter(other => other.path !== page.path && other.kind !== 'info' && (other.path !== '/gauntlet' || GAUNTLET_START)).map(other => <li key={other.path}><a href={other.path}>{other.name}{other.path !== '/' && ` — ${other.topic}`}</a></li>)}</ul></nav>;
   if (page.kind === 'info') return <article className="game-guide info-page" aria-label={page.name}>
     <h1>{page.name}</h1>
     <InfoContent id={page.path.slice(1)} games={gamePages()} />

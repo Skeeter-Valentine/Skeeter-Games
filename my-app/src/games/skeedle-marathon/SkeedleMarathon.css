@@ -83,7 +83,7 @@ button {
   border: 1px solid var(--surface-border);
   padding: 5px 12px;
   border-radius: 6px;
-  font-size: 0.8rem;
+  font-size: 15px;
   font-weight: 800;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -103,7 +103,7 @@ button {
 .marathon-stats {
   display: flex;
   gap: 16px;
-  font-size: 0.85rem;
+  font-size: 15px;
   font-weight: 900;
   white-space: nowrap;
 }
@@ -112,7 +112,7 @@ button {
   min-height: 25px;
   padding-top: 7px;
   text-align: center;
-  font-size: 0.9rem;
+  font-size: 15px;
   font-weight: 800;
 }
 
@@ -269,7 +269,7 @@ button {
   text-align: center;
   font-weight: 950;
   letter-spacing: 0.35em;
-  font-size: 0.9rem;
+  font-size: 15px;
 }
 
 .marathon-keyboard {
@@ -296,7 +296,7 @@ button {
   border-radius: 5px;
   background: #30363d;
   color: var(--text-main);
-  font-size: 0.82rem;
+  font-size: 15px;
   font-weight: 900;
   cursor: pointer;
   transition:
@@ -315,7 +315,7 @@ button {
 
 .keyboard-key--wide {
   min-width: 64px;
-  font-size: 0.68rem;
+  font-size: 14px;
 }
 
 /* --- Keyboard Key Statuses (High Specificity) --- */
@@ -366,7 +366,7 @@ button.keyboard-key.correct {
 .answer-heading {
   margin-top: 24px;
   color: #aaa;
-  font-size: 0.85rem;
+  font-size: 15px;
   font-weight: 800;
   text-transform: uppercase;
 }
@@ -444,7 +444,7 @@ button.keyboard-key.correct {
     width: 100%;
     justify-content: space-around;
     gap: 4px;
-    font-size: 0.7rem;
+    font-size: 15px;
   }
 
   .marathon-boards {
@@ -484,12 +484,12 @@ button.keyboard-key.correct {
     min-width: 0;
     height: 40px;
     padding: 0 1px;
-    font-size: 0.74rem;
+    font-size: 15px;
   }
 
   .keyboard-key--wide {
     flex: 1.45;
     min-width: 0;
-    font-size: 0.55rem;
+    font-size: 14px;
   }
 }

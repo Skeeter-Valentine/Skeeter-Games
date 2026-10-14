@@ -65,7 +65,7 @@
   padding: 6px 14px;
   border-radius: 8px;
   font-weight: bold;
-  font-size: 0.8rem;
+  font-size: 15px;
   letter-spacing: 1px;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -90,7 +90,7 @@
   padding: 6px 14px;
   border-radius: 6px;
   font-weight: bold;
-  font-size: 0.85rem;
+  font-size: 15px;
   cursor: pointer;
   transition: all 0.2s ease;
   box-shadow: 0 0 8px rgba(57, 255, 20, 0.2);
@@ -215,7 +215,7 @@
 
 .word500-key.wide {
   flex: 1.5;
-  font-size: 0.75rem;
+  font-size: 14px;
 }
 
 /* Grey styling for incorrect/used keys */
@@ -260,7 +260,7 @@
 
   .word500-key {
     height: 44px;
-    font-size: 0.85rem;
+    font-size: 15px;
   }
 }
 
@@ -306,13 +306,13 @@
   /* Shrink keyboard keys to prevent overflow */
   .word500-key {
     padding: 10px 4px;
-    font-size: 0.8rem;
+    font-size: 15px;
     min-width: 26px;
     height: 42px;
   }
 
   .word500-key.wide {
-    font-size: 0.7rem;
+    font-size: 14px;
     padding: 10px 6px;
   }
 
@@ -331,7 +331,15 @@
 
   .word500-key {
     padding: 8px 2px;
-    font-size: 0.75rem;
+    font-size: 15px;
     min-width: 22px;
   }
 }
+
+/* Skeedle+ rows are ten tiles wide (Skeedle500 shares these class names and
+   sizes, which made the rows wider than a phone screen). Here the tiles share
+   the row's width instead, up to 42px each, so all ten always fit. */
+.skeedlemath-game .word500-board { max-width: 480px; }
+.skeedlemath-game .word500-row { justify-content: center; }
+.skeedlemath-game .word500-tiles { width: 100%; gap: clamp(3px, 1.2vw, 6px); }
+.skeedlemath-game .word500-tile { flex: 1 1 0; min-width: 0; max-width: 42px; width: auto; height: auto; aspect-ratio: 1 / 1; box-sizing: border-box; font-size: clamp(15px, 4.6vw, 1.25rem); }

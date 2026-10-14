@@ -4,17 +4,31 @@ import GameToolbar from './GameToolbar';
 import PuzzleRate from './PuzzleRate';
 import { clockKey, formatDuration, readDailyStats, readLocal, recordDailyResult, summarizeDailyStats, validSeconds, writeLocal } from '../utils/dailyStats.js';
 import './DailyResults.css';
-import { useDailyDate, useDailyMode, useArchive } from './DailyBoundary';
+import { useDailyDate, useDailyMode, useArchive, useGauntlet } from './DailyBoundary';
 import { archiveStatsId } from '../utils/archive.js';
 import { sendPuzzleResult, puzzleLoggingEnabled } from '../services/puzzleResults.js';
+import { dailyBoardEnabled } from '../services/dailyBoard.js';
+import DailyLeaderboard from './DailyLeaderboard';
 
 // Icons remain available in every mode. Only daily sessions record results
 // or run the shared clock; existing game timers remain authoritative.
 export default function DailyResults({ daily, date, ...props }) {
   const sessionDate = useDailyDate();
+  const gauntlet = useGauntlet();
   useDailyMode(daily);
   const resultDate = date ?? sessionDate;
+  // In the Skeeter Gauntlet the game's finish goes to the gauntlet: no toolbar,
+  // pop-up, daily statistics or community results.
+  if (gauntlet) return <GauntletReport gauntlet={gauntlet} daily={daily} {...props} />;
   return <DailySession key={`${props.gameId}:${resultDate}:${daily}`} daily={daily} date={resultDate} {...props} />;
+}
+
+// Reports a finished gauntlet game once. Practice-mode finishes never count.
+function GauntletReport({ gauntlet, gameId, daily, finished, won = true, ready = true }) {
+  useEffect(() => {
+    if (daily && ready && finished) gauntlet.onResult(gameId, won ? 'won' : 'lost');
+  }, [gauntlet, gameId, daily, ready, finished, won]);
+  return null;
 }
 
 function DailySession({ gameId, title, date, daily, finished, won = true, seconds, ready = true,
@@ -24,6 +38,7 @@ function DailySession({ gameId, title, date, daily, finished, won = true, second
   const [stats, setStats] = useState(() => readDailyStats(statsId));
   const [syncStatus, setSyncStatus] = useState('');
   const [open, setOpen] = useState(false);
+  const [boardOpen, setBoardOpen] = useState(false);
   const [clock, setClock] = useState(() => {
     const saved = readLocal(clockKey(statsId, date), 0);
     return validSeconds(saved) ? saved : 0;
@@ -86,8 +101,11 @@ function DailySession({ gameId, title, date, daily, finished, won = true, second
   const close = () => { setOpen(false); onClose?.(); };
   const summary = summarizeDailyStats(stats, date);
   const result = stats.results[date];
+  // Today's fastest times: live daily puzzles only (not archive or practice).
+  const showBoard = dailyBoardEnabled && daily && !archive;
   return <>
-    <GameToolbar gameId={gameId} title={title} onStats={() => { setStats(readDailyStats(statsId)); setOpen(true); }}>
+    <GameToolbar gameId={gameId} title={title} onStats={() => { setStats(readDailyStats(statsId)); setOpen(true); }}
+      onBoard={showBoard ? () => setBoardOpen(true) : undefined}>
       {daily && !hasTimer && <span aria-label="Daily elapsed time">Time: {formatDuration(result?.seconds ?? clock)}</span>}
     </GameToolbar>
     {visible && <GameModal titleId={`daily-title-${gameId}`} onClose={close}>
@@ -102,6 +120,7 @@ function DailySession({ gameId, title, date, daily, finished, won = true, second
             <div key={label}><strong>{value}</strong><span>{label}</span></div>)}
         </div>
         <PuzzleRate gameId={gameId} date={date} mode={archive ? 'archive' : 'daily'} refresh={syncStatus} />
+        {showBoard && result && <DailyLeaderboard gameId={gameId} date={date} refresh={syncStatus} compact />}
         {legacyStats?.played > 0 && <details className="daily-results-legacy"><summary>Legacy local statistics</summary>
           <p>{legacyStats.played} games in the original statistics. These totals may include replays or practice and are kept separate from dated daily results.</p>
           {legacyStats.wins != null && <p>Wins: {legacyStats.wins}</p>}
@@ -111,6 +130,12 @@ function DailySession({ gameId, title, date, daily, finished, won = true, second
         </details>}
         <p className="daily-results-note">{archive ? 'Archive results are saved separately and never affect your live daily streak.' : 'Saved in this browser. Only your first result each day counts. Streaks require consecutive daily wins; solve times include wins only.'}</p>
         <p className="daily-results-note">{syncStatus || (puzzleLoggingEnabled ? 'Community results count the first attempt per player and puzzle date.' : 'Community reporting is not enabled yet.')}</p>
+    </GameModal>}
+    {boardOpen && <GameModal titleId={`board-title-${gameId}`} onClose={() => setBoardOpen(false)}>
+      <p className="daily-results-eyebrow">{title} · {date}</p>
+      <h2 id={`board-title-${gameId}`}>Today's leaderboard</h2>
+      <DailyLeaderboard gameId={gameId} date={date} refresh={syncStatus} />
+      <p className="daily-results-note">Your first solve of today's puzzle counts. Times come from the game clock.</p>
     </GameModal>}
   </>;
 }
