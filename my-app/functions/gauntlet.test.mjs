@@ -26,14 +26,14 @@ test('the server times every game and adds the shrinking penalty', () => {
   rejects(() => applyEvent(run, { action: 'finish', day: DAY, game: run.lineup[1], status: 'won' }, NOON + 60_000), 'failed-precondition');
   rejects(() => applyEvent(run, { action: 'finish', day: DAY, game: run.lineup[0], status: 'won' }, NOON + (MIN_WIN_SECONDS - 1) * 1000), 'failed-precondition');
   ({ run } = applyEvent(run, { action: 'finish', day: DAY, game: run.lineup[0], status: 'won' }, NOON + 90_000));
-  assert.deepEqual(run.results[0], { game: run.lineup[0], status: 'won', seconds: 90, penalty: 0, bonus: 0, total: 90 });
+  assert.deepEqual(run.results[0], { game: run.lineup[0], status: 'won', seconds: 90, penalty: 0, hintPenalty: 0, bonus: 0, total: 90 });
   assert.equal(run.waiting, true);
   rejects(() => applyEvent(run, { action: 'finish', day: DAY, game: run.lineup[1], status: 'won' }, NOON + 200_000), 'failed-precondition');
   // The break between games is free: the clock restarts on "next".
   ({ run } = applyEvent(run, { action: 'next', day: DAY }, NOON + 500_000));
   // A claimed 3-minute penalty after 1 minute: 2 minutes are added.
   ({ run } = applyEvent(run, { action: 'finish', day: DAY, game: run.lineup[1], status: 'gave-up', penalty: 185 }, NOON + 560_000));
-  assert.deepEqual(run.results[1], { game: run.lineup[1], status: 'gave-up', seconds: 60, penalty: 120, bonus: 0, total: 180 });
+  assert.deepEqual(run.results[1], { game: run.lineup[1], status: 'gave-up', seconds: 60, penalty: 120, hintPenalty: 0, bonus: 0, total: 180 });
   // Penalties are clamped to 1-60 minutes, whatever the client says.
   ({ run } = applyEvent(run, { action: 'next', day: DAY }, NOON + 600_000));
   ({ run } = applyEvent(run, { action: 'finish', day: DAY, game: run.lineup[2], status: 'lost', penalty: 999_999 }, NOON + 610_000));
@@ -124,4 +124,25 @@ test('the page and the server agree on guess bonuses', async () => {
   const client = await import('../src/gauntlet/gauntlet.js');
   const { guessBonus } = await import('./gauntlet.js');
   for (const game of ['skeedlemath', 'quordle', 'parshle', 'word500', 'akari']) for (let n = 0; n <= 10; n++) assert.equal(client.guessBonus(game, n), guessBonus(game, n));
+});
+
+test('each Skeedle Beadle hint adds 5 seconds, on the page and the server', async () => {
+  const client = await import('../src/gauntlet/gauntlet.js');
+  const { hintPenalty } = await import('./gauntlet.js');
+  assert.equal(hintPenalty('skeedle-beadle', 3), 15);
+  assert.equal(hintPenalty('akari', 3), 0);
+  assert.equal(hintPenalty('skeedle-beadle', '3'), 0);
+  assert.equal(hintPenalty('skeedle-beadle', -2), 0);
+  for (const n of [0, 1, 4, 2000]) assert.equal(client.hintPenalty('skeedle-beadle', n), hintPenalty('skeedle-beadle', n));
+  const day = client.testDay(1);
+  let { run } = applyEvent(null, { action: 'start', day }, NOON);
+  const beadle = run.lineup.indexOf('skeedle-beadle');
+  assert.ok(beadle > 0, 'test 1 has Skeedle Beadle');
+  for (let i = 0; i < beadle; i++) {
+    ({ run } = applyEvent(run, { action: 'finish', day, game: run.lineup[i], status: 'won', hints: 9 }, NOON + 60_000));
+    ({ run } = applyEvent(run, { action: 'next', day }, NOON + 60_000));
+  }
+  assert.equal(run.results[0].hintPenalty, 0, 'only Skeedle Beadle counts hints');
+  ({ run } = applyEvent(run, { action: 'finish', day, game: 'skeedle-beadle', status: 'won', hints: 2 }, NOON + 160_000));
+  assert.deepEqual(run.results[beadle], { game: 'skeedle-beadle', status: 'won', seconds: 100, penalty: 0, hintPenalty: 10, bonus: 0, total: 110 });
 });

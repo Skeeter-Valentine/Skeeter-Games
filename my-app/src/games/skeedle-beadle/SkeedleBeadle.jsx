@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import Navbar from '../../components/Navbar';
 import DailyResults from '../../components/DailyResults';
+import useUndoShortcut from '../../components/useUndoShortcut';
+import { HINT_SECONDS } from '../../gauntlet/gauntlet.js';
 import { useDailyDate, useArchive } from '../../components/DailyBoundary';
 import { readLocal, writeLocal, formatDuration } from '../../utils/dailyStats.js';
 import { puzzleSnapshot } from '../../utils/archive.js';
@@ -94,6 +96,8 @@ export default function SkeedleBeadle() {
     setSelected(null); setHint(null); setLastSlide(null); setMessage('');
   }
 
+  useUndoShortcut(undo);
+
   function restart() {
     if (!game.moves) return;
     setGame(current => ({ ...current, sticks: puzzle.sticks.map(stick => stick.slice()), moves: 0,
@@ -101,12 +105,15 @@ export default function SkeedleBeadle() {
     setSelected(null); setHint(null); setLastSlide(null); setMessage('Back to the start. Undo brings your last position back.');
   }
 
+  // Daily puzzles (and the Skeeter Gauntlet): each hint adds HINT_SECONDS to
+  // the time. Asking again while the same hint is showing is free.
   function showHint() {
-    if (won) return;
+    if (won || hint) return;
     const path = solve(sticks, { maxStates: 60000 });
     if (!path) { setHint(null); setMessage('There is no way forward from here. Undo a few moves and try another route.'); return; }
     setHint(path[0]); setSelected(null);
-    setGame(current => ({ ...current, hints: current.hints + 1, started: true }));
+    setGame(current => ({ ...current, hints: current.hints + 1, started: true,
+      seconds: current.mode === 'daily' ? current.seconds + HINT_SECONDS : current.seconds }));
     setMessage(`Try moving the glowing stick's top beads onto the stick with the dashed outline. About ${path.length} moves to go from here.`);
   }
 
@@ -125,14 +132,14 @@ export default function SkeedleBeadle() {
 
   // Always two even rows: every level has an even number of sticks.
   const columns = Math.ceil(sticks.length / 2);
-  const status = won ? `Sorted in ${game.moves} moves${game.moves <= puzzle.par ? ` — at or under par (${puzzle.par})!` : ` (par ${puzzle.par}).`}${game.hints ? ` Hints used: ${game.hints}.` : ''}`
+  const status = won ? `Sorted in ${game.moves} moves${game.moves <= puzzle.par ? ` — at or under par (${puzzle.par})!` : ` (par ${puzzle.par}).`}${game.hints ? ` Hints used: ${game.hints}${game.mode === 'daily' ? ` (+${game.hints * HINT_SECONDS}s)` : ''}.` : ''}`
     : stuck ? 'No moves left. Undo or restart to find another route.'
     : message || (selected !== null ? 'Beads picked up. Choose where to slide them.' : 'Pick a stick, then the stick to slide its top beads onto.');
 
   return <main className="beadle-page">
     <Navbar />
     <header className="beadle-heading"><p className="beadle-eyebrow">BEAD SORT</p><h1>Skeedle Beadle</h1><p>Every shape on its own stick.</p></header>
-    <DailyResults gameId="skeedle-beadle" title="Skeedle Beadle" daily={game.mode === 'daily'} date={date} finished={won} seconds={game.seconds} started={game.started} />
+    <DailyResults gameId="skeedle-beadle" title="Skeedle Beadle" daily={game.mode === 'daily'} date={date} finished={won} seconds={game.seconds} started={game.started} hints={game.hints} />
     <div className="beadle-controls">
       <button aria-pressed={game.mode === 'daily'} onClick={() => changeMode('daily')}>{archive ? 'Archive puzzle' : 'Daily'}</button>
       <button aria-pressed={game.mode === 'practice'} onClick={() => changeMode('practice')}>Practice</button>
@@ -177,7 +184,8 @@ export default function SkeedleBeadle() {
       <div className="beadle-controls beadle-tools">
         <button disabled={!game.history.length || won} onClick={undo}>Undo</button>
         <button disabled={!game.moves || won} onClick={restart}>Restart</button>
-        <button disabled={won} onClick={showHint}>Hint</button>
+        <button disabled={won} onClick={showHint} title={game.mode === 'daily' ? `Each hint adds ${HINT_SECONDS} seconds to your time` : undefined}>
+          Hint{game.mode === 'daily' && <small className="beadle-hint-cost"> +{HINT_SECONDS}s</small>}</button>
       </div>
       <p className={`beadle-message${won ? ' won' : stuck ? ' stuck' : ''}`} role="status">{status}</p>
     </section>

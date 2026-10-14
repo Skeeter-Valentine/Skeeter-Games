@@ -1,6 +1,7 @@
 import { useDailyDate, useArchive } from '../../components/DailyBoundary';
 import { getDailyGridSize } from './dailyConfig.js';
 import DailyResults from '../../components/DailyResults';
+import useUndoShortcut from '../../components/useUndoShortcut';
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { puzzleSnapshot } from '../../utils/archive.js';
 import './pipes.css';
@@ -127,6 +128,10 @@ export default function Pipes({ onWin }) {
   const [poweredGrid, setPoweredGrid] = useState([]);
   const [isWon, setIsWon] = useState(false);
   const [serverPos, setServerPos] = useState({ r: 0, c: 0 });
+  // Undo steps back through rotations and locks; Reset returns to the
+  // puzzle's starting pipes (and can itself be undone).
+  const [history, setHistory] = useState([]);
+  const [startGrid, setStartGrid] = useState([]);
 
   // Timer States
   const [seconds, setSeconds] = useState(0);
@@ -172,6 +177,8 @@ export default function Pipes({ onWin }) {
           const { grid, locked, time, completed, server } = JSON.parse(savedData);
           if (grid && grid.length === dailyPuzzle.size) {
             setServerPos(server || dailyPuzzle.server);
+            setHistory([]);
+            setStartGrid(dailyPuzzle.grid.map(row => [...row]));
             setUserGrid(grid);
             setLockedGrid(locked || Array(grid.length).fill(null).map(() => Array(grid.length).fill(false)));
             setSeconds(time || 0);
@@ -192,6 +199,8 @@ export default function Pipes({ onWin }) {
     setServerPos({ r: sR, c: sC });
 
     const initialLocked = Array(size).fill(null).map(() => Array(size).fill(false));
+    setHistory([]);
+    setStartGrid(fresh.grid.map(row => [...row]));
     setUserGrid(newUserGrid);
     setLockedGrid(initialLocked);
     setIsWon(false);
@@ -417,9 +426,33 @@ export default function Pipes({ onWin }) {
   /* ==========================================================================
      CLICK HANDLERS (ROTATE & LOCK)
      ========================================================================== */
+  const remember = () => setHistory(previous => [...previous, { grid: userGrid, locked: lockedGrid }].slice(-500));
+
+  const undo = () => {
+    if (isWon || !history.length) return;
+    const { grid, locked } = history[history.length - 1];
+    setHistory(history.slice(0, -1));
+    setUserGrid(grid);
+    setLockedGrid(locked);
+    saveDailyState(grid, locked, false, seconds);
+  };
+
+  const resetBoard = () => {
+    if (isWon || !startGrid.length) return;
+    const grid = startGrid.map(row => [...row]);
+    const locked = grid.map(row => row.map(() => false));
+    remember();
+    setUserGrid(grid);
+    setLockedGrid(locked);
+    saveDailyState(grid, locked, false, seconds);
+  };
+
+  useUndoShortcut(undo);
+
   const handleLeftClick = (r, c) => {
     if (isWon || lockedGrid[r]?.[c]) return;
 
+    remember();
     setIsTimerActive(true);
     setUserGrid((prevGrid) => {
       const nextGrid = prevGrid.map((row) => [...row]);
@@ -432,6 +465,7 @@ export default function Pipes({ onWin }) {
   const handleRightClick = (r, c) => {
     if (isWon) return;
 
+    remember();
     setIsTimerActive(true);
     setLockedGrid((prevLocked) => {
       const nextLocked = prevLocked.map((row) => [...row]);
@@ -583,6 +617,8 @@ export default function Pipes({ onWin }) {
       </div>
 
       <div className="pipes-controls" style={{ display: 'flex', gap: '12px', justifyContent: 'center', marginTop: '12px' }}>
+        <button style={inactiveBtnStyle} disabled={isWon || !history.length} onClick={undo} title="Undo (Ctrl+Z)">↶ Undo</button>
+        <button style={inactiveBtnStyle} disabled={isWon || !startGrid.length} onClick={resetBoard} title="Back to the starting pipes">↺ Reset</button>
         {gameMode === 'custom' && (
           <button style={neonBlueBtnStyle} onClick={() => generatePuzzle(gridSize, 'custom')}>
             New Game

@@ -213,6 +213,7 @@ button, select{
 .btn.active{background:#173a61;border-color:var(--accent);color:#d9edff}
 .btn.primary{background:var(--accent2);border-color:#2f81f7}
 .btn.danger{color:#ffb4b0}
+.btn:disabled{opacity:.4;cursor:default;transform:none}
 
 .number-pad{
   display:flex;

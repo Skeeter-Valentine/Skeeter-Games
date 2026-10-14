@@ -57,3 +57,4 @@
   .beadle-bead { transition: none; }
   .beadle-bead.fresh, .beadle-stick.shake, .beadle-rack.won .beadle-bead { animation: none; }
 }
+.beadle-hint-cost { margin-left: 4px; color: #ff8fbd; font-size: 15px; font-weight: bold; }

@@ -3,6 +3,7 @@ import { puzzleSnapshot } from '../../utils/archive.js';
 import { readLocal, writeLocal } from '../../utils/dailyStats.js';
 import { hashiProgressKey, hashiSolvedKey, islandFingerprint, restoreHashi } from './progress.js';
 import DailyResults from '../../components/DailyResults';
+import useUndoShortcut from '../../components/useUndoShortcut';
 // src/games/hashi/Hashi.jsx
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import StatsModal from './components/StatsModal';
@@ -36,6 +37,8 @@ export default function Hashi({ onWin }) {
     const [message, setMessage] = useState('');
     const [gridSize, setGridSize] = useState(6);
     const [gameState, setGameState] = useState({ islands: [], bridges: [] });
+    // Earlier bridge layouts, for Undo (and Ctrl+Z).
+    const [history, setHistory] = useState([]);
     const [isDailyMode, setIsDailyMode] = useState(false);
     
     const [seconds, setSeconds] = useState(0);
@@ -126,11 +129,13 @@ export default function Hashi({ onWin }) {
             if (savedSolved === 'true' || progress?.solved) {
                 setMessage(archive ? '🎉 Archive Puzzle Already Completed!' : '🎉 Daily Puzzle Already Completed Today!');
             }
+            setHistory([]);
             setGameState({ islands, bridges: progress?.bridges ?? [] });
             return;
         }
 
         const generatedIslands = generateUniquePuzzle(gridSize, Math.random);
+        setHistory([]);
         setGameState({ islands: generatedIslands, bridges: [] });
     };
 
@@ -238,6 +243,20 @@ export default function Hashi({ onWin }) {
 
     }, [gameState, gridSize]);
 
+    const undo = () => {
+        if (isSolved || !history.length) return;
+        const bridges = history[history.length - 1];
+        setHistory(history.slice(0, -1));
+        setGameState(prev => ({ ...prev, bridges }));
+    };
+    // Clears the bridges but keeps the clock running; Undo brings them back.
+    const resetBoard = () => {
+        if (isSolved || !gameState.bridges.length) return;
+        setHistory(previous => [...previous, gameState.bridges].slice(-500));
+        setGameState(prev => ({ ...prev, bridges: [] }));
+    };
+    useUndoShortcut(undo);
+
     const handleCanvasClick = (e) => {
         if (isSolved) return;
 
@@ -318,6 +337,7 @@ export default function Hashi({ onWin }) {
                 updatedBridges.push({ from: nId1, to: nId2, count: 1 });
             }
 
+            setHistory(previous => [...previous, bridges].slice(-500));
             setGameState(prev => ({ ...prev, bridges: updatedBridges }));
 
             const allMet = islands.every(island => {
@@ -376,7 +396,8 @@ export default function Hashi({ onWin }) {
                     >
                         Random
                     </button>
-                    <button onClick={() => { setGameState(prev => ({ ...prev, bridges: [] })); setSeconds(0); setIsActive(false); setIsSolved(false); }} className="hashi-btn">Reset</button>
+                    <button onClick={undo} disabled={isSolved || !history.length} className="hashi-btn" title="Undo (Ctrl+Z)">↶ Undo</button>
+                    <button onClick={resetBoard} disabled={isSolved || !gameState.bridges.length} className="hashi-btn">Reset</button>
                 </div>
 
                 {!isDailyMode && (

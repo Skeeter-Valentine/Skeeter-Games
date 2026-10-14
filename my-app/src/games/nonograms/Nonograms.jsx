@@ -3,6 +3,7 @@ import { puzzleSnapshot } from '../../utils/archive.js';
 import { readLocal, writeLocal } from '../../utils/dailyStats.js';
 import { nonogramProgressKey, saveNonogram, restoreNonogram } from './progress.js';
 import DailyResults from '../../components/DailyResults';
+import useUndoShortcut from '../../components/useUndoShortcut';
 // src/games/nonograms/Nonograms.jsx
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
@@ -59,6 +60,8 @@ export default function Nonograms({ onWin }) {
   const [currentTool, setCurrentTool] = useState(1); // 1 = fill, 2 = cross
 
   const [isWon, setIsWon] = useState(initialProgress.isWon);
+  // Earlier boards, for Undo (and Ctrl+Z). A whole drag is one step.
+  const [history, setHistory] = useState([]);
 
 
 
@@ -103,6 +106,7 @@ export default function Nonograms({ onWin }) {
     setSolutionGrid(dailySolution);
 
     setPlayerGrid(progress.grid);
+    setHistory([]);
 
     setHasStarted(progress.hasStarted);
     setIsWon(progress.isWon);
@@ -128,6 +132,7 @@ export default function Nonograms({ onWin }) {
     setSolutionGrid(practicePuzzle);
 
     setPlayerGrid(Array.from({ length: r }, () => Array(c).fill(0)));
+    setHistory([]);
 
     setHasStarted(false);
     setIsWon(false);
@@ -151,6 +156,7 @@ export default function Nonograms({ onWin }) {
     setSolutionGrid(newPuzzle);
 
     setPlayerGrid(Array.from({ length: r }, () => Array(c).fill(0)));
+    setHistory([]);
 
     setHasStarted(false);
     setIsWon(false);
@@ -168,6 +174,7 @@ export default function Nonograms({ onWin }) {
     setSolutionGrid(newPuzzle);
 
     setPlayerGrid(Array.from({ length: r }, () => Array(c).fill(0)));
+    setHistory([]);
 
     setHasStarted(false);
     setIsWon(false);
@@ -205,8 +212,8 @@ export default function Nonograms({ onWin }) {
 
 
 
+    setHistory(previous => [...previous, playerGrid].slice(-500));
     const newGrid = playerGrid.map(row => [...row]);
-
     newGrid[r][c] = actionToApply;
 
     setPlayerGrid(newGrid);
@@ -285,14 +292,18 @@ export default function Nonograms({ onWin }) {
 
 
 
+  // Clears the board but keeps the clock running; Undo brings it back.
   const resetBoard = () => {
-
+    if (isWon) return;
+    setHistory(previous => [...previous, playerGrid].slice(-500));
     setPlayerGrid(Array.from({ length: height }, () => Array(width).fill(0)));
-
-    setHasStarted(false);
-    setIsWon(false);
-
   };
+  const undo = () => {
+    if (isWon || !history.length) return;
+    setPlayerGrid(history[history.length - 1]);
+    setHistory(history.slice(0, -1));
+  };
+  useUndoShortcut(undo);
 
 
 
@@ -403,7 +414,8 @@ export default function Nonograms({ onWin }) {
 
           </button>
 
-          <button className="reset-btn" onClick={resetBoard}>Reset</button>
+          <button className="reset-btn" onClick={undo} disabled={isWon || !history.length} title="Undo (Ctrl+Z)">↶ Undo</button>
+          <button className="reset-btn" onClick={resetBoard} disabled={isWon}>Reset</button>
 
         </div>
 

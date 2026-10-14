@@ -180,13 +180,22 @@ export function guessBonus(gameId, guesses) {
 // The bonus shown beside guess row `row` (0 = first guess).
 export const rowBonus = (gameId, row) => guessBonus(gameId, row + 1);
 
-export function recordResult(run, { gameId, status, now, penalty = 0, guesses }) {
+// Skeedle Beadle: every hint adds 5 seconds to your time.
+export const HINT_SECONDS = 5;
+export const HINT_GAMES = ['skeedle-beadle'];
+export function hintPenalty(gameId, hints) {
+  if (!HINT_GAMES.includes(gameId) || !Number.isInteger(hints) || hints < 1) return 0;
+  return HINT_SECONDS * Math.min(hints, 1000);
+}
+
+export function recordResult(run, { gameId, status, now, penalty = 0, guesses, hints }) {
   if (!run || run.finishedAt || run.waiting || run.lineup[run.index] !== gameId) return run;
   run = resumeRun(run, now);
   const spent = Math.max(0, Math.round((now - run.gameStartedAt) / 1000));
   const added = status === 'won' ? 0 : remainingPenalty(penalty, spent);
   const bonus = status === 'won' ? guessBonus(gameId, guesses) : 0;
-  const results = [...run.results, { game: gameId, status, seconds: spent, penalty: added, bonus, total: Math.max(0, spent + added - bonus) }];
+  const hinted = hintPenalty(gameId, hints);
+  const results = [...run.results, { game: gameId, status, seconds: spent, penalty: added, hintPenalty: hinted, bonus, total: Math.max(0, spent + added + hinted - bonus) }];
   const finished = results.length === run.lineup.length;
   return { ...run, results, index: run.index + 1, waiting: !finished, finishedAt: finished ? now : null };
 }

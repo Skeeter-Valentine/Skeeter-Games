@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Navbar from '../../components/Navbar';
 import DailyResults from '../../components/DailyResults';
+import useUndoShortcut from '../../components/useUndoShortcut';
 import { useDailyDate, useArchive } from '../../components/DailyBoundary';
 import { readLocal, writeLocal } from '../../utils/dailyStats.js';
 import { PRACTICE_SIZES, dailyPuzzle, evaluateBoard, generatePuzzle } from './puzzle.js';
@@ -83,6 +84,8 @@ export default function Akari() {
         [to]: [...current[to], { bulbs: current.bulbs, marks: current.marks }] };
     });
   }
+
+  useUndoShortcut(() => travel('undo'), () => travel('redo'));
 
   function handleKey(event, id) {
     const key = event.key.toLowerCase();

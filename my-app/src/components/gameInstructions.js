@@ -11,7 +11,7 @@ export const gameInstructions = {
     'Sort the beads so every stick holds a single kind. Each color has its own shape: a finished stick is four matching beads, and empty sticks are fine too.',
     'Tap a stick to pick up its top beads, then tap another stick to slide them across. Beads only go onto the same shape or onto an empty stick.',
     'All matching beads on top move together, as many as fit. Each stick holds four beads.',
-    'Undo steps back one move at a time, Restart returns to the starting sticks (and can be undone), and Hint suggests a next move that still leads to a solution.',
+    'Undo steps back one move at a time, Restart returns to the starting sticks (and can be undone), and Hint suggests a next move that still leads to a solution. On the daily puzzle (and in the Skeeter Gauntlet) each hint adds 5 seconds to your time.',
     'Number keys pick sticks from left to right, top row first (0, − and = for the 10th–12th); U undoes, H shows a hint and Esc puts the beads back down.',
     'Daily puzzles reset at midnight UTC and save progress in this browser. Mild has 6 bead types, Medium 8 and Picante 10, each with two empty sticks, so the sticks always form two even rows. Par is a solution length found by the puzzle maker; beating it is a bonus, not a requirement. Practice lets you choose a difficulty and generate another puzzle.',
   ],

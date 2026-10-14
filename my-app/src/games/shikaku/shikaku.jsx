@@ -1,5 +1,6 @@
 import { useDailyDate, useArchive } from '../../components/DailyBoundary';
 import DailyResults from '../../components/DailyResults';
+import useUndoShortcut from '../../components/useUndoShortcut';
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import './shikaku.css';
@@ -20,6 +21,8 @@ export default function Shikaku({ onWin }) {
   const [gridSize, setGridSize] = useState(() => getDailyGridSize(todayStr));
   const [cluesGrid, setCluesGrid] = useState([]);
   const [placedRects, setPlacedRects] = useState([]);
+  // Earlier rectangle layouts, for Undo (and Ctrl+Z).
+  const [history, setHistory] = useState([]);
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState(null);
   const [dragCurrent, setDragCurrent] = useState(null);
@@ -65,6 +68,7 @@ export default function Shikaku({ onWin }) {
       setGridSize(clues.length);
       setCluesGrid(clues);
       const progress = restoreProgress(clues, readLocal(progressKey, null));
+      setHistory([]);
       setPlacedRects(progress.placedRects);
       setSeconds(progress.seconds);
       setIsWin(progress.isWin);
@@ -76,6 +80,7 @@ export default function Shikaku({ onWin }) {
       setCluesGrid(clues);
     }
 
+    setHistory([]);
     setPlacedRects([]);
     setSeconds(0);
     setIsWin(false);
@@ -241,6 +246,7 @@ export default function Shikaku({ onWin }) {
       if (area > 1) {
         const filtered = placedRects.filter((rect) => !rectsOverlap(rect, bounds));
         const updated = [...filtered, bounds];
+        remember();
         setPlacedRects(updated);
         checkWinCondition(updated);
       }
@@ -250,10 +256,20 @@ export default function Shikaku({ onWin }) {
     setDragCurrent(null);
   };
 
+  const remember = () => setHistory(previous => [...previous, placedRects].slice(-500));
+  const undo = () => {
+    if (isWin || !history.length) return;
+    setPlacedRects(history[history.length - 1]);
+    setHistory(history.slice(0, -1));
+    setStatus('');
+  };
+  useUndoShortcut(undo);
+
   const handleRectClick = (index, e) => {
     setIsTimerActive(true);
     e.stopPropagation();
     const updated = placedRects.filter((_, i) => i !== index);
+    remember();
     setPlacedRects(updated);
     setStatus('');
     setIsWin(false);
@@ -425,17 +441,15 @@ export default function Shikaku({ onWin }) {
       <div className={`shikaku-status ${isWin ? 'win' : ''}`}>{status}</div>
 
       <div className="shikaku-controls">
+        <button className="shikaku-btn" disabled={isWin || !history.length} onClick={undo} title="Undo (Ctrl+Z)">↶ Undo</button>
+        {/* Clears the board but keeps the clock running (Undo brings it back). */}
         <button
           className="shikaku-btn"
+          disabled={isWin || !placedRects.length}
           onClick={() => {
-            if (gameMode === 'daily') {
-              writeLocal(progressKey, null);
-            }
+            remember();
             setPlacedRects([]);
             setStatus('');
-            setIsWin(false);
-            setSeconds(0);
-            setIsTimerActive(false);
           }}
         >
           Reset Board

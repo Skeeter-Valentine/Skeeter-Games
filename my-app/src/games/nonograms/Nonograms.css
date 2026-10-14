@@ -210,3 +210,4 @@
     font-size: 0.75rem;
   }
 }
+.reset-btn:disabled { opacity: 0.4; cursor: default; }

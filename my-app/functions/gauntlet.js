@@ -81,6 +81,14 @@ export function guessBonus(gameId, guesses) {
   return GUESS_BONUS_SECONDS * (limit - guesses + 1);
 }
 
+// Skeedle Beadle: every hint adds 5 seconds to your time.
+export const HINT_SECONDS = 5;
+export const HINT_GAMES = ['skeedle-beadle'];
+export function hintPenalty(gameId, hints) {
+  if (!HINT_GAMES.includes(gameId) || !Number.isInteger(hints) || hints < 1) return 0;
+  return HINT_SECONDS * Math.min(hints, 1000);
+}
+
 export const clampPenalty = seconds => Math.min(3600, Math.max(60, Math.round((Number(seconds) || 0) / 60) * 60));
 // Faster than this is not a real solve.
 export const MIN_WIN_SECONDS = 5;
@@ -127,7 +135,8 @@ export function applyEvent(run, event, now) {
     if (status === 'won' && spent < MIN_WIN_SECONDS) throw new GauntletError('failed-precondition', 'That solve was too fast to count.');
     const penalty = status === 'won' ? 0 : Math.max(0, clampPenalty(event.penalty) - spent);
     const bonus = status === 'won' ? guessBonus(game, event.guesses) : 0;
-    const results = [...run.results, { game, status, seconds: spent, penalty, bonus, total: Math.max(0, spent + penalty - bonus) }];
+    const hinted = hintPenalty(game, event.hints);
+    const results = [...run.results, { game, status, seconds: spent, penalty, hintPenalty: hinted, bonus, total: Math.max(0, spent + penalty + hinted - bonus) }];
     const finished = results.length === run.lineup.length;
     const next = { ...run, results, index: run.index + 1, waiting: !finished, finishedAt: finished ? now : null };
     return { run: next, entry: finished ? boardEntry(next) : null };

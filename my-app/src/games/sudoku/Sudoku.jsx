@@ -3,6 +3,7 @@ import { puzzleSnapshot } from '../../utils/archive.js';
 import { readLocal, writeLocal } from '../../utils/dailyStats.js';
 import { sudokuProgressKey, saveSudoku, restoreSudoku } from './progress.js';
 import DailyResults from '../../components/DailyResults';
+import useUndoShortcut from '../../components/useUndoShortcut';
 // src/games/sudoku/Skeedoku.jsx
 import React, { useState, useEffect, useRef } from 'react';
 import './Sudoku.css';
@@ -42,6 +43,8 @@ export default function Skeedoku({ onWin }) {
   const [puzzle, setPuzzle] = useState([]);
   const [grid, setGrid] = useState([]);
   const [notes, setNotes] = useState([]);
+  // Earlier boards and notes, for Undo (and Ctrl+Z). Mistakes still count.
+  const [history, setHistory] = useState([]);
   const [selected, setSelected] = useState(-1);
   const [notesMode, setNotesMode] = useState(false);
   const [mistakes, setMistakes] = useState(0);
@@ -210,6 +213,7 @@ export default function Skeedoku({ onWin }) {
     setSolution(newSolution);
     setPuzzle(newPuzzle);
     setGrid([...newPuzzle]);
+    setHistory([]);
     setNotes(Array.from({ length: totalCells }, () => new Set()));
     setSelected(newPuzzle.findIndex(v => v === 0));
     setMistakes(0);
@@ -286,10 +290,22 @@ export default function Skeedoku({ onWin }) {
     setShowModal(true);
   };
 
+  const remember = () => setHistory(previous => [...previous, { grid, notes }].slice(-500));
+  const undo = () => {
+    if (completed || !history.length) return;
+    const previous = history[history.length - 1];
+    setHistory(history.slice(0, -1));
+    setGrid(previous.grid);
+    setNotes(previous.notes);
+    setMessage({ text: '', type: '' });
+  };
+  useUndoShortcut(undo);
+
   const enterNumber = (n) => {
     if (n > size || selected < 0 || puzzle[selected] || completed) return;
 
     if (notesMode && grid[selected]) return;
+    remember();
     setHasStarted(true);
     if (notesMode) {
       setNotes(prev => {
@@ -325,6 +341,8 @@ export default function Skeedoku({ onWin }) {
   const erase = () => {
     if (selected < 0 || puzzle[selected] || completed) return;
     if (grid[selected] || notes[selected].size) setHasStarted(true);
+    else return;
+    remember();
     const nextGrid = [...grid];
     nextGrid[selected] = 0;
     setGrid(nextGrid);
@@ -353,6 +371,7 @@ export default function Skeedoku({ onWin }) {
       idx = candidates[Math.floor(Math.random() * candidates.length)];
     }
     setHasStarted(true);
+    remember();
     const nextGrid = [...grid];
     nextGrid[idx] = solution[idx];
     setGrid(nextGrid);
@@ -374,7 +393,18 @@ export default function Skeedoku({ onWin }) {
     else checkComplete(grid);
   };
 
+  // Mid-puzzle, Reset clears your entries but keeps the clock and mistakes
+  // (Undo brings the entries back). After finishing, it starts over.
   const resetGame = () => {
+    if (!completed) {
+      remember();
+      setGrid([...puzzle]);
+      setNotes(Array.from({ length: size * size }, () => new Set()));
+      setSelected(puzzle.findIndex(v => v === 0));
+      setMessage({ text: 'Board cleared. Undo brings your entries back.', type: '' });
+      return;
+    }
+    setHistory([]);
     setGrid([...puzzle]);
     setNotes(Array.from({ length: size * size }, () => new Set()));
     setMistakes(0);
@@ -407,7 +437,7 @@ export default function Skeedoku({ onWin }) {
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [selected, notesMode, grid, puzzle, completed, solution, mistakes, size]);
+  }, [selected, notesMode, grid, notes, puzzle, completed, solution, mistakes, size]);
 
   const selectedValue = selected >= 0 ? grid[selected] : 0;
   const activeNums = Array.from({ length: size }, (_, i) => i + 1);
@@ -505,6 +535,7 @@ export default function Skeedoku({ onWin }) {
           </div>
 
           <div className="controls">
+            <button className="btn" onClick={undo} disabled={completed || !history.length} title="Undo (Ctrl+Z)">↶ Undo</button>
             <button className="btn" onClick={erase}>Erase</button>
             <button className="btn" onClick={giveHint}>Hint</button>
             <button className="btn" onClick={checkBoard}>Check</button>

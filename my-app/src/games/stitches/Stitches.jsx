@@ -1,5 +1,6 @@
 import { useDailyDate, useArchive } from '../../components/DailyBoundary';
 import DailyResults from '../../components/DailyResults';
+import useUndoShortcut from '../../components/useUndoShortcut';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Navbar from '../../components/Navbar';
 import { checkSolution, dailyPuzzle, generatePuzzle, getCounts, getEdges } from './puzzle.js';
@@ -155,6 +156,14 @@ export default function Stitches({ onWin }) {
   };
   const clueClass = (actual, target) => actual > target ? 'over' : actual === target ? 'met' : '';
 
+  function undo() {
+    if (!game.history.length || won) return;
+    const previous = game.history.at(-1);
+    setGame(current => ({ ...current, ...previous, history: current.history.slice(0, -1) }));
+    setMessage('');
+  }
+  useUndoShortcut(undo);
+
   return (
     <>
       <Navbar />
@@ -243,15 +252,12 @@ export default function Stitches({ onWin }) {
             <button aria-pressed={tool === 'stitch'} onClick={() => setTool('stitch')}>Stitch</button>
             <button aria-pressed={tool === 'mark'} onClick={() => setTool('mark')}>Mark empty ×</button>
             <span className="stitches-tool-divider" />
-            <button disabled={!game.history.length || won} onClick={() => {
-              const previous = game.history.at(-1);
-              setGame(current => ({ ...current, ...previous, history: current.history.slice(0, -1) }));
-              setMessage('');
-            }}>Undo</button>
-            <button onClick={() => {
+            <button disabled={!game.history.length || won} onClick={undo} title="Undo (Ctrl+Z)">Undo</button>
+            {/* Clears the board but keeps the clock running; Undo brings it back. */}
+            <button disabled={won || (!game.selected.length && !game.marks.length)} onClick={() => {
               markDrag.current = null;
-              setGame(current => ({ ...current, selected: [], marks: [], history: [], seconds: 0, started: false }));
-              notified.current = false;
+              setGame(current => ({ ...current, selected: [], marks: [],
+                history: [...current.history, { selected: current.selected, marks: current.marks }] }));
               setMessage('');
             }}>Reset</button>
           </div>

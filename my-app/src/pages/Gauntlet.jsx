@@ -12,7 +12,7 @@ import { puzzleLoggingEnabled, readGameRates } from '../services/puzzleResults.j
 import { publishPar, readPar, watchOwner } from '../services/gauntletPar.js';
 import { BOARD_SIZE, boardEnabled, boardStanding, friendlyError, readBoard, readMyEntry, readMyRun, saveNickname, sendEvent, signOutPlayer, watchPlayer } from '../services/gauntletBoard.js';
 import SignInDialog from '../components/SignInDialog';
-import { fromServerRun, pauseRun, resumeRun, GAUNTLET_START, PAR_NAME, STORAGE_PREFIX, TEST_GAUNTLETS, addToHistory, remainingPenalty, gauntletLaunched, isTestDay, testDay, gauntletDay, gauntletOpensAt, paceVersusPar, parVerdict, validPar, averageSolveSeconds, currentGameSeconds, formatClock, gameTitle,
+import { fromServerRun, pauseRun, resumeRun, GAUNTLET_START, PAR_NAME, STORAGE_PREFIX, TEST_GAUNTLETS, addToHistory, remainingPenalty, gauntletLaunched, isTestDay, testDay, gauntletDay, gauntletOpensAt, paceVersusPar, parVerdict, validPar, averageSolveSeconds, currentGameSeconds, formatClock, gameTitle, hintPenalty,
   gauntletLineup, gauntletPuzzleDate, historySummary, newRun, recordResult, restoreRun, runTotal, shareText, startNextGame } from '../gauntlet/gauntlet.js';
 import Akari from '../games/akari/Akari';
 import SkeedleBeadle from '../games/skeedle-beadle/SkeedleBeadle';
@@ -274,15 +274,24 @@ export default function Gauntlet() {
   }, [date, open, player?.uid, adopt]);
 
   // Games report their own finish (see GauntletReport in DailyResults).
-  const onResult = useCallback((gameId, status, guesses) => {
+  // Extras: guesses (word games' guess bonus) and hints (Skeedle Beadle).
+  const onResult = useCallback((gameId, status, extras = {}) => {
     const active = runRef.current;
     if (!active || active.waiting || active.finishedAt || active.lineup[active.index] !== gameId) return;
     const penaltySeconds = penaltyRef.current?.seconds ?? 0;
-    const guessCount = Number.isInteger(guesses) ? guesses : undefined;
-    save(recordResult(active, { gameId, status, now: Date.now(), penalty: penaltySeconds, guesses: guessCount }));
+    const guessCount = Number.isInteger(extras.guesses) ? extras.guesses : undefined;
+    const live = hintsRef.current;
+    const hintCount = Number.isInteger(extras.hints) ? extras.hints : live.game === gameId ? live.count : undefined;
+    save(recordResult(active, { gameId, status, now: Date.now(), penalty: penaltySeconds, guesses: guessCount, hints: hintCount }));
     setConfirming(false);
-    if (active.ranked) send({ action: 'finish', day: active.date, game: gameId, status, penalty: penaltySeconds, guesses: guessCount });
+    if (active.ranked) send({ action: 'finish', day: active.date, game: gameId, status, penalty: penaltySeconds, guesses: guessCount, hints: hintCount });
   }, [save, send]);
+  // Hints used so far in the current game, so the clock shows their cost live.
+  const [liveHints, setLiveHints] = useState({ game: null, count: 0 });
+  const hintsRef = useRef(liveHints);
+  hintsRef.current = liveHints;
+  const onHints = useCallback((gameId, count) => setLiveHints(current =>
+    current.game === gameId && current.count === count ? current : { game: gameId, count }), []);
 
   useEffect(() => {
     if (!run || run.finishedAt || run.waiting) return;
@@ -361,7 +370,9 @@ export default function Gauntlet() {
     if (run.pausedAt && !rules) closeRules();
   });
   const giveUp = () => { const active = runRef.current; if (active) onResult(active.lineup[active.index], 'gave-up'); };
-  const total = runTotal(run) + currentGameSeconds(run, now);
+  const playing = run && !run.finishedAt && !run.waiting ? run.lineup[run.index] : null;
+  const liveHintSeconds = playing && liveHints.game === playing ? hintPenalty(playing, liveHints.count) : 0;
+  const total = runTotal(run) + currentGameSeconds(run, now) + liveHintSeconds;
   // What giving up would add right now: the rounded average solve time, minus
   // the time already spent on this game (gone once you pass the average).
   const penaltyLeft = remainingPenalty(penalty?.seconds ?? 0, currentGameSeconds(run, now));
@@ -446,6 +457,7 @@ export default function Gauntlet() {
         <li>Stuck? Give up to move on. Giving up (or losing) adds a penalty: that game's average solve time at its spice level, rounded to the minute. The penalty counts down while you play and disappears once you've spent that long, so it always pays to keep going.</li>
         <li>The clock keeps running if you leave mid-game, and pauses between games until you start the next one.</li>
         <li>Opening How to play during a game pauses the clock and hides the board, for up to 5 minutes per gauntlet.</li>
+        <li>Skeedle Beadle: each hint adds 5 seconds to your time.</li>
         <li>Word games (Skeedle+, Ske4dle, Parshle and Skeedle500): every guess you don't need takes 5 seconds off your time. The time off for solving on each guess is shown beside the row.</li>
         <li>You get one attempt per day. <GauntletCountdown /></li>
         {boardEnabled && <li>Signed-in players are timed by the server and ranked on the daily leaderboard: most games solved first, then the fastest total time.</li>}
@@ -473,7 +485,8 @@ export default function Gauntlet() {
           <td><span className="gauntlet-lineup-number">{index + 1}</span>{gameTitle(result.game)}</td>
           <td>{statusLabel[result.status]}</td>
           <td>{formatClock(result.total)}{result.penalty > 0 && <small> ({formatClock(result.seconds)} + {formatClock(result.penalty)} penalty)</small>}
-            {result.bonus > 0 && <small> ({formatClock(result.seconds)} − {result.bonus}s guess bonus)</small>}</td>
+            {result.bonus > 0 && <small> ({formatClock(result.seconds)} − {result.bonus}s guess bonus)</small>}
+            {result.hintPenalty > 0 && <small> (includes +{result.hintPenalty}s for hints)</small>}</td>
         </tr>)}</tbody>
       </table>
       {boardEnabled && !run.ranked && <p className="gauntlet-note">This run isn't on the leaderboard{player ? '' : ' because you weren\'t signed in'}.</p>}
@@ -495,8 +508,8 @@ export default function Gauntlet() {
     body = <section className="gauntlet-card gauntlet-break">
       {pips}
       <p className={`gauntlet-result ${last.status === 'won' ? 'won' : 'lost'}`}>
-        {last.status === 'won' ? `${gameTitle(last.game)} solved in ${formatClock(last.seconds)}${last.bonus > 0 ? ` − ${last.bonus}s guess bonus = ${formatClock(last.total)}` : ''}`
-          : `${gameTitle(last.game)}: ${statusLabel[last.status].toLowerCase()} — ${formatClock(last.seconds)}${last.penalty > 0 ? ` + ${formatClock(last.penalty)} penalty` : ', no penalty'}`}
+        {last.status === 'won' ? `${gameTitle(last.game)} solved in ${formatClock(last.seconds)}${last.hintPenalty > 0 ? ` + ${last.hintPenalty}s for hints` : ''}${last.bonus > 0 ? ` − ${last.bonus}s guess bonus` : ''}${last.bonus > 0 || last.hintPenalty > 0 ? ` = ${formatClock(last.total)}` : ''}`
+          : `${gameTitle(last.game)}: ${statusLabel[last.status].toLowerCase()} — ${formatClock(last.seconds)}${last.penalty > 0 ? ` + ${formatClock(last.penalty)} penalty` : ', no penalty'}${last.hintPenalty > 0 ? ` + ${last.hintPenalty}s for hints` : ''}`}
       </p>
       <p className="gauntlet-total">Total so far <strong>{formatClock(runTotal(run))}</strong></p>
       {showPar && <p className="gauntlet-pace">{ahead(paceVersusPar(run, par))} after {run.results.length} {run.results.length === 1 ? 'game' : 'games'}</p>}
@@ -524,7 +537,7 @@ export default function Gauntlet() {
               </span>}
         </div>
       </div>
-      <GauntletBoundary date={gauntletPuzzleDate(date)} onResult={onResult}>
+      <GauntletBoundary date={gauntletPuzzleDate(date)} onResult={onResult} onHints={onHints}>
         <div className={`gauntlet-pausable${run.pausedAt ? ' paused' : ''}`}>
           <FittedStage key={`${current.id}:${run.index}`} game={current.id}><Game /></FittedStage>
           {run.pausedAt && <p className="gauntlet-paused-note">Paused · close How to play to continue</p>}

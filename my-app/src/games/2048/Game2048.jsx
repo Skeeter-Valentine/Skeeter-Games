@@ -1,6 +1,7 @@
 import { useDailyDate, useArchive } from '../../components/DailyBoundary';
 import { puzzleSnapshot } from '../../utils/archive.js';
 import DailyResults from '../../components/DailyResults';
+import useUndoShortcut from '../../components/useUndoShortcut';
 // src/pages/Game2048.jsx
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import Navbar from '../../components/Navbar';
@@ -263,6 +264,8 @@ export default function Game2048({ onWin }) {
     setHistory((prevHistory) => prevHistory.slice(0, -1));
     setUndoCount((prev) => prev + 1);
   };
+
+  useUndoShortcut(handleUndo);
 
   const handleUndo5x = () => {
     if (history.length === 0 || isTestMode) return;
