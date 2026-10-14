@@ -1,4 +1,5 @@
 import React from 'react';
+import GuessBonus from '../../../components/GuessBonus';
 
 export function getWord500Feedback(guess, target) {
   if (!guess || !target || guess.length !== 5) {
@@ -85,7 +86,7 @@ export default function Board({
             </div>
 
             {/* 3-Box Feedback Grid */}
-            <div className="word500-score-boxes">
+            <div className="word500-score-boxes guess-bonus-row">
               <div className={`score-box q-green ${isSubmitted ? 'active' : ''}`}>
                 {isSubmitted ? feedback.green : ''}
               </div>
@@ -95,6 +96,7 @@ export default function Board({
               <div className={`score-box q-pink ${isSubmitted ? 'active' : ''}`}>
                 {isSubmitted ? feedback.pink : ''}
               </div>
+              <GuessBonus gameId="word500" row={rowIndex} used={guesses.length} won={guesses.includes(targetWord)} />
             </div>
           </div>
         );

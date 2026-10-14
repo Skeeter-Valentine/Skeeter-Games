@@ -1,4 +1,4 @@
-.archive-open, .archive-current button { background: #272134; border: 1px solid #5b4e70; color: #f5f0fb; padding: 8px 10px; border-radius: 7px; cursor: pointer; font: inherit; }
+.archive-current button { background: #272134; border: 1px solid #5b4e70; color: #f5f0fb; padding: 8px 10px; border-radius: 7px; cursor: pointer; font: inherit; }
 .archive-current { font-size: 15px; color: #ffe390; }
 .archive-date { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
 .archive-date input { color-scheme: dark; padding: 10px; max-width: 100%; }

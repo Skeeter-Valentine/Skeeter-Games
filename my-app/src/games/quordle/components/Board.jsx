@@ -1,9 +1,12 @@
 import React from 'react';
+import GuessBonus from '../../../components/GuessBonus';
 
 const WORD_LENGTH = 5;
 const MAX_ATTEMPTS = 9;
 
-export default function Board({ targetWord, guesses, currentGuess, isGameOver, isInvalid }) {
+// bonus: { used, won } on the right-hand boards in the Skeeter Gauntlet, which
+// label each row with its guess bonus (see GuessBonus).
+export default function Board({ targetWord, guesses, currentGuess, isGameOver, isInvalid, bonus = null }) {
   const solvedIndex = guesses.findIndex((g) => g === targetWord);
   const isSolved = solvedIndex !== -1;
   const visibleGuesses = isSolved ? guesses.slice(0, solvedIndex + 1) : guesses;
@@ -29,10 +32,11 @@ export default function Board({ targetWord, guesses, currentGuess, isGameOver, i
     }
   }
 
-  return <div className={`board ${isSolved ? 'solved' : ''}`}>{rows}</div>;
+  const labelled = bonus ? rows.map((row, i) => React.cloneElement(row, { bonus: { ...bonus, row: i } })) : rows;
+  return <div className={`board ${isSolved ? 'solved' : ''}`}>{labelled}</div>;
 }
 
-function Row({ guess, targetWord, isSubmitted, isInvalid }) {
+function Row({ guess, targetWord, isSubmitted, isInvalid, bonus }) {
   const WORD_LENGTH = 5;
   const statuses = Array(WORD_LENGTH).fill('');
 
@@ -78,5 +82,6 @@ function Row({ guess, targetWord, isSubmitted, isInvalid }) {
     );
   }
 
-  return <div className={`row ${isInvalid ? 'shake' : ''}`}>{tiles}</div>;
+  return <div className={`row ${isInvalid ? 'shake' : ''}${bonus ? ' guess-bonus-row' : ''}`}>{tiles}
+    {bonus && <GuessBonus gameId="quordle" row={bonus.row} used={bonus.used} won={bonus.won} />}</div>;
 }

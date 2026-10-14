@@ -71,6 +71,16 @@ export function resumeRun(run, now) {
   const credit = Math.min(Math.max(0, Math.floor((now - run.pausedAt) / 1000)), Math.max(0, PAUSE_ALLOWANCE - used));
   return { ...run, gameStartedAt: run.gameStartedAt + credit * 1000, pausedAt: null, pausedSeconds: used + credit };
 }
+// Word games: each guess you didn't need takes 5 seconds off your time.
+// Solving in 1 of 6 guesses saves 30s, in 2 saves 25s ... in 6 saves 5s.
+export const WORD_GUESS_LIMITS = { skeedlemath: 6, quordle: 9, parshle: 6, word500: 8 };
+export const GUESS_BONUS_SECONDS = 5;
+export function guessBonus(gameId, guesses) {
+  const limit = WORD_GUESS_LIMITS[gameId];
+  if (!limit || !Number.isInteger(guesses) || guesses < 1 || guesses > limit) return 0;
+  return GUESS_BONUS_SECONDS * (limit - guesses + 1);
+}
+
 export const clampPenalty = seconds => Math.min(3600, Math.max(60, Math.round((Number(seconds) || 0) / 60) * 60));
 // Faster than this is not a real solve.
 export const MIN_WIN_SECONDS = 5;
@@ -89,7 +99,10 @@ export function applyEvent(run, event, now) {
     return { run: null, reset: true };
   }
   if (action === 'start') {
-    if (run) return { run, alreadyStarted: true };
+    // A run started under an older lineup rule (before a rules update) can't
+    // be played with today's games, so it is replaced. Finished runs stand.
+    const stale = run && !run.finishedAt && run.lineup?.join() !== lineupIds(day).join();
+    if (run && !stale) return { run, alreadyStarted: true };
     if (!isTestDay(day) && day !== gauntletDay(now)) throw new GauntletError('failed-precondition', 'That gauntlet has closed.');
     return { run: { day, lineup: lineupIds(day), index: 0, gameStartedAt: now, waiting: false, results: [], startedAt: now, finishedAt: null } };
   }
@@ -113,7 +126,8 @@ export function applyEvent(run, event, now) {
     const spent = Math.max(0, Math.round((now - run.gameStartedAt) / 1000));
     if (status === 'won' && spent < MIN_WIN_SECONDS) throw new GauntletError('failed-precondition', 'That solve was too fast to count.');
     const penalty = status === 'won' ? 0 : Math.max(0, clampPenalty(event.penalty) - spent);
-    const results = [...run.results, { game, status, seconds: spent, penalty, total: spent + penalty }];
+    const bonus = status === 'won' ? guessBonus(game, event.guesses) : 0;
+    const results = [...run.results, { game, status, seconds: spent, penalty, bonus, total: Math.max(0, spent + penalty - bonus) }];
     const finished = results.length === run.lineup.length;
     const next = { ...run, results, index: run.index + 1, waiting: !finished, finishedAt: finished ? now : null };
     return { run: next, entry: finished ? boardEntry(next) : null };

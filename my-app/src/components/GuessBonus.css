@@ -1,0 +1,17 @@
+/* Time bonus beside each guess row in Skeeter Gauntlet word games. */
+/* Placed just right of its row (the row is the positioning box). */
+.guess-bonus { position: absolute; top: 50%; left: 100%; margin-left: 10px; transform: translateY(-50%); box-sizing: border-box; flex: 0 0 auto; min-width: 3.3em; padding: 1px 6px; border: 1px solid rgba(216, 255, 0, 0.45); border-radius: 999px;
+  color: #d8ff00; font-size: 15px; font-weight: 900; line-height: 1.4; text-align: center; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.guess-bonus-current { background: rgba(216, 255, 0, 0.16); border-color: #d8ff00; box-shadow: 0 0 6px rgba(216, 255, 0, 0.45); }
+.guess-bonus-past { opacity: 0.35; text-decoration: line-through; border-color: transparent; }
+.guess-bonus-earned { background: #3ddc84; border-color: #3ddc84; color: #0d1a12; }
+
+.guess-bonus-row { position: relative; }
+/* Phones: no room beside the board, so the label joins the end of the row. */
+@media (max-width: 600px) {
+  .guess-bonus { position: static; transform: none; align-self: center; width: 3.2em; min-width: 0; margin-left: 4px; padding: 0; letter-spacing: -0.3px; }
+  /* Skeedle500's row is already full width: smaller boxes make room. */
+  .gauntlet-stage .word500-board .word500-tile, .gauntlet-stage .word500-board .score-box { width: 31px; height: 31px; }
+  .gauntlet-stage .word500-board .word500-row { gap: 6px; }
+  .gauntlet-stage .word500-board .word500-tiles, .gauntlet-stage .word500-board .word500-score-boxes { gap: 4px; margin-left: 0; }
+}

@@ -12,7 +12,7 @@ import { puzzleLoggingEnabled, readGameRates } from '../services/puzzleResults.j
 import { publishPar, readPar, watchOwner } from '../services/gauntletPar.js';
 import { BOARD_SIZE, boardEnabled, boardStanding, friendlyError, readBoard, readMyEntry, readMyRun, saveNickname, sendEvent, signOutPlayer, watchPlayer } from '../services/gauntletBoard.js';
 import SignInDialog from '../components/SignInDialog';
-import { fromServerRun, pauseRun, resumeRun, GAUNTLET_START, PAR_NAME, STORAGE_PREFIX, TEST_GAUNTLETS, addToHistory, remainingPenalty, gauntletLaunched, isTestDay, testDay, gauntletDay, gauntletOpensAt, nextGauntletAt, paceVersusPar, parVerdict, validPar, averageSolveSeconds, currentGameSeconds, formatClock, gameTitle,
+import { fromServerRun, pauseRun, resumeRun, GAUNTLET_START, PAR_NAME, STORAGE_PREFIX, TEST_GAUNTLETS, addToHistory, remainingPenalty, gauntletLaunched, isTestDay, testDay, gauntletDay, gauntletOpensAt, paceVersusPar, parVerdict, validPar, averageSolveSeconds, currentGameSeconds, formatClock, gameTitle,
   gauntletLineup, gauntletPuzzleDate, historySummary, newRun, recordResult, restoreRun, runTotal, shareText, startNextGame } from '../gauntlet/gauntlet.js';
 import Akari from '../games/akari/Akari';
 import SkeedleBeadle from '../games/skeedle-beadle/SkeedleBeadle';
@@ -29,6 +29,7 @@ import Word500 from '../games/word500/Word500';
 import Minesweeper from '../games/minesweeper/Minesweeper';
 import Game2048 from '../games/2048/Game2048';
 import Hashi from '../games/hashi/Hashi';
+import GauntletCountdown from '../components/GauntletCountdown';
 import './Gauntlet.css';
 
 const COMPONENTS = { akari: Akari, 'skeedle-beadle': SkeedleBeadle, map: MapGame, parshle: Parshle, stitches: Stitches,
@@ -38,9 +39,6 @@ const runKey = date => `${STORAGE_PREFIX}${isTestDay(date) ? 'test-run' : 'run'}
 const HISTORY_KEY = `${STORAGE_PREFIX}history`;
 const statusLabel = { won: 'Solved', lost: 'Lost', 'gave-up': 'Gave up' };
 
-// When the next gauntlet opens (4am Mountain Time), shown in the player's own time.
-const localTime = instant => new Date(instant).toLocaleString(undefined, { weekday: 'short', hour: 'numeric', minute: '2-digit' });
-const nextOpening = date => localTime(nextGauntletAt(date));
 const ahead = seconds => seconds < 0 ? `${formatClock(-seconds)} ahead of ${PAR_NAME}` : seconds > 0 ? `${formatClock(seconds)} behind ${PAR_NAME}` : `level with ${PAR_NAME}`;
 
 // Average solve time for the current game and spice level: the built-in
@@ -276,13 +274,14 @@ export default function Gauntlet() {
   }, [date, open, player?.uid, adopt]);
 
   // Games report their own finish (see GauntletReport in DailyResults).
-  const onResult = useCallback((gameId, status) => {
+  const onResult = useCallback((gameId, status, guesses) => {
     const active = runRef.current;
     if (!active || active.waiting || active.finishedAt || active.lineup[active.index] !== gameId) return;
     const penaltySeconds = penaltyRef.current?.seconds ?? 0;
-    save(recordResult(active, { gameId, status, now: Date.now(), penalty: penaltySeconds }));
+    const guessCount = Number.isInteger(guesses) ? guesses : undefined;
+    save(recordResult(active, { gameId, status, now: Date.now(), penalty: penaltySeconds, guesses: guessCount }));
     setConfirming(false);
-    if (active.ranked) send({ action: 'finish', day: active.date, game: gameId, status, penalty: penaltySeconds });
+    if (active.ranked) send({ action: 'finish', day: active.date, game: gameId, status, penalty: penaltySeconds, guesses: guessCount });
   }, [save, send]);
 
   useEffect(() => {
@@ -303,8 +302,13 @@ export default function Gauntlet() {
       setStarting(true);
       try {
         const result = await sendEvent({ action: 'start', day: date });
-        if (result.alreadyStarted) setSyncNote('You already started today\'s gauntlet, so you\'re picking up where you left off.');
         setNow(Date.now());
+        const serverRun = fromServerRun(result.run, Number.isFinite(result.now) ? result.now - Date.now() : 0);
+        if (!serverRun) {
+          setSyncNote('Your saved run doesn\'t match today\'s games. The leaderboard server needs updating: please try again shortly.');
+          return;
+        }
+        if (result.alreadyStarted) setSyncNote('You already started today\'s gauntlet, so you\'re picking up where you left off.');
         adopt(result);
       } catch (error) {
         setSyncNote(`Couldn't start a leaderboard run: ${friendlyError(error)}`);
@@ -442,7 +446,8 @@ export default function Gauntlet() {
         <li>Stuck? Give up to move on. Giving up (or losing) adds a penalty: that game's average solve time at its spice level, rounded to the minute. The penalty counts down while you play and disappears once you've spent that long, so it always pays to keep going.</li>
         <li>The clock keeps running if you leave mid-game, and pauses between games until you start the next one.</li>
         <li>Opening How to play during a game pauses the clock and hides the board, for up to 5 minutes per gauntlet.</li>
-        <li>You get one attempt per day. A new gauntlet opens {nextOpening(date)}.</li>
+        <li>Word games (Skeedle+, Ske4dle, Parshle and Skeedle500): every guess you don't need takes 5 seconds off your time. The time off for solving on each guess is shown beside the row.</li>
+        <li>You get one attempt per day. <GauntletCountdown /></li>
         {boardEnabled && <li>Signed-in players are timed by the server and ranked on the daily leaderboard: most games solved first, then the fastest total time.</li>}
       </ul>
       <button type="button" className="gauntlet-btn gauntlet-btn-primary" onClick={() => start()} disabled={startBlocked}>
@@ -467,7 +472,8 @@ export default function Gauntlet() {
         <tbody>{run.results.map((result, index) => <tr key={result.game} className={result.status === 'won' ? 'won' : 'lost'}>
           <td><span className="gauntlet-lineup-number">{index + 1}</span>{gameTitle(result.game)}</td>
           <td>{statusLabel[result.status]}</td>
-          <td>{formatClock(result.total)}{result.penalty > 0 && <small> ({formatClock(result.seconds)} + {formatClock(result.penalty)} penalty)</small>}</td>
+          <td>{formatClock(result.total)}{result.penalty > 0 && <small> ({formatClock(result.seconds)} + {formatClock(result.penalty)} penalty)</small>}
+            {result.bonus > 0 && <small> ({formatClock(result.seconds)} − {result.bonus}s guess bonus)</small>}</td>
         </tr>)}</tbody>
       </table>
       {boardEnabled && !run.ranked && <p className="gauntlet-note">This run isn't on the leaderboard{player ? '' : ' because you weren\'t signed in'}.</p>}
@@ -481,7 +487,7 @@ export default function Gauntlet() {
       <button type="button" className="gauntlet-btn gauntlet-btn-primary" onClick={share}>Share result</button>
       {copied && <p className="gauntlet-note" role="status">{copied}</p>}
       <pre className="gauntlet-share-text">{shareText(run, window.location.origin, showPar ? par : null)}</pre>
-      <p className="gauntlet-note">A new gauntlet opens {nextOpening(date)}.</p>
+      <p className="gauntlet-note"><GauntletCountdown /></p>
       <Link className="gauntlet-btn" to="/">Back to the puzzles</Link>
     </section>;
   } else if (run.waiting) {
@@ -489,7 +495,7 @@ export default function Gauntlet() {
     body = <section className="gauntlet-card gauntlet-break">
       {pips}
       <p className={`gauntlet-result ${last.status === 'won' ? 'won' : 'lost'}`}>
-        {last.status === 'won' ? `${gameTitle(last.game)} solved in ${formatClock(last.seconds)}`
+        {last.status === 'won' ? `${gameTitle(last.game)} solved in ${formatClock(last.seconds)}${last.bonus > 0 ? ` − ${last.bonus}s guess bonus = ${formatClock(last.total)}` : ''}`
           : `${gameTitle(last.game)}: ${statusLabel[last.status].toLowerCase()} — ${formatClock(last.seconds)}${last.penalty > 0 ? ` + ${formatClock(last.penalty)} penalty` : ', no penalty'}`}
       </p>
       <p className="gauntlet-total">Total so far <strong>{formatClock(runTotal(run))}</strong></p>

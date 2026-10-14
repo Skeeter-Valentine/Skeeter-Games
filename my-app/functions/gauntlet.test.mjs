@@ -26,14 +26,14 @@ test('the server times every game and adds the shrinking penalty', () => {
   rejects(() => applyEvent(run, { action: 'finish', day: DAY, game: run.lineup[1], status: 'won' }, NOON + 60_000), 'failed-precondition');
   rejects(() => applyEvent(run, { action: 'finish', day: DAY, game: run.lineup[0], status: 'won' }, NOON + (MIN_WIN_SECONDS - 1) * 1000), 'failed-precondition');
   ({ run } = applyEvent(run, { action: 'finish', day: DAY, game: run.lineup[0], status: 'won' }, NOON + 90_000));
-  assert.deepEqual(run.results[0], { game: run.lineup[0], status: 'won', seconds: 90, penalty: 0, total: 90 });
+  assert.deepEqual(run.results[0], { game: run.lineup[0], status: 'won', seconds: 90, penalty: 0, bonus: 0, total: 90 });
   assert.equal(run.waiting, true);
   rejects(() => applyEvent(run, { action: 'finish', day: DAY, game: run.lineup[1], status: 'won' }, NOON + 200_000), 'failed-precondition');
   // The break between games is free: the clock restarts on "next".
   ({ run } = applyEvent(run, { action: 'next', day: DAY }, NOON + 500_000));
   // A claimed 3-minute penalty after 1 minute: 2 minutes are added.
   ({ run } = applyEvent(run, { action: 'finish', day: DAY, game: run.lineup[1], status: 'gave-up', penalty: 185 }, NOON + 560_000));
-  assert.deepEqual(run.results[1], { game: run.lineup[1], status: 'gave-up', seconds: 60, penalty: 120, total: 180 });
+  assert.deepEqual(run.results[1], { game: run.lineup[1], status: 'gave-up', seconds: 60, penalty: 120, bonus: 0, total: 180 });
   // Penalties are clamped to 1-60 minutes, whatever the client says.
   ({ run } = applyEvent(run, { action: 'next', day: DAY }, NOON + 600_000));
   ({ run } = applyEvent(run, { action: 'finish', day: DAY, game: run.lineup[2], status: 'lost', penalty: 999_999 }, NOON + 610_000));
@@ -92,4 +92,36 @@ test('pausing for How to play is credited on the server too, up to the allowance
   ({ run } = applyEvent(run, { action: 'pause', day: DAY }, NOON + 230_000));
   ({ run } = applyEvent(run, { action: 'finish', day: DAY, game: run.lineup[1], status: 'won' }, NOON + 230_000 + PAUSE_ALLOWANCE * 1000 * 2));
   assert.equal(run.results[1].seconds, 30 + PAUSE_ALLOWANCE * 2 - (PAUSE_ALLOWANCE - 60));
+});
+
+test('a run from an older lineup rule is replaced on start', () => {
+  const stale = { day: DAY, lineup: ['akari', 'map', 'pipes', 'hashi', 'shikaku', 'stitches'], index: 1, gameStartedAt: NOON, waiting: true, results: [{ game: 'akari' }], startedAt: NOON, finishedAt: null };
+  const { run, alreadyStarted } = applyEvent(stale, { action: 'start', day: DAY }, NOON + 1000);
+  assert.ok(!alreadyStarted);
+  assert.deepEqual(run.lineup, lineupIds(DAY));
+  assert.equal(run.results.length, 0);
+  const finished = { ...stale, finishedAt: NOON };
+  assert.ok(applyEvent(finished, { action: 'start', day: DAY }, NOON + 1000).alreadyStarted, 'finished runs stand');
+});
+
+test('word games take 5 seconds off for every guess left over', async () => {
+  const { guessBonus } = await import('./gauntlet.js');
+  assert.deepEqual([1, 2, 6].map(n => guessBonus('parshle', n)), [30, 25, 5]);
+  assert.equal(guessBonus('quordle', 4), 30);
+  assert.equal(guessBonus('word500', 8), 5);
+  assert.equal(guessBonus('akari', 1), 0);
+  assert.equal(guessBonus('parshle', 7), 0);
+  assert.equal(guessBonus('parshle', '2'), 0);
+  const day = DAY;
+  let { run } = applyEvent(null, { action: 'start', day }, NOON);
+  const first = run.lineup[0];
+  ({ run } = applyEvent(run, { action: 'finish', day, game: first, status: 'won', guesses: 2 }, NOON + 100_000));
+  assert.equal(run.results[0].bonus, guessBonus(first, 2));
+  assert.equal(run.results[0].total, 100 - guessBonus(first, 2));
+});
+
+test('the page and the server agree on guess bonuses', async () => {
+  const client = await import('../src/gauntlet/gauntlet.js');
+  const { guessBonus } = await import('./gauntlet.js');
+  for (const game of ['skeedlemath', 'quordle', 'parshle', 'word500', 'akari']) for (let n = 0; n <= 10; n++) assert.equal(client.guessBonus(game, n), guessBonus(game, n));
 });

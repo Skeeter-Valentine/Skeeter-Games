@@ -2,6 +2,7 @@ import { useDailyDate, useArchive } from '../../components/DailyBoundary';
 import { useEffect, useState } from 'react';
 import Navbar from '../../components/Navbar';
 import DailyResults from '../../components/DailyResults';
+import GuessBonus from '../../components/GuessBonus';
 import { readLocal, writeLocal } from '../../utils/dailyStats';
 import { getParshleDailyTargetWord, getRandomTargetWord, isValidWord } from '../word500/constants/wordBank';
 import { hiddenPositions, keyboardFeedback, visibleFeedback } from './logic';
@@ -81,7 +82,7 @@ function Session({ daily, date }) {
   });
 
   return <>
-    <DailyResults gameId="parshle" title="Parshle" daily={daily} date={date} finished={finished} won={won} started={started} />
+    <DailyResults gameId="parshle" title="Parshle" daily={daily} date={date} finished={finished} won={won} started={started} guesses={guesses.length} />
     <div className="parshle-board" aria-label="Parshle guess board">
       {Array.from({ length: 6 }, (_, row) => {
         const guess = guesses[row];
@@ -90,8 +91,9 @@ function Session({ daily, date }) {
         const winningRow = guess === answer;
         const colors = winningRow ? Array(5).fill('correct') : guess ? visibleFeedback(guess, answer, seed, row, masks)
           : Array.from({ length: 5 }, (_, col) => hidden.includes(col) ? 'hidden' : '');
-        return <div className="parshle-row" key={row} aria-label={`Guess ${row + 1}`}>
+        return <div className="parshle-row guess-bonus-row" key={row} aria-label={`Guess ${row + 1}`}>
           {Array.from({ length: 5 }, (_, col) => <span key={col} className={`parshle-tile ${colors[col] || ''}${winningRow && hidden.includes(col) ? ' formerly-hidden' : ''}`} aria-label={`${letters[col] || 'Empty'}${colors[col] ? `: ${colors[col] === 'hidden' ? 'feedback hidden' : colors[col]}` : ''}`}>{letters[col]}</span>)}
+          <GuessBonus gameId="parshle" row={row} used={guesses.length} won={won} />
         </div>;
       })}
     </div>

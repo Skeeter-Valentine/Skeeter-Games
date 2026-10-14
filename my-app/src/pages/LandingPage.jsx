@@ -29,6 +29,7 @@ import gauntletBannerNarrowImg from '../assets/gauntlet-banner-narrow.webp';
 
 import { PAR_NAME, gauntletLaunched, STORAGE_PREFIX, formatClock, gauntletDay, restoreRun, runTotal, validPar } from '../gauntlet/gauntlet.js';
 import { readPar } from '../services/gauntletPar.js';
+import GauntletCountdown from '../components/GauntletCountdown';
 import { readLocal } from '../utils/dailyStats.js';
 
 const GAMES = [
@@ -67,10 +68,13 @@ export default function LandingPage() {
     readPar(gauntletDate).then(value => { if (active) setPar(validPar(value, gauntletDate)); }).catch(() => {});
     return () => { active = false; };
   }, [gauntletOpen, gauntletDate]);
-  const parText = par ? `${PAR_NAME}'s time: ${formatClock(par.total)}` : '';
-  const gauntletStatus = !gauntletOpen ? 'Coming soon' : !gauntletRun ? (parText ? `${parText} · Can you beat it?` : 'Six puzzles. One clock. One attempt a day.')
-    : gauntletRun.finishedAt ? `Done today · ${formatClock(runTotal(gauntletRun))}${parText ? ` · ${parText}` : ''}`
+  // Under the banner: "Beat Skeet!", the owner's time for today's gauntlet,
+  // your own progress and, once you've finished, the countdown to the next one.
+  const parText = par ? `${PAR_NAME}'s time today: ${formatClock(par.total)}` : `${PAR_NAME}'s time today: not posted yet`;
+  const progressText = !gauntletRun ? '' : gauntletRun.finishedAt ? `Your time: ${formatClock(runTotal(gauntletRun))}`
     : `In progress · game ${gauntletRun.index + 1} of ${gauntletRun.lineup.length}`;
+  const gauntletAction = !gauntletOpen ? 'Try a test gauntlet' : !gauntletRun ? 'Play today’s gauntlet' : gauntletRun.finishedAt ? 'See results' : 'Continue';
+  const gauntletStatus = !gauntletOpen ? 'Coming soon' : ['Beat Skeet!', parText, progressText].filter(Boolean).join(' · ');
 
   return (
     <div className="landing-container">
@@ -102,7 +106,14 @@ export default function LandingPage() {
             <source media="(max-width: 600px)" srcSet={gauntletBannerNarrowImg} width="1280" height="760" />
             <img src={gauntletBannerImg} alt="" width="2022" height="640" loading="eager" decoding="async" className="gauntlet-feature-image" />
           </picture>
-          <span className="gauntlet-feature-status" aria-hidden="true">{gauntletStatus} · <strong>{!gauntletOpen ? 'Try a test gauntlet' : !gauntletRun ? 'Play today’s gauntlet' : gauntletRun.finishedAt ? 'See results' : 'Continue'} →</strong></span>
+          {gauntletOpen ? <span className="gauntlet-feature-status" aria-hidden="true">
+            <span className="gauntlet-beat">Beat Skeet!</span>
+            <span className="gauntlet-par-line">{par ? <>{PAR_NAME}'s time today: <b>{formatClock(par.total)}</b></> : parText}</span>
+            {progressText && <span className="gauntlet-progress-line">{progressText}</span>}
+            {gauntletRun?.finishedAt && <GauntletCountdown label="Next gauntlet in" />}
+            <strong>{gauntletAction} →</strong>
+          </span>
+            : <span className="gauntlet-feature-status" aria-hidden="true">{gauntletStatus} · <strong>{gauntletAction} →</strong></span>}
         </Link>
         <div className="landing-grid">
           {GAMES.map((game, index) => (

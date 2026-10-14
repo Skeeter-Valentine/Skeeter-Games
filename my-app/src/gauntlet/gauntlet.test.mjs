@@ -47,7 +47,7 @@ test('a run records wins, losses with the average penalty, and waits between gam
   const [first, second] = run.lineup;
   assert.equal(recordResult(run, { gameId: second, status: 'won', now: t + 5000 }), run, 'only the current game counts');
   run = recordResult(run, { gameId: first, status: 'won', now: t + 65_000 });
-  assert.deepEqual(run.results[0], { game: first, status: 'won', seconds: 65, penalty: 0, total: 65 });
+  assert.deepEqual(run.results[0], { game: first, status: 'won', seconds: 65, penalty: 0, bonus: 0, total: 65 });
   assert.equal(run.waiting, true);
   assert.equal(recordResult(run, { gameId: second, status: 'won', now: t + 70_000 }), run, 'nothing counts while waiting');
   assert.equal(currentGameSeconds(run, t + 999_000), 0);
@@ -55,7 +55,7 @@ test('a run records wins, losses with the average penalty, and waits between gam
   assert.equal(currentGameSeconds(run, t + 230_000), 30);
   run = recordResult(run, { gameId: second, status: 'gave-up', now: t + 230_000, penalty: 180 });
   // A 3:00 penalty after 0:30 of play: 2:30 left, so the game costs 3:00 in total.
-  assert.deepEqual(run.results[1], { game: second, status: 'gave-up', seconds: 30, penalty: 150, total: 180 });
+  assert.deepEqual(run.results[1], { game: second, status: 'gave-up', seconds: 30, penalty: 150, bonus: 0, total: 180 });
   assert.equal(runTotal(run), 245);
   for (const id of run.lineup.slice(2)) { run = startNextGame(run, t); run = recordResult(run, { gameId: id, status: 'lost', now: t + 10_000, penalty: 50 }); }
   assert.ok(run.finishedAt);

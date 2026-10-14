@@ -212,7 +212,7 @@ export default function Quordle({ onWin }) {
   return (
     <div className="game-container quordle-game-container" onClick={focusHiddenInput}>
       <Navbar />
-      <DailyResults started={hasStarted} gameId="quordle" title="Ske4dle" daily={gameMode === 'daily'} date={sessionDate} finished={gameOver} won={targetWords.length === 4 && targetWords.every(word => guesses.includes(word))} ready={targetWords.length === 4} />
+      <DailyResults started={hasStarted} gameId="quordle" title="Ske4dle" daily={gameMode === 'daily'} date={sessionDate} finished={gameOver} won={targetWords.length === 4 && targetWords.every(word => guesses.includes(word))} ready={targetWords.length === 4} guesses={guesses.length} />
 
       {/* 5. HIDDEN INPUT ELEMENT FOR MOBILE VIRTUAL KEYBOARD */}
       <input
@@ -280,6 +280,7 @@ export default function Quordle({ onWin }) {
             currentGuess={currentGuess}
             isGameOver={gameOver}
             isInvalid={isInvalidGuess}
+            bonus={boardIdx % 2 === 1 ? { used: guesses.length, won: targetWords.every(word => guesses.includes(word)) } : null}
           />
         ))}
       </div>

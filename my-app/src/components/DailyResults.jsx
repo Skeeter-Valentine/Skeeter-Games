@@ -24,10 +24,11 @@ export default function DailyResults({ daily, date, ...props }) {
 }
 
 // Reports a finished gauntlet game once. Practice-mode finishes never count.
-function GauntletReport({ gauntlet, gameId, daily, finished, won = true, ready = true }) {
+// Word games also pass `guesses` (guesses used) for the gauntlet's guess bonus.
+function GauntletReport({ gauntlet, gameId, daily, finished, won = true, ready = true, guesses }) {
   useEffect(() => {
-    if (daily && ready && finished) gauntlet.onResult(gameId, won ? 'won' : 'lost');
-  }, [gauntlet, gameId, daily, ready, finished, won]);
+    if (daily && ready && finished) gauntlet.onResult(gameId, won ? 'won' : 'lost', guesses);
+  }, [gauntlet, gameId, daily, ready, finished, won, guesses]);
   return null;
 }
 

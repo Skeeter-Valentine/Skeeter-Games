@@ -82,7 +82,7 @@ corner, sign in with Google, create an email account, use *Forgot password?*.
 ## 3. Find your owner ID
 
 Open `/admin/archive` on the site and sign in with your Google account. It shows
-your user ID (`QtQwYuCN4vWR1XNyz9K6fe9G7jl1` is already in the code). That ID
+your user ID. That ID
 goes in `VITE_ADMIN_UIDS`.
 
 ## 4. Deploy the server code and rules (terminal, once per change)
@@ -135,6 +135,19 @@ privacy-focused browsers):
    redirect URIs; Microsoft, GitHub, Facebook, Apple: where you added the
    handler URL above).
 3. Set `VITE_FIREBASE_AUTH_DOMAIN=skeetergames.org` in Netlify and redeploy.
+
+## Netlify "secrets scanning" build failures
+
+Netlify fails a build when the value of one of its environment variables
+appears in the repository or the built site. `VITE_ADMIN_UIDS` is a Firebase
+user ID, not a password: it is in `firestore.rules` and in the site's
+JavaScript by design. Tell Netlify to skip it by adding this environment
+variable in Netlify (Site configuration > Environment variables):
+
+    SECRETS_SCAN_OMIT_KEYS = VITE_ADMIN_UIDS
+
+Add any other `VITE_` key Netlify complains about to the same comma-separated
+list; every `VITE_` value is public in the built site anyway.
 
 ## Troubleshooting
 

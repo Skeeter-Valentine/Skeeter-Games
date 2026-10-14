@@ -4,6 +4,7 @@ import { readLocal, writeLocal } from '../../utils/dailyStats.js';
 import { mathProgressKey, restoreMathGuesses } from './progress.js';
 import { generateEquation } from './equations.js';
 import DailyResults from '../../components/DailyResults';
+import GuessBonus from '../../components/GuessBonus';
 // src/games/skeedlemath/Skeedlemath.jsx
 import React, { useState, useEffect, useMemo } from 'react';
 import './Skeedlemath.css';
@@ -275,7 +276,7 @@ export default function Skeedlemath({ onWin }) {
   return (
     <>
       <Navbar />
-      <DailyResults started={hasStarted} gameId="skeedlemath" title="Skeedle+" daily={isDailyMode} finished={gameStatus !== 'IN_PROGRESS'} won={gameStatus === 'WON'} ready={!!targetEquation} />
+      <DailyResults started={hasStarted} gameId="skeedlemath" title="Skeedle+" daily={isDailyMode} finished={gameStatus !== 'IN_PROGRESS'} won={gameStatus === 'WON'} ready={!!targetEquation} guesses={guesses.length} />
       <div className="word500-container skeedlemath-game">
         <div className="skeedle-header">
           <h1 className="skeedle-title-btn" style={{ cursor: 'default' }}>SKEEDLE+</h1>
@@ -317,7 +318,7 @@ export default function Skeedlemath({ onWin }) {
 
             return (
               <div key={rIdx} className="word500-row">
-                <div className="word500-tiles">
+                <div className="word500-tiles guess-bonus-row">
                   {chars.map((char, cIdx) => {
                     let tileClass = 'word500-tile';
                     const isCellActive = isCurrentRow && cIdx === activeCellIndex;
@@ -342,6 +343,7 @@ export default function Skeedlemath({ onWin }) {
                       </div>
                     );
                   })}
+                  <GuessBonus gameId="skeedlemath" row={rIdx} used={guesses.length} won={gameStatus === 'WON'} />
                 </div>
               </div>
             );

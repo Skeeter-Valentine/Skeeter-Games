@@ -30,7 +30,10 @@ export default function PuzzleArchive({ gameId, title }) {
   const local = readDailyStats(archiveStatsId(gameId, true)).results[selected];
   const counts = resultSummary(rate);
   return <>
-    <button type="button" className="archive-open" onClick={() => setOpen(true)} aria-haspopup="dialog">Archive</button>
+    <button type="button" className="archive-open game-utility-icon" onClick={() => setOpen(true)} aria-haspopup="dialog"
+      aria-label={`${title} archive: play a past puzzle`} title="Archive">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15" rx="2" /><path d="M3.5 10h17M8 3v4M16 3v4M7.5 13.5h2M11 13.5h2M14.5 13.5h2M7.5 16.5h2M11 16.5h2" /></svg>
+    </button>
     {session.archive && <span className="archive-current">Archive · {session.date} <button type="button" onClick={() => session.selectDate(today)}>Today</button></span>}
     {open && <GameModal titleId="archive-title" onClose={() => setOpen(false)}>
       <h2 id="archive-title">{title} archive</h2>

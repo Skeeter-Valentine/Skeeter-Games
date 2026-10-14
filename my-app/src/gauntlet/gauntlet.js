@@ -168,12 +168,25 @@ export function newRun(date, now) {
 
 // A finished game. Won: the time it took. Lost or gave up: the time spent plus
 // whatever is left of the penalty (see remainingPenalty).
-export function recordResult(run, { gameId, status, now, penalty = 0 }) {
+// Word games: each guess you didn't need takes 5 seconds off your time.
+// Solving in 1 of 6 guesses saves 30s, in 2 saves 25s ... in 6 saves 5s.
+export const WORD_GUESS_LIMITS = { skeedlemath: 6, quordle: 9, parshle: 6, word500: 8 };
+export const GUESS_BONUS_SECONDS = 5;
+export function guessBonus(gameId, guesses) {
+  const limit = WORD_GUESS_LIMITS[gameId];
+  if (!limit || !Number.isInteger(guesses) || guesses < 1 || guesses > limit) return 0;
+  return GUESS_BONUS_SECONDS * (limit - guesses + 1);
+}
+// The bonus shown beside guess row `row` (0 = first guess).
+export const rowBonus = (gameId, row) => guessBonus(gameId, row + 1);
+
+export function recordResult(run, { gameId, status, now, penalty = 0, guesses }) {
   if (!run || run.finishedAt || run.waiting || run.lineup[run.index] !== gameId) return run;
   run = resumeRun(run, now);
   const spent = Math.max(0, Math.round((now - run.gameStartedAt) / 1000));
   const added = status === 'won' ? 0 : remainingPenalty(penalty, spent);
-  const results = [...run.results, { game: gameId, status, seconds: spent, penalty: added, total: spent + added }];
+  const bonus = status === 'won' ? guessBonus(gameId, guesses) : 0;
+  const results = [...run.results, { game: gameId, status, seconds: spent, penalty: added, bonus, total: Math.max(0, spent + added - bonus) }];
   const finished = results.length === run.lineup.length;
   return { ...run, results, index: run.index + 1, waiting: !finished, finishedAt: finished ? now : null };
 }
