@@ -146,3 +146,27 @@ test('each Skeedle Beadle hint adds 5 seconds, on the page and the server', asyn
   ({ run } = applyEvent(run, { action: 'finish', day, game: 'skeedle-beadle', status: 'won', hints: 2 }, NOON + 160_000));
   assert.deepEqual(run.results[beadle], { game: 'skeedle-beadle', status: 'won', seconds: 100, penalty: 0, hintPenalty: 10, bonus: 0, total: 110 });
 });
+
+test('the owner\'s advance run is recorded as if played when the day opened', async () => {
+  const { recordAdvanceRun, gauntletOpensAt } = await import('./gauntlet.js');
+  const day = '2026-10-15', now = Date.parse('2026-10-15T06:39:00Z'); // 12:39am Denver, day not open yet
+  assert.equal(gauntletOpensAt(day), Date.parse('2026-10-15T10:00:00Z'));
+  assert.equal(gauntletOpensAt('2026-12-01'), Date.parse('2026-12-01T11:00:00Z'));
+  const lineup = lineupIds(day);
+  const results = lineup.map((game, i) => ({ game, status: i === 5 ? 'gave-up' : 'won', seconds: 60 + i, penalty: i === 5 ? 120 : 0, bonus: 0, hintPenalty: 0, total: 999 }));
+  const { run, entry } = recordAdvanceRun(day, { results, startedAt: now - 600000, finishedAt: now }, now);
+  assert.equal(run.startedAt, Date.parse('2026-10-15T10:00:00Z'));
+  assert.equal(run.finishedAt, run.startedAt + 600000);
+  assert.equal(entry.solved, 5);
+  // Totals are recomputed on the server, not taken from the client.
+  assert.equal(entry.total, results.reduce((sum, r) => sum + r.seconds + r.penalty, 0));
+  rejects(() => recordAdvanceRun(day, { results: results.slice(1) }, now), 'invalid-argument');
+  rejects(() => recordAdvanceRun(day, { results: [...results].reverse() }, now), 'invalid-argument');
+  rejects(() => recordAdvanceRun('2099-01-05', { results }, now), 'invalid-argument');
+  rejects(() => recordAdvanceRun('2026-10-01', { results }, now), 'invalid-argument');
+  // A word-game bonus can't exceed what the game allows.
+  const word = lineup.findIndex(game => ['skeedlemath', 'quordle', 'parshle', 'word500'].includes(game));
+  const greedy = results.map((r, i) => i === word ? { ...r, bonus: 9999 } : r);
+  const capped = recordAdvanceRun(day, { results: greedy, startedAt: now - 1, finishedAt: now }, now).run.results[word];
+  assert.ok(capped.bonus <= 45 && capped.total >= 0);
+});

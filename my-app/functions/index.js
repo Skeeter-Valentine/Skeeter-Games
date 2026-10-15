@@ -3,18 +3,19 @@ import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { games as DAILY_GAMES, validateAttempt, transition } from './attempts.js';
 import { dailyBoardId, dailyBoardSeconds, recentBoardIds } from './dailyBoard.js';
-import { applyEvent, cleanNickname, gauntletDay, GauntletError, isDay } from './gauntlet.js';
-import { dailyPeppers, gauntletPeppers, pepperWeek } from './peppers.js';
+import { applyEvent, cleanNickname, gauntletDay, gauntletOpensAt, GauntletError, isDay, recordAdvanceRun } from './gauntlet.js';
+import { dailyPeppers, gauntletPeppers, gauntletRunPeppers, pepperWeek } from './peppers.js';
 import { buildStats, parseAttemptId } from './adminStats.js';
 
 initializeApp();
 
 // Adds peppers to this week's total (pepperWeeks/{week}/players/{uid}). The
 // nickname rides along so the public board can show it; players without one
-// still collect peppers and appear once they choose a nickname.
-function addPeppers(transaction, db, uid, peppers, nickname) {
+// still collect peppers and appear once they choose a nickname. `at` is the
+// moment they count for (an advance gauntlet counts on the day it opens).
+function addPeppers(transaction, db, uid, peppers, nickname, at = Date.now()) {
   if (!peppers) return;
-  transaction.set(db.doc(`pepperWeeks/${pepperWeek(Date.now())}/players/${uid}`), {
+  transaction.set(db.doc(`pepperWeeks/${pepperWeek(at)}/players/${uid}`), {
     peppers: FieldValue.increment(peppers), nickname: nickname || null, updatedAt: FieldValue.serverTimestamp(),
   }, { merge: true });
 }
@@ -78,6 +79,20 @@ export const gauntletEvent = onCall({ region: 'us-central1', maxInstances: 20 },
     const [runSnap, playerSnap] = await Promise.all([transaction.get(runRef), transaction.get(playerRef)]);
     const nickname = playerSnap.exists ? playerSnap.get('nickname') : null;
     if (event.action === 'start' && !runSnap.exists && !nickname) throw new HttpsError('failed-precondition', 'Choose a nickname first.');
+    // The owner's advance run (played early, timed in their browser) goes on
+    // that day's leaderboard as if played when the day opened.
+    if (event.action === 'record') {
+      if (!OWNER_UIDS.includes(uid)) throw new HttpsError('permission-denied', 'Only the site owner can record a gauntlet in advance.');
+      if (!nickname) throw new HttpsError('failed-precondition', 'Choose a nickname first.');
+      if (runSnap.exists && runSnap.get('finishedAt')) return { run: runSnap.data(), entry: null, alreadyRecorded: true, now: Date.now() };
+      let recorded;
+      try { recorded = recordAdvanceRun(event.day, event.run, Date.now()); }
+      catch (error) { throw asHttpsError(error); }
+      transaction.set(runRef, { ...recorded.run, uid });
+      transaction.set(entryRef, { ...recorded.entry, nickname });
+      addPeppers(transaction, db, uid, gauntletRunPeppers(event.day, recorded.run), nickname, gauntletOpensAt(event.day));
+      return { run: recorded.run, entry: recorded.entry, now: Date.now() };
+    }
     let outcome;
     try { outcome = applyEvent(runSnap.exists ? runSnap.data() : null, event, Date.now()); }
     catch (error) { throw asHttpsError(error); }

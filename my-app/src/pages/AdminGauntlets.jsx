@@ -53,8 +53,8 @@ export default function AdminGauntlets() {
     <button type="button" onClick={() => signOut(firebaseServices().auth)}>Sign out</button>
   </>;
   else body = <>
-    <p className="admin-archive-note">Play a gauntlet before it opens to record {PAR_NAME}'s time to beat. Advance runs aren't on the leaderboard, and
-      your time is published for that day as soon as you finish. Each new gauntlet opens at {new Date(gauntletOpensAt(today)).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })} your time.</p>
+    <p className="admin-archive-note">Play a gauntlet before it opens to record {PAR_NAME}'s time to beat. When you finish, your time is published for that day
+      and your run is posted to that day's leaderboard, as if you'd played it when it opened. Each new gauntlet opens at {new Date(gauntletOpensAt(today)).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })} your time.</p>
     {error && <p role="alert">{error}</p>}
     <p>{recorded} of {days.length} recorded{nextMissing ? <> · next without a time: <strong>{dayLabel(nextMissing)}</strong></> : ''}</p>
     <div className="admin-archive-scroll">

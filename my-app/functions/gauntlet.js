@@ -153,6 +153,49 @@ export function boardEntry(run) {
   return { solved, total, score: boardScore(solved, total), finishedAt: run.finishedAt };
 }
 
+// ----- Advance runs (site owner) -----
+// The owner plays upcoming gauntlets early (/gauntlet?day=…) to film them. The
+// finished run is posted to that day's leaderboard as if it had been played
+// the moment the day opened. Its timing comes from the owner's browser, so
+// only the owner may record one; the numbers are still checked for sense.
+export function gauntletOpensAt(day) {
+  // 4am Denver is 10:00 UTC in summer time and 11:00 UTC in winter.
+  const summer = Date.parse(`${day}T10:00:00Z`);
+  return gauntletDay(summer) === day ? summer : summer + 3600000;
+}
+const addDay = (day, days) => new Date(Date.parse(`${day}T00:00:00Z`) + days * 86400000).toISOString().slice(0, 10);
+export const ADVANCE_DAYS = 60;
+const wholeSeconds = (value, max) => Number.isFinite(value) && value >= 0 ? Math.min(max, Math.round(value)) : null;
+export function recordAdvanceRun(day, submitted, now) {
+  const today = gauntletDay(now);
+  if (!isDay(day) || isTestDay(day) || day < addDay(today, -1) || day > addDay(today, ADVANCE_DAYS)) {
+    throw new GauntletError('invalid-argument', 'That gauntlet can\'t be recorded.');
+  }
+  const lineup = lineupIds(day);
+  const raw = submitted?.results;
+  if (!Array.isArray(raw) || raw.length !== lineup.length) throw new GauntletError('invalid-argument', 'Only a finished gauntlet can be recorded.');
+  const results = raw.map((result, i) => {
+    const game = lineup[i];
+    if (result?.game !== game || !['won', 'lost', 'gave-up'].includes(result.status)) throw new GauntletError('invalid-argument', 'That run doesn\'t match the gauntlet.');
+    const seconds = wholeSeconds(result.seconds, 3 * 3600);
+    if (seconds === null) throw new GauntletError('invalid-argument', 'That run has an invalid time.');
+    const won = result.status === 'won';
+    const penalty = won ? 0 : wholeSeconds(result.penalty, 3600) ?? 0;
+    const bonusCap = won && WORD_GUESS_LIMITS[game] ? GUESS_BONUS_SECONDS * WORD_GUESS_LIMITS[game] : 0;
+    const bonus = Math.min(bonusCap, wholeSeconds(result.bonus, bonusCap) ?? 0);
+    const hinted = HINT_GAMES.includes(game) ? wholeSeconds(result.hintPenalty, 3600) ?? 0 : 0;
+    return { game, status: result.status, seconds, penalty, hintPenalty: hinted, bonus, total: Math.max(0, seconds + penalty + hinted - bonus) };
+  });
+  // Played start to finish at opening time, taking as long as it really took.
+  const startedAt = gauntletOpensAt(day);
+  const elapsed = Number(submitted.finishedAt) - Number(submitted.startedAt);
+  const length = Number.isFinite(elapsed) && elapsed > 0 ? Math.min(elapsed, 12 * 3600000)
+    : results.reduce((sum, result) => sum + result.seconds, 0) * 1000;
+  const finishedAt = startedAt + Math.round(length);
+  const run = { day, lineup, index: lineup.length, gameStartedAt: finishedAt, waiting: false, results, startedAt, finishedAt, recordedInAdvance: true };
+  return { run, entry: boardEntry(run) };
+}
+
 // ----- Nicknames -----
 // 3-16 letters, numbers, spaces, underscores or hyphens; unique ignoring case.
 const BLOCKED = ['fuck', 'shit', 'cunt', 'bitch', 'nigg', 'fag', 'retard', 'whore', 'slut', 'rape', 'nazi', 'hitler',

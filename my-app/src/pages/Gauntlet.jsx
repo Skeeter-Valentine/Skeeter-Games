@@ -177,8 +177,9 @@ export default function Gauntlet() {
   const testNumber = Number(params.get('test'));
   const test = Number.isInteger(testNumber) && testNumber >= 1 && testNumber <= TEST_GAUNTLETS ? testNumber : 0;
   // ?day=YYYY-MM-DD opens a future gauntlet early, for the site owner only
-  // (from /admin/gauntlets): it plays off the leaderboard and the finished
-  // time is published as that day's time to beat.
+  // (from /admin/gauntlets). It's timed in the browser; the finished run is
+  // published as that day's time to beat and posted to that day's leaderboard
+  // as if played when the day opened.
   const dayParam = params.get('day');
   const [advance] = useState(() => !test && /^\d{4}-\d{2}-\d{2}$/.test(dayParam ?? '') && dayParam > gauntletDay() ? dayParam : null);
   const [date] = useState(() => test ? testDay(test) : advance ?? gauntletDay());
@@ -406,6 +407,26 @@ export default function Gauntlet() {
     // time to beat (e.g. recorded in advance) is kept unless you press Publish.
     if (!par || (advance && par.total !== runTotal(run))) publish(run);
   }, [owner, run, par, publish]);
+  // The owner's finished run that isn't on the leaderboard yet (an advance
+  // run, or one played off the board) is posted to that day's leaderboard.
+  const [recordStatus, setRecordStatus] = useState('');
+  const record = useCallback(async finished => {
+    setRecordStatus('Posting your run to the leaderboard…');
+    try {
+      const result = await sendEvent({ action: 'record', day: finished.date,
+        run: { results: finished.results, startedAt: finished.startedAt, finishedAt: finished.finishedAt } });
+      save({ ...finished, ranked: true });
+      setRecordStatus(result?.alreadyRecorded ? 'You already have a run on this day\'s leaderboard, so it was kept.'
+        : `Posted to ${advance ? `${advanceLabel}'s` : 'today\'s'} leaderboard, as if played when it opened.`);
+    } catch (error) { setRecordStatus(`Couldn't post your run to the leaderboard (${friendlyError(error)}).`); }
+  }, [save]);
+  const canRecord = owner && !test && !!run?.finishedAt && !run.ranked && boardEnabled && !!player?.nickname;
+  const autoRecorded = useRef(false);
+  useEffect(() => {
+    if (!canRecord || autoRecorded.current) return;
+    autoRecorded.current = true;
+    record(run);
+  }, [canRecord, run, record]);
   const showPar = par && !owner;
   const isOwner = owner && !test;
   const summary = historySummary(history, date);
@@ -493,7 +514,7 @@ export default function Gauntlet() {
       <h1>Skeeter Gauntlet</h1>
       <p className="gauntlet-lede">Six puzzles. One clock. One attempt a day.</p>
       {showPar && <p className="gauntlet-par">{PAR_NAME}'s time today: <strong>{formatClock(par.total)}</strong> · Can you beat it?</p>}
-      {isOwner && <p className="gauntlet-par">Signed in as the owner: your finished time will be published as {PAR_NAME}'s time to beat.</p>}
+      {isOwner && <p className="gauntlet-par">Signed in as the owner: your finished time will be published as {PAR_NAME}'s time to beat{advance ? ' and posted to that day\'s leaderboard' : ''}.</p>}
       {boardOn && <PlayerBar player={player} busy={playerBusy} error={playerError} onSignIn={signIn} onNickname={chooseNickname}
         onSignOut={() => { setPlayerError(''); signOutPlayer().catch(() => {}); }} />}
       <ol className="gauntlet-lineup">
@@ -539,7 +560,10 @@ export default function Gauntlet() {
             {result.hintPenalty > 0 && <small> (includes +{result.hintPenalty}s for hints)</small>}</td>
         </tr>)}</tbody>
       </table>
-      {boardOn && !run.ranked && <p className="gauntlet-note">This run isn't on the leaderboard{player ? '' : ' because you weren\'t signed in'}.</p>}
+      {isOwner && (recordStatus || (advance && run.ranked)) && <p className="gauntlet-par">{recordStatus || `This run is on ${advanceLabel}'s leaderboard.`}
+        {/^Couldn't/.test(recordStatus) && <> <button type="button" className="gauntlet-btn" onClick={() => record(run)}>Try again</button></>}</p>}
+      {isOwner && advance && !run.ranked && !recordStatus && player !== undefined && !player?.nickname && <p className="gauntlet-note">Sign in with a nickname to post this run to the leaderboard.</p>}
+      {boardOn && !run.ranked && !recordStatus && <p className="gauntlet-note">This run isn't on the leaderboard{player ? '' : ' because you weren\'t signed in'}.</p>}
       {boardOn && <Leaderboard title={boardTitle} board={board} uid={player?.uid} />}
       <div className="gauntlet-stats">
         <div><strong>{summary.played}</strong><span>Played</span></div>
@@ -626,7 +650,7 @@ export default function Gauntlet() {
         exactly where they will on the day. */}
     {advance && open && !framing && !(run && !run.finishedAt && !run.waiting) && <div className="gauntlet-test-bar gauntlet-advance-bar" role="note">
       <strong>Advance gauntlet · {advanceLabel}</strong>
-      <span>Only you can open this before it goes live. When you finish, your time is published as that day's {PAR_NAME} time to beat. Not on the leaderboard.</span>
+      <span>Only you can open this before it goes live. When you finish, your time is published as that day's {PAR_NAME} time to beat and posted to that day's leaderboard, as if you'd played it when it opened.</span>
       <Link to="/admin/gauntlets">All upcoming gauntlets</Link>
       {run && <button type="button" className="gauntlet-btn" onClick={restartTest}>Restart this gauntlet</button>}
     </div>}

@@ -31,6 +31,13 @@ export function dailyPeppers({ game, date, mode, status }, firstWin, now) {
 // Gauntlet games use their own puzzles (dated 20000 days ahead, as on the site).
 export const gauntletGamePeppers = (day, game) => dailyDifficulty(game, addDays(day, 20000));
 
+// Peppers for a whole finished run recorded at once (the owner's advance runs):
+// every solved game's rating plus the finishing bonus.
+export function gauntletRunPeppers(day, run) {
+  if (isTestDay(day) || !run?.results?.length) return 0;
+  return run.results.reduce((sum, result) => sum + (result.status === 'won' ? gauntletGamePeppers(day, result.game) : 0), 0) + GAUNTLET_BONUS;
+}
+
 // Peppers for one gauntlet "finish" event. Test gauntlets never count.
 export function gauntletPeppers(day, run, finished) {
   if (isTestDay(day) || !run?.results?.length) return 0;
