@@ -1,0 +1,49 @@
+/* Player stats admin page (AdminStats.jsx). Builds on AdminArchive.css. */
+.admin-stats h2 { margin: 34px 0 6px; font-size: 21px; }
+.stats-nav { display: flex; gap: 16px; justify-content: flex-end; font-size: 15px; }
+.stats-hero { display: grid; grid-template-columns: minmax(220px, 1fr) 2fr; gap: 14px; margin: 12px 0 8px; }
+.stats-hero-main { display: flex; flex-direction: column; justify-content: center; padding: 20px 24px; border: 1px solid #5a486e; border-radius: 14px;
+  background: linear-gradient(135deg, rgba(232, 52, 60, 0.16), rgba(0, 240, 255, 0.06)), #171222; }
+.stats-hero-main strong { font-size: 64px; line-height: 1; color: #fff; font-variant-numeric: tabular-nums; }
+.stats-hero-main span { margin-top: 6px; color: #f3ecfb; font-size: 18px; font-weight: bold; }
+.stats-hero-main small, .stats-tiles small { color: #a39bbe; font-size: 15px; }
+.stats-tiles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin: 0; }
+.stats-tiles div { padding: 12px 16px; border: 1px solid #3b2f4b; border-radius: 12px; background: #171222; }
+.stats-tiles dt { color: #c8c0d5; font-size: 15px; }
+.stats-tiles dd { margin: 2px 0; color: #fff; font-size: 30px; font-weight: bold; font-variant-numeric: tabular-nums; }
+.stats-chart { position: relative; margin: 8px 0 0; padding: 10px; border: 1px solid #3b2f4b; border-radius: 12px; background: #140f1e; }
+.stats-chart svg { display: block; width: 100%; height: auto; touch-action: pan-y; }
+.stats-grid { stroke: #2f263c; stroke-width: 1; }
+.stats-axis { fill: #a39bbe; font-size: 12px; font-variant-numeric: tabular-nums; }
+.stats-line { fill: none; stroke: #00d4e6; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.stats-crosshair { stroke: #8f86a5; stroke-width: 1; stroke-dasharray: 3 3; }
+.stats-dot { fill: #00d4e6; stroke: #140f1e; stroke-width: 2; }
+.stats-tooltip { position: absolute; top: 6px; transform: translateX(-50%); padding: 6px 10px; border: 1px solid #5a486e; border-radius: 8px; background: #221a2e;
+  color: #f5f0fb; font-size: 15px; white-space: nowrap; pointer-events: none; }
+.stats-tooltip span { margin-left: 8px; color: #a39bbe; }
+.stats-table td { vertical-align: middle; }
+.stats-num { text-align: right; font-variant-numeric: tabular-nums; }
+.stats-spark { display: block; width: 120px; height: 30px; }
+.stats-spark polyline { fill: none; stroke: #00d4e6; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.stats-spark circle { fill: #00d4e6; }
+.stats-up { color: #3ddc84; font-weight: bold; }
+.stats-down { color: #ff8fbd; font-weight: bold; }
+.stats-flat { color: #8f86a5; }
+.stats-player { cursor: pointer; }
+.stats-player.open td { background: #1c1526; }
+.admin-archive .stats-name { padding: 0; border: 0; background: none; color: #f5f0fb; font-weight: bold; text-align: left; }
+.stats-name em { color: #a39bbe; font-weight: normal; }
+.stats-chips { white-space: normal !important; }
+.stats-chip { display: inline-block; margin: 2px 6px 2px 0; padding: 2px 8px; border: 1px solid #3b2f4b; border-radius: 999px; background: #1e1729; font-size: 15px; }
+.stats-chip b { color: #00f0ff; }
+.stats-more { color: #a39bbe; font-size: 15px; }
+.stats-breakdown td { background: #140f1e; white-space: normal !important; }
+.stats-breakdown ul { display: grid; gap: 6px; margin: 6px 0 4px; padding: 0; list-style: none; }
+.stats-breakdown li { display: grid; grid-template-columns: 170px minmax(80px, 1fr) 190px; gap: 12px; align-items: center; }
+.stats-bar { display: block; height: 10px; border-radius: 0 5px 5px 0; background: #221a2e; }
+.stats-bar span { display: block; height: 100%; border-radius: 0 5px 5px 0; background: #00d4e6; }
+.admin-stats input[type="search"] { background: #0f0c1b; border: 1px solid #5b4e70; color: #f5f0fb; padding: 7px 10px; border-radius: 7px; font: inherit; }
+@media (max-width: 760px) {
+  .stats-hero { grid-template-columns: 1fr; }
+  .stats-breakdown li { grid-template-columns: 1fr; gap: 2px; }
+}

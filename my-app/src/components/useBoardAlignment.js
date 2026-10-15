@@ -17,6 +17,7 @@ export const boardSelectors = {
   stitches: '.stitches-board',
   map: '.skeedomap-canvas svg',
   'skeedle-beadle': '.beadle-panel',
+  'pepper-placer': '.pp-board',
 };
 
 export default function useBoardAlignment(gameId) {

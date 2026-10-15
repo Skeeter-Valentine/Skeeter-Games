@@ -5,6 +5,7 @@ import { games as DAILY_GAMES, validateAttempt, transition } from './attempts.js
 import { dailyBoardId, dailyBoardSeconds, recentBoardIds } from './dailyBoard.js';
 import { applyEvent, cleanNickname, gauntletDay, GauntletError, isDay } from './gauntlet.js';
 import { dailyPeppers, gauntletPeppers, pepperWeek } from './peppers.js';
+import { buildStats, parseAttemptId } from './adminStats.js';
 
 initializeApp();
 
@@ -122,4 +123,35 @@ export const setNickname = onCall({ region: 'us-central1', maxInstances: 10 }, a
   boardSnaps.forEach(snap => { if (snap.exists) batch.update(snap.ref, { nickname: cleaned.nickname }); });
   await batch.commit();
   return { nickname: cleaned.nickname };
+});
+
+// ----- Owner statistics (/admin/stats) -----
+// Reads every player record, puzzle attempt, gauntlet run and puzzle total
+// and summarises them. Only the site owner may call it. Cost grows with the
+// number of attempts (one read each), which is fine at this size.
+export const adminStats = onCall({ region: 'us-central1', maxInstances: 2, timeoutSeconds: 120, memory: '512MiB' }, async request => {
+  if (!request.auth || !OWNER_UIDS.includes(request.auth.uid)) throw new HttpsError('permission-denied', 'Owner only.');
+  const db = getFirestore();
+  const [groups, runSnap, rateSnap] = await Promise.all([
+    db.collectionGroup('players').get(), db.collection('gauntletRuns').get(), db.collection('puzzleRates').get(),
+  ]);
+  const players = [], attempts = [];
+  for (const doc of groups.docs) {
+    const parent = doc.ref.parent.parent;
+    if (!parent) { players.push({ uid: doc.id, nickname: doc.get('nickname') || null }); continue; }
+    if (parent.parent.id !== 'puzzleAttempts') continue;
+    const puzzle = parseAttemptId(parent.id);
+    if (puzzle) attempts.push({ uid: doc.id, ...puzzle, status: doc.get('status') });
+  }
+  const runs = runSnap.docs.map(doc => {
+    const split = doc.id.indexOf('_');
+    return { day: doc.id.slice(0, split), uid: doc.id.slice(split + 1), finished: !!doc.get('finishedAt') };
+  }).filter(run => /^\d{4}-\d{2}-\d{2}$/.test(run.day) && !run.day.startsWith('2099'));
+  const rates = rateSnap.docs.map(doc => ({ game: doc.get('game'), date: doc.get('date'), mode: doc.get('mode'), starts: doc.get('starts') || 0, wins: doc.get('wins') || 0 }))
+    .filter(rate => rate.game && rate.date);
+  const stats = buildStats({ players, attempts, runs, rates, today: new Date().toISOString().slice(0, 10) });
+  // Everyone with a nickname, plus the 200 most active players without one.
+  const named = stats.users.filter(user => user.nickname);
+  const unnamed = stats.users.filter(user => !user.nickname);
+  return { ...stats, users: [...named, ...unnamed.slice(0, 200)], unnamedTotal: unnamed.length };
 });

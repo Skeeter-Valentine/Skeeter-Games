@@ -2,7 +2,9 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import Navbar from '../../components/Navbar';
 import DailyResults from '../../components/DailyResults';
 import useUndoShortcut from '../../components/useUndoShortcut';
-import { useDailyDate, useArchive } from '../../components/DailyBoundary';
+import { useDailyDate, useArchive, useGauntlet } from '../../components/DailyBoundary';
+import { WalkthroughPrompt, walkthroughSeen } from '../../components/Walkthrough';
+import AkariTutorial, { AKARI_TUTORIAL_KEY } from './AkariTutorial';
 import { readLocal, writeLocal } from '../../utils/dailyStats.js';
 import { PRACTICE_SIZES, dailyPuzzle, evaluateBoard, generatePuzzle } from './puzzle.js';
 import './Akari.css';
@@ -40,16 +42,20 @@ export default function Akari() {
   const [game, setGame] = useState(() => newGame(date, 'daily', 7, archive));
   const [tool, setTool] = useState('bulb');
   const [practiceSize, setPracticeSize] = useState(7);
+  // "Learn to play" walkthrough (never inside the Skeeter Gauntlet).
+  const inGauntlet = !!useGauntlet();
+  const [learning, setLearning] = useState(false);
+  const [seenTutorial, setSeenTutorial] = useState(() => walkthroughSeen(AKARI_TUTORIAL_KEY));
   const boardRef = useRef(null);
   const { puzzle, bulbs, marks } = game;
   const status = useMemo(() => evaluateBoard(puzzle, bulbs), [puzzle, bulbs]);
   const { won, lit, conflicts, clues, whiteCount } = status;
 
   useEffect(() => {
-    if (!game.started || won) return;
+    if (!game.started || won || learning) return;
     const timer = setInterval(() => setGame(current => ({ ...current, seconds: current.seconds + 1 })), 1000);
     return () => clearInterval(timer);
-  }, [game.started, won]);
+  }, [game.started, won, learning]);
 
   useEffect(() => {
     if (game.mode === 'daily') writeLocal(saveKey(date, archive), {
@@ -58,6 +64,7 @@ export default function Akari() {
   }, [date, archive, game.mode, game.seconds, game.started, puzzle, bulbs, marks]);
 
   function changeMode(mode, size = practiceSize) {
+    setLearning(false);
     setGame(newGame(date, mode, size, archive));
     setTool('bulb');
   }
@@ -107,17 +114,24 @@ export default function Akari() {
   return <main className="akari-page">
     <Navbar />
     <header className="akari-heading"><p className="akari-eyebrow">LIGHT UP</p><h1>Skeeluminate</h1><p>A little light goes a long way.</p></header>
-    <DailyResults gameId="akari" title="Skeeluminate" daily={game.mode === 'daily'} date={date} finished={won} seconds={game.seconds} started={game.started} />
+    <DailyResults gameId="akari" title="Skeeluminate" daily={game.mode === 'daily'} date={date} finished={won} seconds={game.seconds} started={game.started} onLearn={() => setLearning(true)} />
     <div className="akari-controls">
-      <button aria-pressed={game.mode === 'daily'} onClick={() => changeMode('daily')}>{archive ? 'Archive puzzle' : 'Daily'}</button>
-      <button aria-pressed={game.mode === 'practice'} onClick={() => changeMode('practice')}>Practice</button>
-      {game.mode === 'practice' && <>
+      <button aria-pressed={!learning && game.mode === 'daily'} onClick={() => changeMode('daily')}>{archive ? 'Archive puzzle' : 'Daily'}</button>
+      <button aria-pressed={!learning && game.mode === 'practice'} onClick={() => changeMode('practice')}>Practice</button>
+      <button aria-pressed={learning} onClick={() => setLearning(!learning)}>Learn to play</button>
+      {!learning && game.mode === 'practice' && <>
         <select aria-label="Practice board size" value={practiceSize} onChange={event => { const size = Number(event.target.value); setPracticeSize(size); changeMode('practice', size); }}>
           {PRACTICE_SIZES.map(size => <option key={size} value={size}>{size} × {size}</option>)}
         </select>
         <button onClick={() => changeMode('practice')}>New puzzle</button>
       </>}
     </div>
+    {!learning && !seenTutorial && !inGauntlet && !won && <WalkthroughPrompt game="Skeeluminate" seenKey={AKARI_TUTORIAL_KEY} onStart={() => setLearning(true)} onDismiss={() => setSeenTutorial(true)} />}
+    {learning ? <AkariTutorial onDone={action => {
+      setLearning(false); setSeenTutorial(true);
+      if (action === 'practice') { setPracticeSize(5); changeMode('practice', 5); }
+      if (action === 'daily') changeMode('daily');
+    }} /> : <>
     <p className="akari-date">{game.mode === 'daily' ? `${date} · ${archive ? 'Archive' : 'Daily'}` : 'Practice'} · {puzzle.size} × {puzzle.size}</p>
     <section className="akari-panel" aria-label="Skeeluminate puzzle">
       <div className="akari-progress"><span><strong>{lit.size}</strong> / {whiteCount} lit</span><span>{Math.floor(game.seconds / 60)}:{String(game.seconds % 60).padStart(2, '0')}</span></div>
@@ -147,5 +161,6 @@ export default function Akari() {
       <p className={`akari-message${won ? ' won' : ''}`} role="status">{won ? 'Brilliant! Every square is lit.' : conflicts.size ? 'These bulbs shine on each other. Remove one of the red bulbs.' : Object.values(clues).includes('over') ? 'A numbered wall has too many adjacent bulbs.' : 'Light every white square. Bulbs must not shine on each other.'}</p>
     </section>
     <p className="akari-help">Tap a square to place a bulb. Use Mark × for notes, or right-click.<br />Arrow keys move between squares · B bulb · X mark · Delete erase</p>
+    </>}
   </main>;
 }

@@ -24,18 +24,20 @@ import skeedlemathImg from '../assets/skeedlemath2-blend.webp';
 import nonogramsImg from '../assets/skeedograms2-blend.webp';
 import skeedlemarathonImg from '../assets/skeedlemarathon-blend.webp';
 import stitchesImg from '../assets/skitches.webp';
+import pepperPlacerImg from '../assets/pepper-placer.webp';
 import gauntletBannerImg from '../assets/gauntlet-banner.webp';
 import gauntletBannerNarrowImg from '../assets/gauntlet-banner-narrow.webp';
 
 import { PAR_NAME, gauntletLaunched, STORAGE_PREFIX, formatClock, gauntletDay, restoreRun, runTotal, validPar } from '../gauntlet/gauntlet.js';
-import { readPar } from '../services/gauntletPar.js';
+import { readPar, watchOwner } from '../services/gauntletPar.js';
 import GauntletCountdown from '../components/GauntletCountdown';
 import { readLocal } from '../utils/dailyStats.js';
 
 const GAMES = [
+  { id: 'pepper-placer', title: 'Pepper Placer', path: '/pepper-placer', image: pepperPlacerImg, isNew: true },
   { id: 'akari', title: 'Skeeluminate', path: '/akari', image: skeeluminateImg, isNew: true },
   { id: 'skeedle-beadle', title: 'Skeedle Beadle', path: '/skeedle-beadle', image: skeedleBeadleImg, isNew: true },
-  { id: 'map', title: 'Cartograskeet', path: '/map', image: cartograskeetImg, isNew: true },
+  { id: 'map', title: 'Cartograskeet', path: '/map', image: cartograskeetImg },
   { id: 'parshle', title: 'Parshle', path: '/parshle', image: parshleImg },
   { id: 'stitches', title: 'Skitches', path: '/stitches', image: stitchesImg },
   { id: 'skeedlemarathon', title: 'Skeedlemarathon', path: '/skeedle-marathon', image: skeedlemarathonImg },
@@ -62,6 +64,9 @@ export default function LandingPage() {
   const gauntletOpen = gauntletLaunched(gauntletDate);
   const gauntletRun = gauntletOpen ? restoreRun(readLocal(`${STORAGE_PREFIX}run:${gauntletDate}`, null), gauntletDate) : null;
   const [par, setPar] = useState(null);
+  // The owner's account (and only it) gets a link to the admin pages.
+  const [owner, setOwner] = useState(false);
+  useEffect(() => watchOwner(setOwner), []);
   useEffect(() => {
     if (!gauntletOpen) return;
     let active = true;
@@ -93,6 +98,7 @@ export default function LandingPage() {
               <span><ChiliRating level={3} /> Picante</span>
             </div>
           </section>
+          {owner && <Link to="/admin" className="landing-admin-link" aria-label="Admin pages" title="Admin pages"><span aria-hidden="true">⚙</span><span className="landing-admin-text">Admin</span></Link>}
           <AccountMenu inline />
         </div>
       </header>

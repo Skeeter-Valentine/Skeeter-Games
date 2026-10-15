@@ -109,6 +109,8 @@ export const signOutPlayer = () => signOut(firebaseServices().auth);
 export const saveNickname = nickname => call('setNickname', { nickname }, 2);
 // { action: 'start' | 'next' | 'finish' | 'reset', day, game?, status?, penalty? }
 export const sendEvent = event => call('gauntletEvent', event);
+// Owner-only player and game statistics (/admin/stats).
+export const readAdminStats = () => call('adminStats', {}, 2);
 
 // This player's server run for a day, if they started one (on any device).
 export async function readMyRun(day, uid) {

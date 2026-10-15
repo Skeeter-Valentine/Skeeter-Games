@@ -9,7 +9,9 @@ import { COLORBLIND_GAMES } from './colorblind.js';
 
 const SPLIT_ROW_GAMES = ['parshle'];
 
-export default function GameToolbar({ gameId, title, onStats, onBoard, children }) {
+// onLearn: the game has a "Learn to play" walkthrough; the How to play pop-up
+// links to it.
+export default function GameToolbar({ gameId, title, onStats, onBoard, onLearn, children }) {
   const [instructionsOpen, setInstructionsOpen] = useState(false);
   const toolbarRef = useBoardAlignment(gameId);
   // Games with a narrow board put the timer and colorblind switch on their own
@@ -39,6 +41,10 @@ export default function GameToolbar({ gameId, title, onStats, onBoard, children 
     {instructionsOpen && <GameModal titleId={`instructions-${gameId}`} onClose={() => setInstructionsOpen(false)}>
       <p className="daily-results-eyebrow">{title}</p>
       <h2 id={`instructions-${gameId}`}>How to play</h2>
+      {onLearn && <div className="game-instructions-learn">
+        <p>Rather learn by doing? A short walkthrough solves a small puzzle with you, one step at a time.</p>
+        <button type="button" onClick={() => { setInstructionsOpen(false); onLearn(); }}>Try the walkthrough</button>
+      </div>}
       <ol className="game-instructions-list">{gameInstructions[gameId].map(rule => <li key={rule}>{rule}</li>)}</ol>
     </GameModal>}
   </>;

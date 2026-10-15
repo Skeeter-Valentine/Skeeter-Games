@@ -7,6 +7,8 @@ import { GAME_TITLES, buildRows } from '../utils/adminArchive.js';
 import { dailyDate } from '../utils/dailyClock.js';
 import { formatDuration } from '../utils/dailyStats.js';
 import ChiliRating from '../components/ChiliRating';
+import { Link } from 'react-router-dom';
+import Navbar from '../components/Navbar';
 import './AdminArchive.css';
 
 // Hidden, unlinked page. It only appears for Google accounts whose Firebase
@@ -96,6 +98,8 @@ export default function AdminArchive() {
   </>;
 
   return <main className="admin-archive">
+    <Navbar />
+    <nav className="admin-home-back"><Link to="/admin">← Admin home</Link></nav>
     <h1>Puzzle difficulty archive</h1>
     {body}
   </main>;

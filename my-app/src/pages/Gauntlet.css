@@ -163,3 +163,34 @@
 .gauntlet-pausable.paused .gauntlet-stage { visibility: hidden; }
 .gauntlet-paused-note { position: absolute; top: 120px; left: 0; right: 0; margin: 0; color: #d8ff00; font-size: 22px; text-align: center; }
 .gauntlet-hud-clock.paused { opacity: 0.55; }
+
+/* Cartograskeet in the frame: the map alone is sized to the frame (no wider
+   than the gauntlet bar, centered); the palette and tools sit underneath,
+   below it and never shrink the map (the frame grows to hold them). FittedStage doesn't scale
+   this game (--frame-h is the frame's height). */
+.gauntlet-frame.fitted [data-game="map"] .skeedomap { display: flex; flex-direction: column; align-items: center;
+  box-sizing: border-box; width: 100%; max-width: none; margin: 0; padding: 0 16px; }
+.gauntlet-frame.fitted [data-game="map"] .skeedomap-header, .gauntlet-frame.fitted [data-game="map"] .skeedomap-heading,
+.gauntlet-frame.fitted [data-game="map"] .skeedomap-board-top { display: none; }
+.gauntlet-frame.fitted [data-game="map"] .skeedomap-layout { display: contents; }
+.gauntlet-frame.fitted [data-game="map"] .skeedomap-board-card { order: 1; box-sizing: border-box; width: auto; }
+.gauntlet-frame.fitted [data-game="map"] .skeedomap-canvas { padding: 8px; }
+/* 1.435 is the map's width-to-height ratio; 70px covers the card's border,
+   padding and the progress line under the map. */
+.gauntlet-frame.fitted [data-game="map"] .skeedomap-canvas svg { display: block; height: auto;
+  width: min(calc(min(980px, 100vw - 32px) - 18px), calc((var(--frame-h) - 70px) * 1.435)); }
+.gauntlet-frame.fitted [data-game="map"] .skeedomap-board-bottom { padding-top: 4px; padding-bottom: 6px; }
+.gauntlet-frame.fitted [data-game="map"] .skeedomap-sidebar { order: 2; width: min(980px, 100%); margin-top: 14px; }
+.gauntlet-frame.fitted [data-game="map"] .skeedomap-pattern-toggle { order: 3; margin: 14px 0 0; }
+.gauntlet-frame.fitted [data-game="map"] .skeedomap-status { order: 4; margin-top: 10px; }
+
+/* "Show playing area for filming": the empty frame, outlined, at the width
+   of the gauntlet bar (the widest any game gets) and the frame's height. */
+.gauntlet-framing-open { display: block; margin: 12px auto 0; }
+.gauntlet-framing-box { box-sizing: border-box; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px;
+  width: min(980px, calc(100vw - 16px)); height: calc(var(--frame-h, 60vh) - 4px); margin: 0 auto; padding: 24px;
+  border: 3px dashed #d8ff00; border-radius: 14px; background: rgba(216, 255, 0, 0.04); color: #f3ecfb; text-align: center; font-size: 17px; }
+.gauntlet-framing-box strong { color: #d8ff00; font-size: 28px; letter-spacing: 1px; text-transform: uppercase; }
+.gauntlet-framing-box span { max-width: 520px; }
+.gauntlet-framing-note { color: #a39bbe; font-size: 15px; }
+.gauntlet-framing-start { border-color: #d8ff00; color: #d8ff00; }

@@ -7,7 +7,7 @@ test('every public route has initial HTML, unique metadata, canonical and sitema
   const sitemap = await readFile('dist/sitemap.xml', 'utf8');
   const app = (await readFile('src/App.jsx', 'utf8')).replace(/\{\/\*[\s\S]*?\*\/\}/g, '');
   // Skip redirect-only routes (/nerdle, /light-up), the 404 route and hidden admin pages.
-  const routes = [...app.matchAll(/<Route path="([^"]+)" element=\{(<\w+)/g)].filter(match => match[2] !== '<Navigate').map(match => match[1]).filter(path => path !== '*' && !path.startsWith('/admin/'));
+  const routes = [...app.matchAll(/<Route path="([^"]+)" element=\{(<\w+)/g)].filter(match => match[2] !== '<Navigate').map(match => match[1]).filter(path => path !== '*' && path !== '/admin' && !path.startsWith('/admin/'));
   assert.deepEqual(routes.sort(), Object.keys(pages).sort());
   assert.equal(new Set(Object.values(pages).map(page => page.title)).size, routes.length);
   assert.equal(new Set(Object.values(pages).map(page => page.description)).size, routes.length);

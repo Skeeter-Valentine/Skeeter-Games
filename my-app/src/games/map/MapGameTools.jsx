@@ -9,7 +9,7 @@ function readCompletions() {
   return Array.isArray(saved) ? [...new Set(saved.filter(value => typeof value === 'string'))] : [];
 }
 
-export default function MapGameTools({ puzzleId, won, filled, total, actions }) {
+export default function MapGameTools({ puzzleId, won, filled, total, actions, onLearn }) {
   const [open, setOpen] = useState(false);
   const [completed, setCompleted] = useState(readCompletions);
   useEffect(() => {
@@ -23,7 +23,7 @@ export default function MapGameTools({ puzzleId, won, filled, total, actions }) 
   }, [won, puzzleId]);
 
   return <>
-    <GameToolbar gameId="map" title="Cartograskeet" onStats={() => { setCompleted(readCompletions()); setOpen(true); }} />
+    <GameToolbar gameId="map" title="Cartograskeet" onLearn={onLearn} onStats={() => { setCompleted(readCompletions()); setOpen(true); }} />
     {open && <GameModal titleId="map-statistics" onClose={() => setOpen(false)}>
       <p className="daily-results-eyebrow">Cartograskeet</p>
       <h2 id="map-statistics">Your map statistics</h2>

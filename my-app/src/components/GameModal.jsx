@@ -23,7 +23,7 @@ export default function GameModal({ titleId, onClose, children, closeLabel = 'Ba
     <div className="daily-results-content">
       <button type="button" className="daily-results-close" aria-label="Close dialog" onClick={onClose}>×</button>
       {children}
-      <button type="button" className="daily-results-done" onClick={onClose}>{closeLabel}</button>
+      {closeLabel && <button type="button" className="daily-results-done" onClick={onClose}>{closeLabel}</button>}
     </div>
   </dialog>, document.body);
 }

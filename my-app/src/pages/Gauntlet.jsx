@@ -59,6 +59,7 @@ function usePenalty(gameId, level) {
 // bar (filling the rest of the window), scaled down if needed so the whole
 // game fits. The frame never moves between games, so a screen recorder or
 // stream can be cropped to it once. Phones keep the normal scrolling layout.
+const UNSCALED_GAMES = ['map'];
 const FIT_QUERY = '(min-width: 900px) and (min-height: 560px)';
 function FittedStage({ game, children }) {
   const frameRef = useRef(null);
@@ -86,10 +87,15 @@ function FittedStage({ game, children }) {
         // message or extra row appears. The first pass happens before the
         // frame's own styles apply, so it doesn't count toward that.
         const fitted = box.classList.contains('fitted');
-        const raw = Math.min(1, Math.floor(height / Math.max(1, stage.offsetHeight) * 100) / 100);
+        // Cartograskeet sizes its map to the frame itself (see Gauntlet.css),
+        // with its tools below the frame, so it is never scaled.
+        const raw = UNSCALED_GAMES.includes(game) ? 1 : Math.min(1, Math.floor(height / Math.max(1, stage.offsetHeight) * 100) / 100);
         const scale = fitted ? Math.min(smallest.current, raw) : raw;
         if (fitted) smallest.current = scale;
-        setFit(previous => previous && previous.scale === scale && previous.height === height && previous.width === width ? previous : { scale, height, width });
+        // An unscaled game's tools run on below the frame; the frame grows to
+        // hold them so the page below isn't covered.
+        const outer = UNSCALED_GAMES.includes(game) ? Math.max(height, stage.offsetHeight) : height;
+        setFit(previous => previous && previous.scale === scale && previous.height === height && previous.width === width && previous.outer === outer ? previous : { scale, height, width, outer });
       });
     };
     const resized = () => { smallest.current = 1; measure(); };
@@ -101,9 +107,9 @@ function FittedStage({ game, children }) {
     measure();
     return () => { cancelAnimationFrame(frame); observer.disconnect(); window.removeEventListener('resize', resized); media.removeEventListener?.('change', resized); };
   }, []);
-  return <div ref={frameRef} className={`gauntlet-frame${fit ? ' fitted' : ''}`} style={fit ? { height: fit.height } : undefined}>
+  return <div ref={frameRef} className={`gauntlet-frame${fit ? ' fitted' : ''}`} style={fit ? { height: fit.outer } : undefined}>
     <div ref={stageRef} className="gauntlet-stage" data-game={game}
-      style={fit ? { width: fit.width, transform: `translateX(-50%) scale(${fit.scale})` } : undefined}>{children}</div>
+      style={fit ? { width: fit.width, transform: `translateX(-50%) scale(${fit.scale})`, '--frame-h': `${fit.height}px` } : undefined}>{children}</div>
   </div>;
 }
 
@@ -170,14 +176,20 @@ export default function Gauntlet() {
   // ?test=1 … ?test=9 opens a replayable test gauntlet instead of today's.
   const testNumber = Number(params.get('test'));
   const test = Number.isInteger(testNumber) && testNumber >= 1 && testNumber <= TEST_GAUNTLETS ? testNumber : 0;
-  const [date] = useState(() => test ? testDay(test) : gauntletDay());
-  const open = !!test || gauntletLaunched(date) || params.get('preview') === '1';
+  // ?day=YYYY-MM-DD opens a future gauntlet early, for the site owner only
+  // (from /admin/gauntlets): it plays off the leaderboard and the finished
+  // time is published as that day's time to beat.
+  const dayParam = params.get('day');
+  const [advance] = useState(() => !test && /^\d{4}-\d{2}-\d{2}$/.test(dayParam ?? '') && dayParam > gauntletDay() ? dayParam : null);
+  const [date] = useState(() => test ? testDay(test) : advance ?? gauntletDay());
   const [lineup] = useState(() => gauntletLineup(date));
   const [run, setRun] = useState(() => restoreRun(readLocal(runKey(date), null), date));
   const [history, setHistory] = useState(() => readLocal(HISTORY_KEY, {}) || {});
   const [now, setNow] = useState(() => Date.now());
   const [confirming, setConfirming] = useState(false);
   const [rules, setRules] = useState(false);
+  // Before starting: show where the gauntlet bar and games will sit, to line up a recording.
+  const [framing, setFraming] = useState(false);
   const [copied, setCopied] = useState('');
   const runRef = useRef(run);
   // The owner's published time for today (undefined while loading).
@@ -191,6 +203,9 @@ export default function Gauntlet() {
     return () => { active = false; };
   }, [date]);
   useEffect(() => watchOwner(setOwner), []);
+  const open = !!test || (advance ? owner : gauntletLaunched(date) || params.get('preview') === '1');
+  // The leaderboard is off for advance runs (the server only times today's).
+  const boardOn = boardEnabled && !advance;
 
   // ----- Leaderboard -----
   // player: undefined while loading, null when signed out, else { uid, nickname }.
@@ -204,7 +219,7 @@ export default function Gauntlet() {
   const queue = useRef(Promise.resolve());
   const pending = useRef(0);
   useEffect(() => watchPlayer(setPlayer), []);
-  const ranked = boardEnabled && !!player?.nickname;
+  const ranked = boardOn && !!player?.nickname;
   const current = run && !run.finishedAt ? lineup[run.index] : null;
   const penalty = usePenalty(current?.id, current?.level);
   const penaltyRef = useRef(penalty);
@@ -215,7 +230,7 @@ export default function Gauntlet() {
     runRef.current = next;
     setRun(next);
     writeLocal(runKey(next.date), next);
-    if (next.finishedAt && !test) setHistory(previous => {
+    if (next.finishedAt && !test && !advance) setHistory(previous => {
       const updated = addToHistory(previous, next);
       writeLocal(HISTORY_KEY, updated);
       return updated;
@@ -223,7 +238,7 @@ export default function Gauntlet() {
   }, []);
 
   const loadBoard = useCallback(async finished => {
-    if (!boardEnabled || !open) return;
+    if (!boardOn || !open) return;
     try {
       const entries = await readBoard(date);
       let mine = null, standing = null;
@@ -262,7 +277,7 @@ export default function Gauntlet() {
 
   // On load, pick up a leaderboard run started on this or another device.
   useEffect(() => {
-    if (!boardEnabled || !open || !player?.uid) return;
+    if (!boardOn || !open || !player?.uid) return;
     let active = true;
     readMyRun(date, player.uid).then(serverRun => {
       if (!active || !serverRun || pending.current) return;
@@ -387,7 +402,9 @@ export default function Gauntlet() {
   useEffect(() => {
     if (test || !owner || !run?.finishedAt || autoPublished.current || par === undefined) return;
     autoPublished.current = true;
-    if (!par || par.total !== runTotal(run)) publish(run);
+    // An advance run (re)publishes its time; on the day itself an existing
+    // time to beat (e.g. recorded in advance) is kept unless you press Publish.
+    if (!par || (advance && par.total !== runTotal(run))) publish(run);
   }, [owner, run, par, publish]);
   const showPar = par && !owner;
   const isOwner = owner && !test;
@@ -397,7 +414,7 @@ export default function Gauntlet() {
   // Enter starts the next game from the break screen. Ignored on a focused
   // button (it clicks itself), for held-down keys, and just after a game ends
   // so the Enter that finished a word game can't skip the break.
-  const startBlocked = starting || (boardEnabled && !!player && !player.nickname);
+  const startBlocked = starting || (boardOn && !!player && !player.nickname);
   const enterAction = open && run?.waiting ? next : null;
   const enterRef = useRef(enterAction);
   enterRef.current = enterAction;
@@ -431,14 +448,45 @@ export default function Gauntlet() {
     })}
   </ol>;
 
+  const advanceLabel = advance && new Date(`${advance}T12:00:00Z`).toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric', timeZone: 'UTC' });
   let body;
-  if (!open) {
+  if (advance && !open) {
+    body = <section className="gauntlet-card gauntlet-intro">
+      <p className="gauntlet-eyebrow">Not open yet</p>
+      <h1>Skeeter Gauntlet</h1>
+      <p>This gauntlet opens {new Date(gauntletOpensAt(advance)).toLocaleString(undefined, { weekday: 'long', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}.</p>
+      <Link className="gauntlet-btn" to="/gauntlet">Play today's gauntlet</Link>
+    </section>;
+  } else if (!open) {
     body = <section className="gauntlet-card gauntlet-intro">
       <p className="gauntlet-eyebrow">Coming soon</p>
       <h1>Skeeter Gauntlet</h1>
       <p>{GAUNTLET_START ? `The first gauntlet opens ${new Date(gauntletOpensAt(GAUNTLET_START)).toLocaleString(undefined, { weekday: 'long', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}.` : 'Six puzzles. One clock. One attempt a day. The Skeeter Gauntlet is coming soon.'}</p>
       <Link className="gauntlet-btn" to="/">Back to the puzzles</Link>
     </section>;
+  } else if (!run && framing) {
+    // The same bar and frame the games use, empty, with the playing area outlined.
+    body = <>
+      <div className="gauntlet-hud gauntlet-hud-preview">
+        <div className="gauntlet-hud-game"><span>Game 1 of {lineup.length}</span><strong>{lineup[0].title}</strong><ChiliRating level={lineup[0].level} /></div>
+        {pips}
+        <div className="gauntlet-hud-clock">0:00</div>
+        <div className="gauntlet-hud-actions">
+          <button type="button" className="gauntlet-btn" onClick={() => setFraming(false)}>Back</button>
+          <span className="gauntlet-giveup">
+            <button type="button" className="gauntlet-btn gauntlet-framing-start" onClick={() => { setFraming(false); start(); }} disabled={startBlocked}>Start</button>
+            <small>Clock starts</small>
+          </span>
+        </div>
+      </div>
+      <FittedStage key="framing" game="framing">
+        <div className="gauntlet-framing-box">
+          <strong>Playing area</strong>
+          <span>Every game appears inside this box, under the bar above. Line your capture up with the bar and this box, then press Start.</span>
+          <span className="gauntlet-framing-note">Cartograskeet's palette sits just below the box.</span>
+        </div>
+      </FittedStage>
+    </>;
   } else if (!run) {
     body = <section className="gauntlet-card gauntlet-intro">
       <p className="gauntlet-eyebrow">Daily challenge</p>
@@ -446,7 +494,7 @@ export default function Gauntlet() {
       <p className="gauntlet-lede">Six puzzles. One clock. One attempt a day.</p>
       {showPar && <p className="gauntlet-par">{PAR_NAME}'s time today: <strong>{formatClock(par.total)}</strong> · Can you beat it?</p>}
       {isOwner && <p className="gauntlet-par">Signed in as the owner: your finished time will be published as {PAR_NAME}'s time to beat.</p>}
-      {boardEnabled && <PlayerBar player={player} busy={playerBusy} error={playerError} onSignIn={signIn} onNickname={chooseNickname}
+      {boardOn && <PlayerBar player={player} busy={playerBusy} error={playerError} onSignIn={signIn} onNickname={chooseNickname}
         onSignOut={() => { setPlayerError(''); signOutPlayer().catch(() => {}); }} />}
       <ol className="gauntlet-lineup">
         {lineup.map((game, index) => <li key={game.id}><span className="gauntlet-lineup-number">{index + 1}</span><span>{game.title}</span><ChiliRating level={game.level} /></li>)}
@@ -460,15 +508,17 @@ export default function Gauntlet() {
         <li>Skeedle Beadle: each hint adds 5 seconds to your time.</li>
         <li>Word games (Skeedle+, Ske4dle, Parshle and Skeedle500): every guess you don't need takes 5 seconds off your time. The time off for solving on each guess is shown beside the row.</li>
         <li>You get one attempt per day. <GauntletCountdown /></li>
-        {boardEnabled && <li>Signed-in players are timed by the server and ranked on the daily leaderboard: most games solved first, then the fastest total time.</li>}
+        {boardOn && <li>Signed-in players are timed by the server and ranked on the daily leaderboard: most games solved first, then the fastest total time.</li>}
       </ul>
       <button type="button" className="gauntlet-btn gauntlet-btn-primary" onClick={() => start()} disabled={startBlocked}>
         {starting ? 'Starting…' : 'Start the gauntlet'}</button>
-      {boardEnabled && player && !player.nickname && <p className="gauntlet-note">Choose a nickname above to start.</p>}
-      {boardEnabled && !player && player !== undefined && <p className="gauntlet-note">Playing without signing in? Your time won't be on the leaderboard.</p>}
+      {owner && <button type="button" className="gauntlet-btn gauntlet-framing-open" onClick={() => { setFraming(true); window.scrollTo(0, 0); }}>Show playing area for filming</button>}
+      {owner && !advance && <Link className="gauntlet-btn gauntlet-framing-open" to="/admin/gauntlets">Record upcoming gauntlets</Link>}
+      {boardOn && player && !player.nickname && <p className="gauntlet-note">Choose a nickname above to start.</p>}
+      {boardOn && !player && player !== undefined && <p className="gauntlet-note">Playing without signing in? Your time won't be on the leaderboard.</p>}
       {syncNote && ranked && !starting && <><p className="gauntlet-note gauntlet-sync" role="alert">{syncNote}</p>
         <button type="button" className="gauntlet-btn" onClick={() => start({ unranked: true })}>Play without the leaderboard</button></>}
-      {boardEnabled && <Leaderboard title={boardTitle} board={board} uid={player?.uid} />}
+      {boardOn && <Leaderboard title={boardTitle} board={board} uid={player?.uid} />}
     </section>;
   } else if (run.finishedAt) {
     const solved = run.results.filter(result => result.status === 'won').length;
@@ -476,7 +526,7 @@ export default function Gauntlet() {
       <p className="gauntlet-eyebrow">{solved === lineup.length ? 'Gauntlet conquered' : 'Gauntlet complete'}</p>
       <h1>{formatClock(runTotal(run))}</h1>
       {showPar && <p className={`gauntlet-par-verdict${runTotal(run) < par.total ? ' won' : ''}`}>{parVerdict(runTotal(run), par.total)} <span>({PAR_NAME}: {formatClock(par.total)})</span></p>}
-      {isOwner && <p className="gauntlet-par">{publishStatus || (par && par.total === runTotal(run) ? `This is today's ${PAR_NAME} time.` : '')}
+      {isOwner && <p className="gauntlet-par">{publishStatus || (par && par.total === runTotal(run) ? `This is ${advance ? `${advanceLabel}'s` : 'today\'s'} ${PAR_NAME} time.` : '')}
         {(!par || par.total !== runTotal(run)) && !/Publishing/.test(publishStatus) && <> <button type="button" className="gauntlet-btn" onClick={() => publish(run)}>Publish my time</button></>}</p>}
       {pips}
       <table className="gauntlet-table">
@@ -489,8 +539,8 @@ export default function Gauntlet() {
             {result.hintPenalty > 0 && <small> (includes +{result.hintPenalty}s for hints)</small>}</td>
         </tr>)}</tbody>
       </table>
-      {boardEnabled && !run.ranked && <p className="gauntlet-note">This run isn't on the leaderboard{player ? '' : ' because you weren\'t signed in'}.</p>}
-      {boardEnabled && <Leaderboard title={boardTitle} board={board} uid={player?.uid} />}
+      {boardOn && !run.ranked && <p className="gauntlet-note">This run isn't on the leaderboard{player ? '' : ' because you weren\'t signed in'}.</p>}
+      {boardOn && <Leaderboard title={boardTitle} board={board} uid={player?.uid} />}
       <div className="gauntlet-stats">
         <div><strong>{summary.played}</strong><span>Played</span></div>
         <div><strong>{summary.bestTime === null ? '—' : formatClock(summary.bestTime)}</strong><span>Best time</span></div>
@@ -571,6 +621,14 @@ export default function Gauntlet() {
       <span>Replayable · not saved to your stats · your time is never published</span>
       <nav aria-label="Test gauntlets">{[1, 2, 3].map(n => <a key={n} href={`/gauntlet?test=${n}`} aria-current={n === test ? 'page' : undefined}>Test {n}</a>)}</nav>
       {run && <button type="button" className="gauntlet-btn" onClick={restartTest}>Restart this test</button>}
+    </div>}
+    {/* Hidden mid-game and in the filming preview so the bar and games sit
+        exactly where they will on the day. */}
+    {advance && open && !framing && !(run && !run.finishedAt && !run.waiting) && <div className="gauntlet-test-bar gauntlet-advance-bar" role="note">
+      <strong>Advance gauntlet · {advanceLabel}</strong>
+      <span>Only you can open this before it goes live. When you finish, your time is published as that day's {PAR_NAME} time to beat. Not on the leaderboard.</span>
+      <Link to="/admin/gauntlets">All upcoming gauntlets</Link>
+      {run && <button type="button" className="gauntlet-btn" onClick={restartTest}>Restart this gauntlet</button>}
     </div>}
     {syncNote && run && !run.finishedAt && <p className="gauntlet-sync-bar" role="alert">{syncNote}</p>}
     {signingIn && <SignInDialog onClose={() => setSigningIn(false)} />}

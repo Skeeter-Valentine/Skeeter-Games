@@ -229,3 +229,11 @@ html, body {
   .gauntlet-feature { margin-bottom: 1.25rem; }
   .gauntlet-feature-status { font-size: 15px; }
 }
+/* Owner-only link to the admin pages (hidden for everyone else). */
+.landing-admin-link { flex-shrink: 0; padding: 6px 12px; border: 1px dashed #d8ff00; border-radius: 999px; color: #d8ff00; font-size: 15px; font-weight: bold; text-decoration: none; }
+.landing-admin-link:hover, .landing-admin-link:focus-visible { background: rgba(216, 255, 0, 0.1); }
+.landing-admin-link { display: inline-flex; align-items: center; gap: 6px; }
+@media (max-width: 600px) {
+  .landing-admin-link { padding: 4px 8px; }
+  .landing-admin-text { display: none; }
+}

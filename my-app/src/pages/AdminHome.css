@@ -1,0 +1,7 @@
+.admin-home-back { font-size: 15px; }
+.admin-home-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; margin: 18px 0; padding: 0; list-style: none; }
+.admin-home-grid a { display: flex; flex-direction: column; gap: 8px; height: 100%; box-sizing: border-box; padding: 20px 22px; border: 1px solid #5a486e; border-radius: 14px;
+  background: #171222; color: #c8c0d5; text-decoration: none; transition: border-color 0.15s ease, transform 0.15s ease; }
+.admin-home-grid a:hover, .admin-home-grid a:focus-visible { border-color: #00f0ff; transform: translateY(-2px); outline: none; }
+.admin-home-grid strong { color: #00f0ff; font-size: 20px; }
+.admin-home-grid span { font-size: 15px; line-height: 1.45; }

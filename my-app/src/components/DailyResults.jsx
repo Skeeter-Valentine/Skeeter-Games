@@ -38,7 +38,7 @@ function GauntletReport({ gauntlet, gameId, daily, finished, won = true, ready =
 }
 
 function DailySession({ gameId, title, date, daily, finished, won = true, seconds, ready = true,
-  manualOpen = false, onClose, legacyStats, started = false, autoOpen = true }) {
+  manualOpen = false, onClose, legacyStats, started = false, autoOpen = true, onLearn }) {
   const archive = !!useArchive()?.archive;
   const statsId = archiveStatsId(gameId, archive);
   const [stats, setStats] = useState(() => readDailyStats(statsId));
@@ -111,7 +111,7 @@ function DailySession({ gameId, title, date, daily, finished, won = true, second
   const showBoard = dailyBoardEnabled && daily && !archive;
   return <>
     <GameToolbar gameId={gameId} title={title} onStats={() => { setStats(readDailyStats(statsId)); setOpen(true); }}
-      onBoard={showBoard ? () => setBoardOpen(true) : undefined}>
+      onBoard={showBoard ? () => setBoardOpen(true) : undefined} onLearn={onLearn}>
       {daily && !hasTimer && <span aria-label="Daily elapsed time">Time: {formatDuration(result?.seconds ?? clock)}</span>}
     </GameToolbar>
     {visible && <GameModal titleId={`daily-title-${gameId}`} onClose={close}>

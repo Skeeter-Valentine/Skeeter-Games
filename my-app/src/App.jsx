@@ -6,8 +6,12 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 
 import LandingPage from './pages/LandingPage';
 import AdminArchive from './pages/AdminArchive';
+import AdminGauntlets from './pages/AdminGauntlets';
+import AdminStats from './pages/AdminStats';
+import AdminHome from './pages/AdminHome';
 import Gauntlet from './pages/Gauntlet';
 import SkeedleBeadle from './games/skeedle-beadle/SkeedleBeadle';
+import PepperPlacer from './games/pepper-placer/PepperPlacer';
 import Seo from './seo/Seo';
 import GameFeedback from './components/GameFeedback';
 import Navbar from './components/Navbar';
@@ -55,13 +59,17 @@ export default function App() {
         <Route path="/nonograms" element={<DailyBoundary><Nonograms /></DailyBoundary>} />
         {/* <Route path="/nurikabe" element={<Nurikabe />} /> */}
         <Route path="/skeedle-beadle" element={<DailyBoundary><SkeedleBeadle /></DailyBoundary>} />
+        <Route path="/pepper-placer" element={<DailyBoundary><PepperPlacer /></DailyBoundary>} />
         {/* About and Privacy: the page text comes from the SEO guide below (src/pages/info). */}
         <Route path="/about" element={<Navbar />} />
         <Route path="/privacy" element={<Navbar />} />
         <Route path="/map" element={<DailyBoundary><Map /></DailyBoundary>} />
         <Route path="/skeedle-marathon" element={<DailyBoundary><SkeedleMarathon /></DailyBoundary>} />
         {/* Hidden owner-only difficulty archive: unlinked, not prerendered, noindex. */}
+        <Route path="/admin" element={<AdminHome />} />
         <Route path="/admin/archive" element={<AdminArchive />} />
+        <Route path="/admin/gauntlets" element={<AdminGauntlets />} />
+        <Route path="/admin/stats" element={<AdminStats />} />
         <Route path="*" element={<div>404 - Game Not Found</div>} />
       </Routes>
       <PageAds />

@@ -2,7 +2,9 @@ import React, { useEffect, useId, useMemo, useRef, useState } from 'react';
 import Navbar from '../../components/Navbar';
 import MapGameTools from './MapGameTools';
 import DailyResults from '../../components/DailyResults';
-import { useDailyDate, useDailyMode, useArchive } from '../../components/DailyBoundary';
+import { useDailyDate, useDailyMode, useArchive, useGauntlet } from '../../components/DailyBoundary';
+import { WalkthroughPrompt, walkthroughSeen } from '../../components/Walkthrough';
+import MapTutorial, { MAP_TUTORIAL_KEY } from './MapTutorial';
 import { readLocal, writeLocal } from '../../utils/dailyStats.js';
 import { puzzleSnapshot } from '../../utils/archive.js';
 import { makePuzzle, dailyConfig } from './puzzle.js';
@@ -49,6 +51,10 @@ export default function Map({ initialSeed, initialSize = 'Medium' }) {
   const [selected, setSelected] = useState(0);
   const [pencil, setPencil] = useState(false);
   const [labels, setLabels] = useState(false);
+  // "Learn to play" walkthrough (never inside the Skeeter Gauntlet).
+  const inGauntlet = !!useGauntlet();
+  const [learning, setLearning] = useState(false);
+  const [seenTutorial, setSeenTutorial] = useState(() => walkthroughSeen(MAP_TUTORIAL_KEY));
   const [message, setMessage] = useState('Pick a color. Find its place.');
   const drag = useRef(null);
   const suppressClick = useRef(false);
@@ -136,6 +142,7 @@ export default function Map({ initialSeed, initialSize = 'Medium' }) {
     setLabels(true);
   }
   function keyboard(event) {
+    if (learning) return;
     if (/^(SELECT|INPUT|TEXTAREA)$/.test(event.target.tagName)) return;
     const key = event.key.toLowerCase();
     if (key === 'escape') { cancelDrag(); return; }
@@ -156,13 +163,20 @@ export default function Map({ initialSeed, initialSize = 'Medium' }) {
         <p className="skeedomap-subtitle">Let's make a map.</p>
         <p className="skeedomap-description">Four colors. No matching neighbors.</p>
       </header>
-      {daily ? <DailyResults gameId="map" title="Cartograskeet" daily date={date} started={history.length > 1} finished={won} /> : <MapGameTools puzzleId={`${settings.seed}:${settings.size}`} won={won} filled={filled} total={board.colors.length} actions={cursor} />}
+      {daily ? <DailyResults gameId="map" title="Cartograskeet" daily date={date} started={!learning && history.length > 1} finished={won} onLearn={() => setLearning(true)} /> : <MapGameTools puzzleId={`${settings.seed}:${settings.size}`} won={won} onLearn={() => setLearning(true)} filled={filled} total={board.colors.length} actions={cursor} />}
       <div className="skeedomap-heading">
         <div className="skeedomap-session-controls">
-          <button className="skeedomap-primary" aria-pressed={daily} onClick={playDaily}>{archive ? 'Archive puzzle' : 'Daily'}</button>
-          <button className="skeedomap-primary" aria-pressed={!daily} onClick={() => newGame()}>New practice map <span aria-hidden="true">↗</span></button>
+          <button className="skeedomap-primary" aria-pressed={!learning && daily} onClick={() => { setLearning(false); playDaily(); }}>{archive ? 'Archive puzzle' : 'Daily'}</button>
+          <button className="skeedomap-primary" aria-pressed={!learning && !daily} onClick={() => { setLearning(false); newGame(); }}>New practice map <span aria-hidden="true">↗</span></button>
+          <button className="skeedomap-primary" aria-pressed={learning} onClick={() => setLearning(!learning)}>Learn to play</button>
         </div>
       </div>
+      {!learning && !seenTutorial && !inGauntlet && !won && <WalkthroughPrompt game="Cartograskeet" seenKey={MAP_TUTORIAL_KEY} onStart={() => setLearning(true)} onDismiss={() => setSeenTutorial(true)} />}
+      {learning ? <MapTutorial onDone={action => {
+        setLearning(false); setSeenTutorial(true);
+        if (action === 'practice') newGame('Small');
+        if (action === 'daily') playDaily();
+      }} /> : <>
       <label className="skeedomap-pattern-toggle">
         <input type="checkbox" role="switch" checked={patterns} onChange={event => setPatterns(event.target.checked)} />
         <span>Colorblind mode · patterns</span>
@@ -223,6 +237,7 @@ export default function Map({ initialSeed, initialSize = 'Medium' }) {
         </aside>
       </div>
       <div className={`skeedomap-status ${won ? 'is-won' : ''}`} role="status" aria-live="polite">{won ? 'Beautifully mapped. Every color is in its place. Ready for another?' : conflicts.size ? `${conflicts.size} regions have matching neighbors. Look for the ! marks.` : message}</div>
+      </>}
       <footer className="skeedomap-footer"><span>Inspired by <a href="https://www.chiark.greenend.org.uk/~sgtatham/puzzles/" target="_blank" rel="noreferrer">Simon Tatham’s Map</a></span></footer>
     </section>
   );

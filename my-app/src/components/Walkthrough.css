@@ -1,0 +1,56 @@
+/* Shared "Learn to play" walkthrough (see Walkthrough.jsx). Matches Pepper
+   Placer's walkthrough: large text, the board beside it (below on phones). */
+.wt-panel { box-sizing: border-box; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 340px); gap: 28px; align-items: center;
+  width: min(980px, calc(100vw - 32px)); margin: 0 0 18px 50%; transform: translateX(-50%); padding: 22px; border: 1px solid #50435f; border-radius: 16px; background: #191525; }
+.wt-text { text-align: left; }
+.wt-panel .wt-text h2 { margin: 2px 0 8px; color: #fff2d6; font-size: 34px; line-height: 1.2; }
+.wt-panel .wt-text p, .wt-panel .wt-text li { color: #ded4e8; font-size: 23px; line-height: 1.45; }
+.wt-text ul, .wt-text ol { padding-left: 24px; }
+.wt-text strong { color: #ffe390; }
+.wt-step { margin: 0; color: #ff8f6b; font-size: 18px !important; letter-spacing: 0.08em; text-transform: uppercase; }
+.wt-nudge { padding: 8px 12px; border-left: 3px solid #f5c542; border-radius: 6px; background: rgba(245, 197, 66, 0.1); font-size: 21px !important; }
+.wt-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+.wt-panel .wt-actions button { min-height: 50px; padding: 10px 20px; border: 1px solid #5b4e70; border-radius: 8px; background: #272134; color: #f5f0fb; font: inherit; font-size: 19px; cursor: pointer; }
+.wt-panel .wt-actions .wt-primary { border-color: #e8343c; background: #c2272f; color: #fff; font-weight: bold; }
+.wt-board { min-width: 0; }
+.wt-panel.wt-wide { grid-template-columns: minmax(0, 1fr) minmax(0, 470px); }
+/* Pop-up when the game opens (WalkthroughPrompt). */
+.wt-modal p:not(.daily-results-eyebrow) { margin: 0 0 18px; color: #e3d9ee; font-size: 19px; line-height: 1.5; }
+.wt-modal .wt-modal-start { display: block; width: 100%; min-height: 52px; padding: 12px; border: 0; border-radius: 8px; background: #ff2a85; color: #fff; font: inherit; font-size: 19px; font-weight: bold; cursor: pointer; }
+.wt-modal .wt-modal-start:hover { background: #ff4b9a; }
+.wt-modal-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.wt-modal-row button { flex: 1 1 140px; min-height: 46px; padding: 8px 12px; border: 1px solid #5b4e70; border-radius: 8px; background: transparent; color: #d8cfe4; font: inherit; font-size: 16px; cursor: pointer; }
+.wt-modal-row button:hover { background: #272134; }
+/* Highlights the games' boards use: the thing a step is about, and what to tap. */
+.wt-focus { position: relative; }
+.wt-focus::before { content: ''; position: absolute; inset: 0; background: rgba(255, 255, 255, 0.3); pointer-events: none; }
+.wt-target { position: relative; }
+.wt-target::after { content: ''; position: absolute; inset: 4px; border: 3px solid #e8343c; border-radius: 6px; box-shadow: 0 0 10px rgba(232, 52, 60, 0.6); pointer-events: none; animation: wt-pulse 1.1s ease-in-out infinite; }
+@keyframes wt-pulse { 50% { transform: scale(0.88); opacity: 0.6; } }
+@media (max-width: 640px) {
+  .wt-panel { grid-template-columns: 1fr; gap: 16px; padding: 14px; }
+  .wt-board { max-width: 340px; width: 100%; margin: 0 auto; }
+  .wt-text { order: 2; }
+  .wt-panel .wt-text p, .wt-panel .wt-text li { font-size: 21px; }
+  .wt-panel .wt-text h2 { font-size: 28px; }
+  .wt-panel .wt-actions button { font-size: 18px; }
+  .wt-panel.wt-wide { grid-template-columns: 1fr; }
+  .wt-panel.wt-wide .wt-board { max-width: none; }
+}
+@media (prefers-reduced-motion: reduce) { .wt-target::after { animation: none; } }
+/* Cartograskeet walkthrough map. */
+.wt-map { display: block; width: 100%; height: auto; overflow: visible; }
+.wt-map-region { cursor: pointer; outline: none; }
+.wt-map-region polygon { stroke: #0f1320; stroke-width: 3; stroke-linejoin: round; transition: fill 0.2s; }
+.wt-map-region.is-focus polygon { stroke: #ffffff; stroke-width: 6; }
+.wt-map-region.is-target polygon { stroke: #ff3b44; stroke-width: 9; stroke-dasharray: 16 8; animation: wt-dash 0.9s linear infinite, wt-glow 1.1s ease-in-out infinite; }
+@keyframes wt-glow { 50% { fill: #6b2a3a; } }
+.wt-map-region:focus-visible polygon { stroke: #00f0ff; stroke-width: 6; }
+.wt-map-clue { fill: #0f1320; opacity: 0.55; pointer-events: none; }
+@keyframes wt-dash { to { stroke-dashoffset: -48; } }
+@media (prefers-reduced-motion: reduce) { .wt-map-region.is-target polygon { animation: none; fill: #5a2836; } }
+/* Skeeluminate walkthrough board. */
+.wt-akari-board { max-width: 340px; margin: 0 auto; }
+/* Skeedle Beadle walkthrough rack (uses the game's own stick styles). */
+.wt-beadle .beadle-rack { --stick: min(56px, 15vw); --gap: min(12px, 2.4vw); flex-wrap: nowrap; }
+.wt-beadle-cue { margin: 0 0 4px; color: #ffd9a3; font-size: 16px; text-align: center; min-height: 1.4em; }

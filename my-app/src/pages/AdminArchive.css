@@ -12,3 +12,12 @@
 .admin-archive th { background: #1e1729; color: #c5b6d5; font-weight: 600; position: sticky; top: 0; }
 .admin-archive tbody tr:hover { background: #1c1526; }
 .admin-archive a { color: #00f0ff; }
+/* Upcoming gauntlets (AdminGauntlets.jsx) */
+.admin-gauntlets td { vertical-align: top; }
+.admin-gauntlet-lineup { display: flex; flex-wrap: wrap; gap: 4px 26px; margin: 0; padding-left: 18px; white-space: normal; }
+.admin-gauntlet-lineup li { white-space: nowrap; }
+.admin-gauntlet-today td { background: rgba(216, 255, 0, 0.05); }
+.admin-gauntlet-tag { margin-left: 8px; padding: 1px 7px; border-radius: 999px; background: #d8ff00; color: #121212; font-size: 15px; font-weight: bold; }
+.admin-gauntlet-time { color: #3ddc84; font-size: 18px; }
+.admin-gauntlet-missing { color: #ff8fbd; font-weight: bold; }
+.admin-gauntlet-play { display: inline-block; padding: 6px 14px; border: 1px solid #00f0ff; border-radius: 8px; text-decoration: none; font-weight: bold; }

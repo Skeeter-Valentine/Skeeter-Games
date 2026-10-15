@@ -15,6 +15,13 @@ export const gameInstructions = {
     'Number keys pick sticks from left to right, top row first (0, − and = for the 10th–12th); U undoes, H shows a hint and Esc puts the beads back down.',
     'Daily puzzles reset at midnight UTC and save progress in this browser. Mild has 6 bead types, Medium 8 and Picante 10, each with two empty sticks, so the sticks always form two even rows. Par is a solution length found by the puzzle maker; beating it is a bonus, not a requirement. Practice lets you choose a difficulty and generate another puzzle.',
   ],
+  'pepper-placer': [
+    'Plant peppers so that every row, every column and every outlined patch holds the same number of peppers: 1 or 2, shown above the board.',
+    'No two peppers may touch, not even diagonally.',
+    'Tap a square to plant a pepper and tap it again to remove it. Use Mark (or right-click and drag) to dot squares that must stay empty; Undo, Redo and Reset are under the board.',
+    'Every puzzle has exactly one solution and can be solved without guessing. A patch that fits inside one row or column uses up that line\'s peppers, so the rest of the line stays empty; and a square is empty if a pepper there would leave a neighbouring row, column or patch with no room.',
+    'Daily puzzles reset at midnight UTC and save progress in this browser. Mild is 1 pepper on a 6 × 6 board, where every move is either a square next to a pepper or the last open square in a row, column or patch; Medium is 1 pepper on 8 × 8 and Picante 2 peppers on 9 × 9. Practice lets you pick a level and generate another puzzle.',
+  ],
   akari: [
     'Place bulbs in white squares to light the entire board. Each bulb shines horizontally and vertically until a black wall blocks it.',
     'No bulb may shine directly on another bulb. Conflicting bulbs are highlighted in red.',

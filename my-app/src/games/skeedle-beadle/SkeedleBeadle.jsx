@@ -3,7 +3,9 @@ import Navbar from '../../components/Navbar';
 import DailyResults from '../../components/DailyResults';
 import useUndoShortcut from '../../components/useUndoShortcut';
 import { HINT_SECONDS } from '../../gauntlet/gauntlet.js';
-import { useDailyDate, useArchive } from '../../components/DailyBoundary';
+import { useDailyDate, useArchive, useGauntlet } from '../../components/DailyBoundary';
+import { WalkthroughPrompt, walkthroughSeen } from '../../components/Walkthrough';
+import BeadleTutorial, { BEADLE_TUTORIAL_KEY } from './BeadleTutorial';
 import { readLocal, writeLocal, formatDuration } from '../../utils/dailyStats.js';
 import { puzzleSnapshot } from '../../utils/archive.js';
 import { CAPACITY, LEVELS, dailyPuzzle, generatePuzzle, isSolved, isSolvedStick, slide, slideProblem, solve, topRun } from './puzzle.js';
@@ -41,16 +43,20 @@ export default function SkeedleBeadle() {
   const [message, setMessage] = useState('');
   const [shake, setShake] = useState(null);
   const [lastSlide, setLastSlide] = useState(null);
+  // "Learn to play" walkthrough (never inside the Skeeter Gauntlet).
+  const inGauntlet = !!useGauntlet();
+  const [learning, setLearning] = useState(false);
+  const [seenTutorial, setSeenTutorial] = useState(() => walkthroughSeen(BEADLE_TUTORIAL_KEY));
   const { puzzle, sticks } = game;
   const won = useMemo(() => isSolved(sticks), [sticks]);
   const stuck = useMemo(() => !won && !sticks.some((_, from) => sticks.some((__, to) => !slideProblem(sticks, from, to))), [sticks, won]);
   const config = LEVELS[puzzle.level];
 
   useEffect(() => {
-    if (!game.started || won) return;
+    if (!game.started || won || learning) return;
     const timer = setInterval(() => setGame(current => ({ ...current, seconds: current.seconds + 1 })), 1000);
     return () => clearInterval(timer);
-  }, [game.started, won]);
+  }, [game.started, won, learning]);
 
   useEffect(() => {
     if (game.mode === 'daily') writeLocal(beadleSaveKey(date, archive), saveBeadle(puzzle, game));
@@ -59,7 +65,7 @@ export default function SkeedleBeadle() {
   function reset(next) {
     setGame(next); setSelected(null); setHint(null); setMessage(''); setLastSlide(null);
   }
-  const changeMode = (mode, level = practiceLevel) => reset(newGame(date, mode, level, archive));
+  const changeMode = (mode, level = practiceLevel) => { setLearning(false); reset(newGame(date, mode, level, archive)); };
 
   function choose(index) {
     if (won) return;
@@ -119,7 +125,7 @@ export default function SkeedleBeadle() {
 
   useEffect(() => {
     function onKey(event) {
-      if (event.ctrlKey || event.metaKey || event.altKey || /input|select|textarea/i.test(event.target?.tagName)) return;
+      if (learning || event.ctrlKey || event.metaKey || event.altKey || /input|select|textarea/i.test(event.target?.tagName)) return;
       const index = KEYS.indexOf(event.key);
       if (index >= 0 && index < sticks.length) { event.preventDefault(); choose(index); }
       else if (event.key === 'Escape') setSelected(null);
@@ -139,17 +145,24 @@ export default function SkeedleBeadle() {
   return <main className="beadle-page">
     <Navbar />
     <header className="beadle-heading"><p className="beadle-eyebrow">BEAD SORT</p><h1>Skeedle Beadle</h1><p>Every shape on its own stick.</p></header>
-    <DailyResults gameId="skeedle-beadle" title="Skeedle Beadle" daily={game.mode === 'daily'} date={date} finished={won} seconds={game.seconds} started={game.started} hints={game.hints} />
+    <DailyResults gameId="skeedle-beadle" title="Skeedle Beadle" daily={game.mode === 'daily'} date={date} finished={won} seconds={game.seconds} started={game.started} hints={game.hints} onLearn={() => setLearning(true)} />
     <div className="beadle-controls">
-      <button aria-pressed={game.mode === 'daily'} onClick={() => changeMode('daily')}>{archive ? 'Archive puzzle' : 'Daily'}</button>
-      <button aria-pressed={game.mode === 'practice'} onClick={() => changeMode('practice')}>Practice</button>
-      {game.mode === 'practice' && <>
+      <button aria-pressed={!learning && game.mode === 'daily'} onClick={() => changeMode('daily')}>{archive ? 'Archive puzzle' : 'Daily'}</button>
+      <button aria-pressed={!learning && game.mode === 'practice'} onClick={() => changeMode('practice')}>Practice</button>
+      <button aria-pressed={learning} onClick={() => setLearning(!learning)}>Learn to play</button>
+      {!learning && game.mode === 'practice' && <>
         <select aria-label="Practice difficulty" value={practiceLevel} onChange={event => { const level = Number(event.target.value); setPracticeLevel(level); changeMode('practice', level); }}>
           {[1, 2, 3].map(level => <option key={level} value={level}>{LEVELS[level].label} · {LEVELS[level].colors} bead types</option>)}
         </select>
         <button onClick={() => changeMode('practice')}>New puzzle</button>
       </>}
     </div>
+    {!learning && !seenTutorial && !inGauntlet && !won && <WalkthroughPrompt game="Skeedle Beadle" seenKey={BEADLE_TUTORIAL_KEY} onStart={() => setLearning(true)} onDismiss={() => setSeenTutorial(true)} />}
+    {learning ? <BeadleTutorial onDone={action => {
+      setLearning(false); setSeenTutorial(true);
+      if (action === 'practice') { setPracticeLevel(1); changeMode('practice', 1); }
+      if (action === 'daily') changeMode('daily');
+    }} /> : <>
     <p className="beadle-date">{game.mode === 'daily' ? `${date} · ${archive ? 'Archive' : 'Daily'}` : 'Practice'} · {config.label} · {config.colors} bead types</p>
     <section className="beadle-panel" aria-label="Skeedle Beadle puzzle">
       <div className="beadle-progress">
@@ -190,5 +203,6 @@ export default function SkeedleBeadle() {
       <p className={`beadle-message${won ? ' won' : stuck ? ' stuck' : ''}`} role="status">{status}</p>
     </section>
     <p className="beadle-help">Tap a stick to pick up its top beads, then tap where to slide them. Beads go onto the same shape or an empty stick.<br />Number keys pick sticks left to right, top row first (0, − and = for 10–12) · U undo · H hint · Esc cancel</p>
+    </>}
   </main>;
 }
