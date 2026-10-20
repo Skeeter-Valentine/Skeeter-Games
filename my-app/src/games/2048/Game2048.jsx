@@ -497,7 +497,7 @@ export default function Game2048({ onWin }) {
 
               <div className="game2048-stat-box">
                 <span className="stat-label">TIME</span>
-                <span className="stat-value">{formatTime(elapsedTime)}</span>
+                <span className="stat-value fixed-time">{formatTime(elapsedTime)}</span>
               </div>
 
               <div className="game2048-stat-box">

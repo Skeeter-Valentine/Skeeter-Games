@@ -215,7 +215,7 @@ export default function PepperPlacer() {
       <div className="pp-progress">
         <span className="pp-goal">{Array.from({ length: level }, (_, i) => <Pepper key={i} className="pp-goal-pepper" />)} <span>× {level} each</span></span>
         <span><strong>{status?.placed ?? 0}</strong> / {status?.total ?? (LEVELS[spice]?.size ?? 0) * level} placed</span>
-        <span>{game ? `${Math.floor(game.seconds / 60)}:${String(game.seconds % 60).padStart(2, '0')}` : '0:00'}</span>
+        <span className="fixed-time" style={{ textAlign: 'right' }}>{game ? `${Math.floor(game.seconds / 60)}:${String(game.seconds % 60).padStart(2, '0')}` : '0:00'}</span>
       </div>
       {!game ? <div className="pp-loading" role="status"><Pepper className="pp-loading-pepper" />Planting peppers…</div>
         : <div className={`pp-board${won ? ' won' : ''}${tool === 'mark' ? ' marking' : ''}`} ref={boardRef} style={{ '--size': n }} aria-label="Pepper Placer board"

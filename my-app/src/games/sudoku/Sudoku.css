@@ -357,3 +357,15 @@ kbd{
     font-size: 15px;
   }
 }
+
+/* Phones: the board column may shrink below its widest row (the title row
+   wraps instead), so nothing runs off the right edge. The board comes first,
+   with New game below it. */
+@media (max-width: 520px) {
+  .app { grid-template-columns: minmax(0, 1fr); }
+  .game-card, .side-card { min-width: 0; }
+  .side-card { order: 1; }
+  .topbar { flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+  .meta { flex-wrap: wrap; justify-content: flex-end; gap: 6px; margin-left: auto; }
+  .controls .btn { min-width: 0; }
+}

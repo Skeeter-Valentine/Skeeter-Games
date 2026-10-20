@@ -112,7 +112,7 @@ function DailySession({ gameId, title, date, daily, finished, won = true, second
   return <>
     <GameToolbar gameId={gameId} title={title} onStats={() => { setStats(readDailyStats(statsId)); setOpen(true); }}
       onBoard={showBoard ? () => setBoardOpen(true) : undefined} onLearn={onLearn}>
-      {daily && !hasTimer && <span aria-label="Daily elapsed time">Time: {formatDuration(result?.seconds ?? clock)}</span>}
+      {daily && !hasTimer && <span aria-label="Daily elapsed time"><span className="game-utility-time-label">Time: </span><span className="fixed-time">{formatDuration(result?.seconds ?? clock)}</span></span>}
     </GameToolbar>
     {visible && <GameModal titleId={`daily-title-${gameId}`} onClose={close}>
         <p className="daily-results-eyebrow">{title} · {archive ? 'Archive · ' : ''}{date}</p>

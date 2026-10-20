@@ -61,10 +61,47 @@ function usePenalty(gameId, level) {
 // stream can be cropped to it once. Phones keep the normal scrolling layout.
 const UNSCALED_GAMES = ['map'];
 const FIT_QUERY = '(min-width: 900px) and (min-height: 560px)';
+// What each game zooms to fill the playing area: its board (word games keep
+// their on-screen keyboard in view). Everything else in the game scales with
+// it: titles and mode buttons above end up out of shot, and tools below sit
+// just under the playing area. The playing area is the framing box: up to
+// 980px wide, the full height of the frame.
+const FOCUS = {
+  akari: ['.akari-board'],
+  'skeedle-beadle': ['.beadle-rack'],
+  stitches: ['.stitches-board'],
+  nonograms: ['.grid-layout'],
+  pipes: ['.pipes-canvas'],
+  shikaku: ['.shikaku-board-wrapper'],
+  minesweeper: ['.ms-classic-window'],
+  hashi: ['.hashi-canvas-wrapper'],
+  parshle: ['.parshle-board', '.parshle-keyboard'],
+  skeedlemath: ['.word500-board', '.word500-keyboard'],
+  word500: ['.word500-board', '.word500-keyboard'],
+  quordle: ['.quordle-grid', '.keyboard'],
+};
+const MAX_ZOOM = 4, AREA_PADDING = 12;
+// The visible extent of the focus elements, including anything that hangs
+// outside them (such as guess-bonus pills), in the stage's own unscaled
+// coordinates.
+function focusBox(stage, selectors, scale) {
+  const origin = stage.getBoundingClientRect();
+  let left = Infinity, top = Infinity, right = -Infinity, bottom = -Infinity;
+  for (const element of selectors.flatMap(selector => [...stage.querySelectorAll(selector)])) {
+    for (const part of [element, ...element.querySelectorAll('*')]) {
+      const rect = part.getBoundingClientRect();
+      if (!rect.width || !rect.height) continue;
+      if (part !== element && getComputedStyle(part).visibility === 'hidden') continue;
+      left = Math.min(left, rect.left); top = Math.min(top, rect.top); right = Math.max(right, rect.right); bottom = Math.max(bottom, rect.bottom);
+    }
+  }
+  if (!Number.isFinite(left)) return null;
+  return { x: (left - origin.left) / scale, y: (top - origin.top) / scale, width: (right - left) / scale, height: (bottom - top) / scale };
+}
 function FittedStage({ game, children }) {
   const frameRef = useRef(null);
   const stageRef = useRef(null);
-  const smallest = useRef(1);
+  const smallest = useRef(Infinity);
   const measureRef = useRef(null);
   const [fit, setFit] = useState(null);
   const active = !!fit;
@@ -87,6 +124,31 @@ function FittedStage({ game, children }) {
         // message or extra row appears. The first pass happens before the
         // frame's own styles apply, so it doesn't count toward that.
         const fitted = box.classList.contains('fitted');
+        // Zoom the board to fill the playing area, centred in it. The zoom
+        // only ever shrinks during a game (a growing message can't make the
+        // board jump), and the board stays centred whatever moves around it.
+        // The scale the stage is drawn at right now (read back from the page,
+        // since a new one may not have been applied yet).
+        const transform = getComputedStyle(stage).transform;
+        const drawn = transform && transform !== 'none' ? new DOMMatrixReadOnly(transform).a || 1 : 1;
+        const focus = FOCUS[game] && focusBox(stage, FOCUS[game], drawn);
+        if (focus) {
+          const areaWidth = Math.min(980, window.innerWidth - 16) - AREA_PADDING * 2, areaHeight = height - AREA_PADDING * 2;
+          const raw = Math.min(MAX_ZOOM, Math.floor(Math.min(areaWidth / focus.width, areaHeight / focus.height) * 100) / 100);
+          const scale = fitted ? Math.min(smallest.current, raw) : raw;
+          if (fitted) smallest.current = scale;
+          const x = Math.round(width / 2 - scale * (focus.x + focus.width / 2));
+          const y = Math.round(height / 2 - scale * (focus.y + focus.height / 2));
+          // The frame grows to hold anything below the board (tools), so it
+          // can still be reached by scrolling.
+          const outer = Math.max(height, Math.ceil(y + scale * stage.offsetHeight));
+          // Hide whatever sits above the board (titles, mode buttons), so the
+          // playing area shows only the board.
+          const clip = Math.max(0, Math.floor(y + scale * focus.y - AREA_PADDING / 2));
+          setFit(previous => previous && previous.focus && previous.scale === scale && previous.height === height && previous.width === width && previous.outer === outer && previous.x === x && previous.y === y && previous.clip === clip
+            ? previous : { focus: true, scale, height, width, outer, x, y, clip });
+          return;
+        }
         // Cartograskeet sizes its map to the frame itself (see Gauntlet.css),
         // with its tools below the frame, so it is never scaled.
         const raw = UNSCALED_GAMES.includes(game) ? 1 : Math.min(1, Math.floor(height / Math.max(1, stage.offsetHeight) * 100) / 100);
@@ -98,7 +160,7 @@ function FittedStage({ game, children }) {
         setFit(previous => previous && previous.scale === scale && previous.height === height && previous.width === width && previous.outer === outer ? previous : { scale, height, width, outer });
       });
     };
-    const resized = () => { smallest.current = 1; measure(); };
+    const resized = () => { smallest.current = Infinity; measure(); };
     measureRef.current = measure;
     const observer = new ResizeObserver(measure);
     observer.observe(stageRef.current);
@@ -107,9 +169,11 @@ function FittedStage({ game, children }) {
     measure();
     return () => { cancelAnimationFrame(frame); observer.disconnect(); window.removeEventListener('resize', resized); media.removeEventListener?.('change', resized); };
   }, []);
-  return <div ref={frameRef} className={`gauntlet-frame${fit ? ' fitted' : ''}`} style={fit ? { height: fit.outer } : undefined}>
+  return <div ref={frameRef} className={`gauntlet-frame${fit ? ' fitted' : ''}`} style={fit ? { height: fit.outer, clipPath: fit.clip ? `inset(${fit.clip}px 0 0 0)` : undefined } : undefined}>
     <div ref={stageRef} className="gauntlet-stage" data-game={game}
-      style={fit ? { width: fit.width, transform: `translateX(-50%) scale(${fit.scale})`, '--frame-h': `${fit.height}px` } : undefined}>{children}</div>
+      style={!fit ? undefined : fit.focus
+        ? { width: fit.width, left: 0, transformOrigin: '0 0', transform: `translate(${fit.x}px, ${fit.y}px) scale(${fit.scale})`, '--frame-h': `${fit.height}px` }
+        : { width: fit.width, transform: `translateX(-50%) scale(${fit.scale})`, '--frame-h': `${fit.height}px` }}>{children}</div>
   </div>;
 }
 
@@ -427,6 +491,28 @@ export default function Gauntlet() {
     autoRecorded.current = true;
     record(run);
   }, [canRecord, run, record]);
+  // No finished run in this browser (played on another device, or storage
+  // cleared) but this day's time to beat is published: post that instead.
+  // It holds each game's result and time, which is all the board needs.
+  const [checkedServer, setCheckedServer] = useState(false);
+  useEffect(() => {
+    if (!player?.uid || !open || test) return;
+    let active = true;
+    readMyRun(date, player.uid).then(() => {}, () => {}).finally(() => { if (active) setCheckedServer(true); });
+    return () => { active = false; };
+  }, [date, open, test, player?.uid]);
+  const canRecordPar = owner && !test && open && !run && checkedServer && !!par && boardEnabled && !!player?.nickname;
+  useEffect(() => {
+    if (!canRecordPar || autoRecorded.current) return;
+    autoRecorded.current = true;
+    setRecordStatus('Posting your published time to the leaderboard…');
+    sendEvent({ action: 'record', day: date, run: { results: par.results.map(({ game, status, total }) =>
+      ({ game, status, seconds: total, penalty: 0, bonus: 0, hintPenalty: 0 })) } })
+      .then(result => {
+        adopt(result);
+        setRecordStatus(result?.alreadyRecorded ? 'Your run was already on the leaderboard.' : 'Posted your published time to the leaderboard, as if played when the gauntlet opened.');
+      }, error => setRecordStatus(`Couldn't post your published time to the leaderboard (${friendlyError(error)}). Refresh to try again.`));
+  }, [canRecordPar, date, par, adopt]);
   const showPar = par && !owner;
   const isOwner = owner && !test;
   const summary = historySummary(history, date);
@@ -515,6 +601,7 @@ export default function Gauntlet() {
       <p className="gauntlet-lede">Six puzzles. One clock. One attempt a day.</p>
       {showPar && <p className="gauntlet-par">{PAR_NAME}'s time today: <strong>{formatClock(par.total)}</strong> · Can you beat it?</p>}
       {isOwner && <p className="gauntlet-par">Signed in as the owner: your finished time will be published as {PAR_NAME}'s time to beat{advance ? ' and posted to that day\'s leaderboard' : ''}.</p>}
+      {isOwner && recordStatus && <p className="gauntlet-par">{recordStatus}</p>}
       {boardOn && <PlayerBar player={player} busy={playerBusy} error={playerError} onSignIn={signIn} onNickname={chooseNickname}
         onSignOut={() => { setPlayerError(''); signOutPlayer().catch(() => {}); }} />}
       <ol className="gauntlet-lineup">

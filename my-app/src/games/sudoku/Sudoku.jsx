@@ -463,7 +463,7 @@ export default function Skeedoku({ onWin }) {
                 <span className="switch" aria-hidden="true"></span>
               </label>
               <span className="pill">{cfg.label}</span>
-              <span className="pill">{formatTime()}</span>
+              <span className="pill"><span className="fixed-time">{formatTime()}</span></span>
             </div>
           </div>
 

@@ -599,7 +599,7 @@ export default function Pipes({ onWin }) {
 
         {/* Timer Display */}
         <div style={{ fontWeight: 'bold', fontSize: '1.1rem', color: '#00f0ff', textShadow: '0 0 5px rgba(0, 240, 255, 0.7)' }}>
-          ⏱️ {formatTime(seconds)}
+          ⏱️ <span className="fixed-time" style={{ textAlign: 'left' }}>{formatTime(seconds)}</span>
         </div>
       </div>
 

@@ -54,7 +54,7 @@
   .gauntlet-hud { grid-template-columns: 1fr auto; padding: 8px 10px; }
   .gauntlet-hud .gauntlet-pips { grid-column: 1 / -1; grid-row: 2; justify-content: flex-start; }
   .gauntlet-hud .gauntlet-pips li { width: 22px; height: 22px; font-size: 15px; }
-  .gauntlet-hud-clock { font-size: 22px; min-width: 0; }
+  .gauntlet-hud-clock { font-size: 22px; min-width: 6.4ch; white-space: nowrap; }
   .gauntlet-hud-actions .gauntlet-btn { min-height: 36px; padding: 6px 10px; font-size: 15px; }
   .gauntlet-card { padding: 20px 16px; }
 }

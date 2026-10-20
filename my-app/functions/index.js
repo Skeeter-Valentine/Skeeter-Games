@@ -1,6 +1,7 @@
 import { initializeApp } from 'firebase-admin/app';
 import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
+import { onSchedule } from 'firebase-functions/v2/scheduler';
 import { games as DAILY_GAMES, validateAttempt, transition } from './attempts.js';
 import { dailyBoardId, dailyBoardSeconds, recentBoardIds } from './dailyBoard.js';
 import { applyEvent, cleanNickname, gauntletDay, gauntletOpensAt, GauntletError, isDay, recordAdvanceRun } from './gauntlet.js';
@@ -90,7 +91,13 @@ export const gauntletEvent = onCall({ region: 'us-central1', maxInstances: 20 },
       catch (error) { throw asHttpsError(error); }
       transaction.set(runRef, { ...recorded.run, uid });
       transaction.set(entryRef, { ...recorded.entry, nickname });
-      addPeppers(transaction, db, uid, gauntletRunPeppers(event.day, recorded.run), nickname, gauntletOpensAt(event.day));
+      // Peppers for a gauntlet that hasn't opened yet wait in pendingPeppers
+      // until it does (releasePeppers), so the weekly board doesn't give the
+      // early run away.
+      const opensAt = gauntletOpensAt(event.day), peppers = gauntletRunPeppers(event.day, recorded.run);
+      if (opensAt > Date.now()) {
+        if (peppers) transaction.set(db.doc(`pendingPeppers/${event.day}_${uid}`), { uid, day: event.day, peppers, at: opensAt });
+      } else addPeppers(transaction, db, uid, peppers, nickname, opensAt);
       return { run: recorded.run, entry: recorded.entry, now: Date.now() };
     }
     let outcome;
@@ -170,3 +177,25 @@ export const adminStats = onCall({ region: 'us-central1', maxInstances: 2, timeo
   const unnamed = stats.users.filter(user => !user.nickname);
   return { ...stats, users: [...named, ...unnamed.slice(0, 200)], unnamedTotal: unnamed.length };
 });
+
+// Credits peppers held back from advance gauntlet runs once their gauntlet
+// opens (4am Colorado time; this runs a minute later). Anything missed, for
+// example while the function was being deployed, is picked up the next run.
+export async function releaseDuePeppers(db, now = Date.now()) {
+  const due = await db.collection('pendingPeppers').where('at', '<=', now).get();
+  let released = 0;
+  for (const pending of due.docs) {
+    await db.runTransaction(async transaction => {
+      const snap = await transaction.get(pending.ref);
+      if (!snap.exists) return;
+      const { uid, peppers, at } = snap.data();
+      const player = await transaction.get(db.doc(`players/${uid}`));
+      addPeppers(transaction, db, uid, peppers, player.exists ? player.get('nickname') : null, at);
+      transaction.delete(pending.ref);
+      released += 1;
+    });
+  }
+  return released;
+}
+export const releasePeppers = onSchedule({ schedule: '1 4 * * *', timeZone: 'America/Denver', region: 'us-central1' },
+  async () => { await releaseDuePeppers(getFirestore()); });

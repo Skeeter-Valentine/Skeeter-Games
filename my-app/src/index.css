@@ -39,3 +39,13 @@ body {
 button, input, select, textarea, a {
   font-family: var(--font-main);
 }
+
+/* Timers: a fixed-width slot (room for 9:59:59) so a growing time never
+   pushes buttons, boards or other stats around. The slot takes its parent's
+   text alignment. */
+.fixed-time {
+  display: inline-block;
+  min-width: 7ch;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}

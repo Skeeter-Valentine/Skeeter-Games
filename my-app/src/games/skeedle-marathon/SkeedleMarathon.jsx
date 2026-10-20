@@ -450,7 +450,7 @@ export default function SkeedleMarathon() {
 
               <div>
                 TIME{" "}
-                <strong>
+                <strong className="fixed-time" style={{ textAlign: 'left' }}>
                   {formatTime(secondsElapsed)}
                 </strong>
               </div>
