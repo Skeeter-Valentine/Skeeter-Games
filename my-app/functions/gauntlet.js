@@ -2,47 +2,30 @@
 // nicknames. Pure functions (no Firebase imports) so they are unit tested and
 // shared by the Cloud Functions in index.js.
 //
-// The lineup code mirrors src/gauntlet/gauntlet.js; gauntlet.test.mjs checks
-// the two always agree, so a player can never submit a different lineup.
+// Lineups come from src/gauntlet/weeklyLineup.js, the same code the site
+// runs (lineup.test.mjs checks the two agree), so a player can never submit a
+// different lineup.
+
+import { WORD_GAMES, lineupFor } from './shared/gauntlet/weeklyLineup.js';
 
 export const GAUNTLET_GAMES = ['akari', 'skeedle-beadle', 'map', 'parshle', 'stitches', 'nonograms', 'skeedlemath',
-  'pipes', 'shikaku', 'quordle', 'word500', 'minesweeper', 'hashi'];
+  'pipes', 'shikaku', 'quordle', 'word500', 'minesweeper', 'hashi', 'pepper-placer'];
 export const GAUNTLET_SIZE = 6;
 const FIXED_LINEUPS = {
   '2099-01-01': ['akari', 'skeedle-beadle', 'map', 'parshle', 'stitches', 'nonograms'],
   '2099-01-02': ['skeedlemath', 'pipes', 'shikaku', 'quordle', 'word500', 'minesweeper'],
-  '2099-01-03': ['hashi', 'map', 'word500', 'stitches', 'akari', 'pipes'],
+  '2099-01-03': ['hashi', 'map', 'word500', 'stitches', 'akari', 'pepper-placer'],
 };
 export const isDay = day => typeof day === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(day)
   && new Date(`${day}T00:00:00Z`).toISOString().slice(0, 10) === day;
 export const isTestDay = day => isDay(day) && day.startsWith('2099-');
 
-function seeded(seedText) {
-  let state = 2166136261;
-  for (const char of seedText) state = Math.imul(state ^ char.charCodeAt(0), 16777619);
-  return () => {
-    state = (state + 0x6d2b79f5) | 0;
-    let t = Math.imul(state ^ (state >>> 15), state | 1);
-    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
-export const WORD_GAMES = ['skeedlemath', 'quordle', 'parshle', 'word500'];
+// Lineups come from the same module the site uses (copied into
+// functions/shared by scripts/sync-functions-shared.mjs before deploys).
+export { WORD_GAMES };
 export function lineupIds(day) {
   if (FIXED_LINEUPS[day]) return [...FIXED_LINEUPS[day]];
-  const rng = seeded(`skeeter-gauntlet-v2:${day}`);
-  const shuffle = list => {
-    const items = [...list];
-    for (let i = items.length - 1; i > 0; i--) {
-      const j = Math.floor(rng() * (i + 1));
-      [items[i], items[j]] = [items[j], items[i]];
-    }
-    return items;
-  };
-  // Exactly two word games, four of the other puzzles, in a shuffled order.
-  const words = GAUNTLET_GAMES.filter(id => WORD_GAMES.includes(id));
-  const others = GAUNTLET_GAMES.filter(id => !WORD_GAMES.includes(id));
-  return shuffle([...shuffle(words).slice(0, 2), ...shuffle(others).slice(0, GAUNTLET_SIZE - 2)]);
+  return lineupFor(day);
 }
 
 // The gauntlet day for an instant: 4am Denver time starts a new day.

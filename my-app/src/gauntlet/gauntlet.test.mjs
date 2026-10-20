@@ -5,7 +5,7 @@ import { WORD_GAMES, fromServerRun, remainingPenalty, TEST_GAUNTLETS, testDay, i
 import { dailyDifficulty } from '../utils/dailyDifficulty.js';
 
 test('every game except Skeedoku, 2048 and Skeedle Marathon can appear, six a day, same for everyone', () => {
-  assert.equal(GAUNTLET_GAMES.length, 13);
+  assert.equal(GAUNTLET_GAMES.length, 14);
   for (const id of ['sudoku', '2048', 'skeedle-marathon']) assert.ok(!GAUNTLET_GAMES.some(game => game.id === id), id);
   const seen = new Set();
   for (let day = 0; day < 120; day++) {
@@ -17,7 +17,7 @@ test('every game except Skeedoku, 2048 and Skeedle Marathon can appear, six a da
     lineup.forEach(game => { seen.add(game.id); assert.ok([1, 2, 3].includes(game.level)); });
     assert.equal(lineup.filter(game => WORD_GAMES.includes(game.id)).length, 2, `two word games on ${date}`);
   }
-  assert.equal(seen.size, 13);
+  assert.equal(seen.size, 14);
   assert.notDeepEqual(gauntletLineup('2026-10-09'), gauntletLineup('2026-10-10'));
 });
 

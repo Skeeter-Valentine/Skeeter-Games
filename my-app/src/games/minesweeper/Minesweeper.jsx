@@ -37,6 +37,9 @@ export default function Minesweeper({ onWin }) {
   const timerIntervalRef = useRef(null);
 
   const [scale, setScale] = useState(1);
+  // Flag mode: taps plant flags instead of digging (long-press or right-click
+  // still does the other action). Easier than long-pressing on phones.
+  const [flagMode, setFlagMode] = useState(false);
   
   // Interaction tracking refs to prevent accidental clicks/flags during panning or zooming
   const touchStartDistRef = useRef(null);
@@ -343,7 +346,8 @@ export default function Minesweeper({ onWin }) {
     pressTimerRef.current = setTimeout(() => {
       if (!hasMovedOrZoomedRef.current) {
         isLongPressRef.current = true;
-        toggleFlag(r, c);
+        if (flagMode) handleCellClick(r, c);
+        else toggleFlag(r, c);
         if (navigator.vibrate) navigator.vibrate(40);
       }
     }, 450);
@@ -388,6 +392,8 @@ export default function Minesweeper({ onWin }) {
       const cell = board[r][c];
       if (cell.isRevealed) {
         handleChord(r, c);
+      } else if (flagMode) {
+        toggleFlag(r, c);
       } else {
         handleCellClick(r, c);
       }
@@ -470,6 +476,11 @@ export default function Minesweeper({ onWin }) {
           <div className="ms-digital-display">{formatDigits(timer)}</div>
         </div>
 
+        <div className="ms-mode-toggle" role="group" aria-label="What a tap does">
+          <button type="button" aria-pressed={!flagMode} onClick={() => setFlagMode(false)}>⛏️ Dig</button>
+          <button type="button" aria-pressed={flagMode} onClick={() => setFlagMode(true)}>🚩 Flag</button>
+        </div>
+
         <div 
           className="ms-zoom-container"
           onTouchStart={handleTouchStartBoard}
@@ -500,6 +511,7 @@ export default function Minesweeper({ onWin }) {
                       } num-${cell.neighborMines}`}
                       onClick={() => {
                         if (cell.isRevealed) handleChord(r, c);
+                        else if (flagMode) toggleFlag(r, c);
                         else handleCellClick(r, c);
                       }}
                       onContextMenu={(e) => {

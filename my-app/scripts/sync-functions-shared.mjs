@@ -1,5 +1,6 @@
-// Copies the site's puzzle-difficulty code into functions/shared so the Cloud
-// Functions award exactly the chili rating players see. Runs automatically
+// Copies the site's puzzle-difficulty and gauntlet lineup code into
+// functions/shared so the Cloud Functions award exactly the chili rating
+// players see and accept exactly the lineups the site shows. Runs automatically
 // before `firebase deploy` (firebase.json predeploy) and before the functions
 // tests. functions/shared is generated, so it is not kept in git.
 import fs from 'node:fs';
@@ -26,7 +27,8 @@ export function sharedFiles(entry = path.join(src, 'utils', 'dailyDifficulty.js'
 
 export function syncShared() {
   fs.rmSync(out, { recursive: true, force: true });
-  const files = sharedFiles();
+  // Puzzle difficulty (peppers) and the gauntlet lineup rules.
+  const files = [...new Set([...sharedFiles(), ...sharedFiles(path.join(src, 'gauntlet', 'weeklyLineup.js'))])];
   for (const file of files) {
     fs.mkdirSync(path.dirname(path.join(out, file)), { recursive: true });
     fs.copyFileSync(path.join(src, file), path.join(out, file));

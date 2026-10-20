@@ -86,8 +86,14 @@ export default function Nonograms({ onWin }) {
     };
 
     window.addEventListener('mouseup', handleGlobalMouseUp);
+    window.addEventListener('pointerup', handleGlobalMouseUp);
+    window.addEventListener('pointercancel', handleGlobalMouseUp);
 
-    return () => window.removeEventListener('mouseup', handleGlobalMouseUp);
+    return () => {
+      window.removeEventListener('mouseup', handleGlobalMouseUp);
+      window.removeEventListener('pointerup', handleGlobalMouseUp);
+      window.removeEventListener('pointercancel', handleGlobalMouseUp);
+    };
 
   }, []);
 
@@ -425,7 +431,7 @@ export default function Nonograms({ onWin }) {
 
 
 
-        <div className="puzzle-container" onContextMenu={handleContextMenu}>
+        <div className="puzzle-container" style={{ '--grid-cols': width }} onContextMenu={handleContextMenu}>
 
           <div
 
@@ -495,9 +501,13 @@ export default function Nonograms({ onWin }) {
 
                       className={className}
 
-                      onMouseDown={(e) => handleMouseDown(e, rIdx, cIdx)}
+                      onPointerDown={(e) => {
+                        // Touch: let the finger move across cells (no implicit capture), so dragging fills a line.
+                        e.currentTarget.releasePointerCapture?.(e.pointerId);
+                        handleMouseDown(e, rIdx, cIdx);
+                      }}
 
-                      onMouseEnter={() => handleMouseEnter(rIdx, cIdx)}
+                      onPointerEnter={() => handleMouseEnter(rIdx, cIdx)}
 
                     >
 

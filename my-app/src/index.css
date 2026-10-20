@@ -43,6 +43,10 @@ button, input, select, textarea, a {
 /* Timers: a fixed-width slot (room for 9:59:59) so a growing time never
    pushes buttons, boards or other stats around. The slot takes its parent's
    text alignment. */
+/* Phones: no double-tap zoom on anything tappable (game cells, keys,
+   buttons), so quick taps never zoom or shift the page. Pinch zoom still works. */
+button, [role="button"], input[type="checkbox"], label, select { touch-action: manipulation; }
+
 .fixed-time {
   display: inline-block;
   min-width: 7ch;

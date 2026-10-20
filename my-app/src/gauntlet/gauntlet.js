@@ -1,6 +1,7 @@
 // Skeeter Gauntlet rules. Pure functions (no React, no storage) so they can be
 // unit tested; the page in src/pages/Gauntlet.jsx wires them to the UI.
 import { dailyDifficulty } from '../utils/dailyDifficulty.js';
+import { WORD_GAMES, lineupFor } from './weeklyLineup.js';
 
 // The first public gauntlet day, or null while the gauntlet is unlaunched
 // (the page then shows "Coming soon"; test gauntlets still work).
@@ -55,6 +56,7 @@ export const GAUNTLET_GAMES = [
   { id: 'word500', title: 'Skeedle500' },
   { id: 'minesweeper', title: 'Mineskeeter' },
   { id: 'hashi', title: 'Hashkeet' },
+  { id: 'pepper-placer', title: 'Pepper Placer' },
 ];
 export const gameTitle = id => GAUNTLET_GAMES.find(game => game.id === id)?.title ?? id;
 
@@ -80,17 +82,6 @@ export function gauntletPuzzleDate(date) {
   return addDays(date, PUZZLE_DAY_OFFSET);
 }
 
-function seeded(seedText) {
-  let state = 2166136261;
-  for (const char of seedText) state = Math.imul(state ^ char.charCodeAt(0), 16777619);
-  return () => {
-    state = (state + 0x6d2b79f5) | 0;
-    let t = Math.imul(state ^ (state >>> 15), state | 1);
-    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
-
 // Test gauntlets (/gauntlet?test=1, 2, 3...): replayable runs on their own
 // "days" in 2099, so they never touch a real day's attempt or history. The
 // first three have fixed lineups that between them cover every game.
@@ -100,30 +91,18 @@ export const isTestDay = day => typeof day === 'string' && day.startsWith('2099-
 const FIXED_LINEUPS = {
   '2099-01-01': ['akari', 'skeedle-beadle', 'map', 'parshle', 'stitches', 'nonograms'],
   '2099-01-02': ['skeedlemath', 'pipes', 'shikaku', 'quordle', 'word500', 'minesweeper'],
-  '2099-01-03': ['hashi', 'map', 'word500', 'stitches', 'akari', 'pipes'],
+  '2099-01-03': ['hashi', 'map', 'word500', 'stitches', 'akari', 'pepper-placer'],
 };
 
 // Word games: every gauntlet has exactly two of these.
-export const WORD_GAMES = ['skeedlemath', 'quordle', 'parshle', 'word500'];
+export { WORD_GAMES };
 
 // Today's six games, the same for everyone, each with its spice level.
 export function gauntletLineup(date) {
   let games = FIXED_LINEUPS[date];
-  if (!games) {
-    const rng = seeded(`skeeter-gauntlet-v2:${date}`);
-    const shuffle = list => {
-      const items = [...list];
-      for (let i = items.length - 1; i > 0; i--) {
-        const j = Math.floor(rng() * (i + 1));
-        [items[i], items[j]] = [items[j], items[i]];
-      }
-      return items;
-    };
-    // Exactly two word games, four of the other puzzles, in a shuffled order.
-    const words = GAUNTLET_GAMES.map(game => game.id).filter(id => WORD_GAMES.includes(id));
-    const others = GAUNTLET_GAMES.map(game => game.id).filter(id => !WORD_GAMES.includes(id));
-    games = shuffle([...shuffle(words).slice(0, 2), ...shuffle(others).slice(0, GAUNTLET_SIZE - 2)]);
-  }
+  // Two word games and four other puzzles, planned a week at a time so every
+  // game gets a fair share (see weeklyLineup.js, shared with the server).
+  if (!games) games = lineupFor(date);
   const puzzleDate = gauntletPuzzleDate(date);
   return games.map(id => ({ id, title: gameTitle(id), level: dailyDifficulty(id, puzzleDate) }));
 }
@@ -135,6 +114,7 @@ export const DEFAULT_AVERAGE_SECONDS = {
   stitches: [150, 300, 540], 'skeedle-marathon': [1200, 1200, 1500], nonograms: [60, 240, 540],
   skeedlemath: [180, 180, 240], pipes: [60, 150, 330], shikaku: [90, 210, 480], quordle: [300, 300, 360],
   word500: [300, 300, 360], minesweeper: [60, 150, 300], '2048': [420, 480, 600], hashi: [90, 180, 360],
+  'pepper-placer': [90, 240, 480],
 };
 export const MIN_COMMUNITY_SOLVES = 5;
 

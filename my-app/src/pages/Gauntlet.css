@@ -79,6 +79,7 @@
 .gauntlet-stage { margin-top: 4px; }
 .gauntlet-stage .akari-controls:not(.akari-tools), .gauntlet-stage .akari-date,
 .gauntlet-stage .beadle-controls:not(.beadle-tools), .gauntlet-stage .beadle-date,
+.gauntlet-stage .pp-controls:not(.pp-tools), .gauntlet-stage .pp-date,
 .gauntlet-stage .skeedomap-session-controls, .gauntlet-stage .skeedomap-board-top > span, .gauntlet-stage .skeedomap-board-top > label,
 .gauntlet-stage .parshle-controls,
 .gauntlet-stage .stitches-mode, .gauntlet-stage .stitches-date,
@@ -156,7 +157,7 @@
    boards get more room. */
 .gauntlet-frame.fitted .gauntlet-stage > * { background: transparent !important; box-shadow: none; }
 .gauntlet-frame.fitted .stitches-rules, .gauntlet-frame.fitted .skeedomap-footer,
-.gauntlet-frame.fitted .akari-help, .gauntlet-frame.fitted .beadle-help { display: none !important; }
+.gauntlet-frame.fitted .akari-help, .gauntlet-frame.fitted .beadle-help, .gauntlet-frame.fitted .pp-help { display: none !important; }
 
 /* Paused while How to play is open: the clock dims and the board is hidden. */
 .gauntlet-pausable { position: relative; }

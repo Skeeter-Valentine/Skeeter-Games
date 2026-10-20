@@ -20,7 +20,7 @@
 /* The board: patches are tinted and outlined in a heavy line. */
 .pp-board { --line: #1d1626; display: grid; grid-template-columns: repeat(var(--size), minmax(0, 1fr)); width: 100%; max-width: 560px; margin: 0 auto 18px;
   border: 3px solid var(--line); border-radius: 6px; overflow: hidden; background: var(--line); touch-action: manipulation; user-select: none; -webkit-user-select: none; }
-.pp-board.marking { touch-action: none; }
+.pp-board.marking { touch-action: pinch-zoom; }
 .pp-board .pp-cell { position: relative; aspect-ratio: 1; min-width: 0; margin: 0; padding: 0; display: flex; align-items: center; justify-content: center;
   border: 0; border-radius: 0; box-shadow: inset 0 0 0 0.5px rgba(29, 22, 38, 0.28); cursor: pointer; color: #1d1626; }
 .pp-cell::after { content: ''; position: absolute; inset: 0; pointer-events: none;

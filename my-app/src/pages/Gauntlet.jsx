@@ -29,12 +29,13 @@ import Word500 from '../games/word500/Word500';
 import Minesweeper from '../games/minesweeper/Minesweeper';
 import Game2048 from '../games/2048/Game2048';
 import Hashi from '../games/hashi/Hashi';
+import PepperPlacer from '../games/pepper-placer/PepperPlacer';
 import GauntletCountdown from '../components/GauntletCountdown';
 import './Gauntlet.css';
 
 const COMPONENTS = { akari: Akari, 'skeedle-beadle': SkeedleBeadle, map: MapGame, parshle: Parshle, stitches: Stitches,
   'skeedle-marathon': SkeedleMarathon, nonograms: Nonograms, skeedlemath: Skeedlemath, pipes: Pipes, shikaku: Shikaku,
-  quordle: Quordle, word500: Word500, minesweeper: Minesweeper, '2048': Game2048, hashi: Hashi };
+  quordle: Quordle, word500: Word500, minesweeper: Minesweeper, '2048': Game2048, hashi: Hashi, 'pepper-placer': PepperPlacer };
 const runKey = date => `${STORAGE_PREFIX}${isTestDay(date) ? 'test-run' : 'run'}:${date}`;
 const HISTORY_KEY = `${STORAGE_PREFIX}history`;
 const statusLabel = { won: 'Solved', lost: 'Lost', 'gave-up': 'Gave up' };
@@ -69,18 +70,20 @@ const FIT_QUERY = '(min-width: 900px) and (min-height: 560px)';
 const FOCUS = {
   akari: ['.akari-board'],
   'skeedle-beadle': ['.beadle-rack'],
-  stitches: ['.stitches-board'],
+  // Skitches draws in an SVG with empty margins: fit what's actually drawn.
+  stitches: ['.stitches-board > *'],
   nonograms: ['.grid-layout'],
   pipes: ['.pipes-canvas'],
   shikaku: ['.shikaku-board-wrapper'],
   minesweeper: ['.ms-classic-window'],
   hashi: ['.hashi-canvas-wrapper'],
+  'pepper-placer': ['.pp-board'],
   parshle: ['.parshle-board', '.parshle-keyboard'],
   skeedlemath: ['.word500-board', '.word500-keyboard'],
   word500: ['.word500-board', '.word500-keyboard'],
   quordle: ['.quordle-grid', '.keyboard'],
 };
-const MAX_ZOOM = 4, AREA_PADDING = 12;
+const MAX_ZOOM = 4, AREA_PADDING = 6;
 // The visible extent of the focus elements, including anything that hangs
 // outside them (such as guess-bonus pills), in the stage's own unscaled
 // coordinates.
@@ -102,6 +105,10 @@ function FittedStage({ game, children }) {
   const frameRef = useRef(null);
   const stageRef = useRef(null);
   const smallest = useRef(Infinity);
+  // The board-zoom scale is tracked apart from the whole-game scale: a game
+  // that shows a loading message first (Pepper Placer) gets its zoom once its
+  // board appears, rather than being held to the loading screen's scale.
+  const smallestFocus = useRef(Infinity);
   const measureRef = useRef(null);
   const [fit, setFit] = useState(null);
   const active = !!fit;
@@ -110,7 +117,7 @@ function FittedStage({ game, children }) {
   useLayoutEffect(() => {
     const media = window.matchMedia?.(FIT_QUERY);
     if (!media) return undefined;
-    let frame = 0;
+    let frame = 0, retry = 0, retries = 0;
     const measure = () => {
       cancelAnimationFrame(frame);
       frame = requestAnimationFrame(() => {
@@ -132,11 +139,14 @@ function FittedStage({ game, children }) {
         const transform = getComputedStyle(stage).transform;
         const drawn = transform && transform !== 'none' ? new DOMMatrixReadOnly(transform).a || 1 : 1;
         const focus = FOCUS[game] && focusBox(stage, FOCUS[game], drawn);
+        // Board not drawn yet (a loading message in the same space): look again
+        // shortly, since its arrival may not change the stage's size.
+        if (FOCUS[game] && !focus && retries < 50) { retries += 1; clearTimeout(retry); retry = setTimeout(measure, 200); }
         if (focus) {
           const areaWidth = Math.min(980, window.innerWidth - 16) - AREA_PADDING * 2, areaHeight = height - AREA_PADDING * 2;
           const raw = Math.min(MAX_ZOOM, Math.floor(Math.min(areaWidth / focus.width, areaHeight / focus.height) * 100) / 100);
-          const scale = fitted ? Math.min(smallest.current, raw) : raw;
-          if (fitted) smallest.current = scale;
+          const scale = fitted ? Math.min(smallestFocus.current, raw) : raw;
+          if (fitted) smallestFocus.current = scale;
           const x = Math.round(width / 2 - scale * (focus.x + focus.width / 2));
           const y = Math.round(height / 2 - scale * (focus.y + focus.height / 2));
           // The frame grows to hold anything below the board (tools), so it
@@ -160,14 +170,14 @@ function FittedStage({ game, children }) {
         setFit(previous => previous && previous.scale === scale && previous.height === height && previous.width === width && previous.outer === outer ? previous : { scale, height, width, outer });
       });
     };
-    const resized = () => { smallest.current = Infinity; measure(); };
+    const resized = () => { smallest.current = Infinity; smallestFocus.current = Infinity; measure(); };
     measureRef.current = measure;
     const observer = new ResizeObserver(measure);
     observer.observe(stageRef.current);
     window.addEventListener('resize', resized);
     media.addEventListener?.('change', resized);
     measure();
-    return () => { cancelAnimationFrame(frame); observer.disconnect(); window.removeEventListener('resize', resized); media.removeEventListener?.('change', resized); };
+    return () => { cancelAnimationFrame(frame); clearTimeout(retry); observer.disconnect(); window.removeEventListener('resize', resized); media.removeEventListener?.('change', resized); };
   }, []);
   return <div ref={frameRef} className={`gauntlet-frame${fit ? ' fitted' : ''}`} style={fit ? { height: fit.outer, clipPath: fit.clip ? `inset(${fit.clip}px 0 0 0)` : undefined } : undefined}>
     <div ref={stageRef} className="gauntlet-stage" data-game={game}

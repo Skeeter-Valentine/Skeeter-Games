@@ -294,3 +294,8 @@
     display: block;
   }
 }
+
+/* Dig / Flag switch: what a tap does (long-press or right-click does the other). */
+.ms-mode-toggle { display: flex; justify-content: center; gap: 6px; margin: 0 0 8px; }
+.ms-classic-window .ms-mode-toggle button { min-height: 40px; min-width: 96px; padding: 6px 14px; border: 2px solid #4a5568; border-radius: 8px; background: #1a202c; color: #e2e8f0; font: inherit; font-size: 16px; font-weight: bold; cursor: pointer; touch-action: manipulation; }
+.ms-classic-window .ms-mode-toggle button[aria-pressed="true"], .ms-classic-window .ms-mode-toggle button[aria-pressed="true"]:hover { border-color: #ff2a85; background: #3a1428; color: #fff; box-shadow: 0 0 8px rgba(255, 42, 133, 0.45); }

@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import Navbar from '../../components/Navbar';
 import DailyResults from '../../components/DailyResults';
 import useUndoShortcut from '../../components/useUndoShortcut';
-import { useDailyDate, useArchive } from '../../components/DailyBoundary';
+import { useDailyDate, useArchive, useGauntlet } from '../../components/DailyBoundary';
 import { readLocal, writeLocal } from '../../utils/dailyStats.js';
 import { puzzleSnapshot } from '../../utils/archive.js';
 import { dailyLevel as dailyLevelFor } from './dailyConfig.js';
@@ -50,6 +50,8 @@ export default function PepperPlacer() {
   // players get a prompt to try it.
   const [learning, setLearning] = useState(false);
   const [seenTutorial, setSeenTutorial] = useState(tutorialSeen);
+  // No walkthrough prompt inside the Skeeter Gauntlet.
+  const inGauntlet = !!useGauntlet();
   const boardRef = useRef(null);
   const drag = useRef(null);
 
@@ -205,7 +207,7 @@ export default function PepperPlacer() {
       </>}
     </div>
     {!learning && <p className="pp-date">{(game?.mode ?? loading?.mode) === 'daily' ? `${date} · ${archive ? 'Archive' : 'Daily'}` : 'Practice'} · {level} {level === 1 ? 'pepper' : 'peppers'} per row, column and patch</p>}
-    {!learning && !seenTutorial && !won && <WalkthroughPrompt game="Pepper Placer" seenKey={PEPPER_TUTORIAL_KEY} onStart={() => setLearning(true)} onDismiss={() => setSeenTutorial(true)} />}
+    {!learning && !seenTutorial && !inGauntlet && !won && <WalkthroughPrompt game="Pepper Placer" seenKey={PEPPER_TUTORIAL_KEY} onStart={() => setLearning(true)} onDismiss={() => setSeenTutorial(true)} />}
     {learning ? <PepperTutorial onDone={action => {
       setLearning(false); setSeenTutorial(true);
       if (action === 'practice') { setPracticeLevel(1); changeMode('practice', 1); }

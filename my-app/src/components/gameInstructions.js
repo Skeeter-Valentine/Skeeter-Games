@@ -55,7 +55,7 @@ export const gameInstructions = {
   minesweeper: [
     'Reveal every safe cell without opening a mine.',
     'A number tells you how many mines occupy its eight surrounding cells, including diagonals.',
-    'Click or tap to reveal a cell. Right-click, or long-press on touch screens, to place or remove a flag.',
+    'Click or tap to reveal a cell. Right-click, or long-press on touch screens, to place or remove a flag. Or switch the Dig / Flag toggle to Flag so a plain tap flags instead (long-press then digs).',
     'Click a revealed number after flagging that many neighbors to reveal the remaining neighbors. Incorrect flags can cause a mine to open.',
     'Flags are reminders; winning requires revealing all safe cells.',
   ],

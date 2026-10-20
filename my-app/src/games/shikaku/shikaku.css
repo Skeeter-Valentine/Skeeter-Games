@@ -108,7 +108,8 @@
   position: relative;
   touch-action: manipulation;
   background-color: var(--bg-dark);
-  touch-action: none; /* Prevents accidental scrolling on mobile */
+  /* Dragging draws a rectangle instead of scrolling; two fingers still zoom. */
+  touch-action: pinch-zoom;
 }
 
 .shikaku-cell {

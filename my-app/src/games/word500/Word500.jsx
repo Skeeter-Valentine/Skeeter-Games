@@ -180,24 +180,6 @@ export default function Word500({ onWin }) {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [handleKeyPress]);
 
-  useEffect(() => {
-    const gtagScript = document.createElement('script');
-    gtagScript.src = 'https://www.googletagmanager.com/gtag/js?id=G-9TBQNYQE6V';
-    gtagScript.async = true;
-    document.head.appendChild(gtagScript);
-
-    window.dataLayer = window.dataLayer || [];
-    function gtag() {
-      window.dataLayer.push(arguments);
-    }
-    gtag('js', new Date());
-    gtag('config', 'G-9TBQNYQE6V');
-
-    return () => {
-      document.head.removeChild(gtagScript);
-    };
-  }, []);
-
   const guessedLetters = Array.from(
     new Set(guesses.join('').toUpperCase().split(''))
   );
