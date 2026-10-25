@@ -113,7 +113,7 @@ export const DEFAULT_AVERAGE_SECONDS = {
   akari: [90, 180, 420], 'skeedle-beadle': [90, 180, 300], map: [90, 180, 360], parshle: [150, 180, 240],
   stitches: [150, 300, 540], 'skeedle-marathon': [1200, 1200, 1500], nonograms: [60, 240, 540],
   skeedlemath: [180, 180, 240], pipes: [60, 150, 330], shikaku: [90, 210, 480], quordle: [300, 300, 360],
-  word500: [300, 300, 360], minesweeper: [60, 150, 300], '2048': [420, 480, 600], hashi: [90, 180, 360],
+  word500: [300, 300, 360], minesweeper: [60, 150, 300], '2048': [420, 480, 600], hashi: [120, 240, 540],
   'pepper-placer': [90, 240, 480],
 };
 export const MIN_COMMUNITY_SOLVES = 5;

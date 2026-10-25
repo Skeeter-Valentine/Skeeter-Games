@@ -1,6 +1,7 @@
 import { gameInstructions } from '../components/gameInstructions.js';
 
 const entries = [
+  ['kakurasu', 'Add ’em Up', 'Daily Kakurasu Puzzle', 'Shade squares so every row and column adds up to its clue, counting each square by its position, in this daily Kakurasu logic puzzle.', 'On a 5 × 5 board a row clue of 15 shades the whole row, since 1 + 2 + 3 + 4 + 5 = 15. A clue of 2 can only be the square in column 2, because each square counts once.'],
   ['pepper-placer', 'Pepper Placer', 'Daily Star Battle Puzzle', 'Place 1 or 2 peppers in every row, column and patch, with no two peppers touching, in this daily Star Battle logic puzzle.', 'If a patch lies entirely inside one row on a 1-pepper board, that row\'s pepper must be in the patch, so every other square in the row stays empty.'],
   ['skeedle-beadle', 'Skeedle Beadle', 'Daily Bead Sort Puzzle', 'Slide shaped beads between sticks until every stick holds one kind of bead in this daily sorting logic puzzle.', 'If one stick has a star bead on top and another stick ends in a star with room to spare, slide the star across. Keep an empty stick free for beads you need to move out of the way.'],
   ['akari', 'Skeeluminate', 'Daily Light Up Puzzle', 'Place bulbs, light every white square, and satisfy numbered walls in this daily Akari (Light Up) logic puzzle.', 'A wall marked 0 forbids bulbs in its neighboring squares. A bulb lights every square along its row and column until it reaches a wall.'],

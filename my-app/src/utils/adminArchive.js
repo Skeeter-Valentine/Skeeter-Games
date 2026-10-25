@@ -6,7 +6,7 @@ export const GAME_TITLES = {
   map: 'Cartograskeet', akari: 'Skeeluminate', stitches: 'Skitches', parshle: 'Parshle', word500: 'Skeedle500',
   quordle: 'Ske4dle', shikaku: 'Shikaku', minesweeper: 'Mineskeeter', sudoku: 'Skeedoku', pipes: 'Skeeter Piper',
   hashi: 'Hashi', nonograms: 'Skeedograms', skeedlemath: 'Skeedle+', 'skeedle-marathon': 'Skeedle Marathon', 2048: '2048', 'skeedle-beadle': 'Skeedle Beadle',
-  'pepper-placer': 'Pepper Placer',
+  'pepper-placer': 'Pepper Placer', kakurasu: 'Add ’em Up',
 };
 
 export function puzzleDates(today) {

@@ -31,7 +31,7 @@ test('ten years of actual daily boards meet quotas, transitions, and rating mapp
     sizes.parshle.add(Array.from({ length: 5 }, (_, row) => hiddenPositions(`parshle:${date}`, row).length).reduce((a, b) => a + b, 0));
     assert.deepEqual(hiddenPositions(`parshle:${date}`, 5), []);
   }
-  for (const [game, expected] of Object.entries({ shikaku: [5, 7, 10, 15, 20], pipes: [5, 7, 9], nonograms: [5, 10, 15], stitches: [5, 7, 9], hashi: [5, 6, 7, 8], parshle: [5, 6, 7, 8, 9, 10, 11, 12] })) {
+  for (const [game, expected] of Object.entries({ shikaku: [5, 7, 10, 15, 20], pipes: [5, 7, 9], nonograms: [5, 10, 15], stitches: [5, 7, 9], hashi: [5, 6, 7, 8, 10], parshle: [5, 6, 7, 8, 9, 10, 11, 12] })) {
     assert.deepEqual([...sizes[game]].sort((a, b) => a - b), expected, game);
   }
   assert.deepEqual(sizes.minesweeper, new Set(['9x9:10', '12x12:22', '14x14:30', '16x16:40', '16x30:99']));

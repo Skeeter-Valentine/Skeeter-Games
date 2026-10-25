@@ -1,4 +1,6 @@
-import { useDailyDate, useArchive } from '../../components/DailyBoundary';
+import { useDailyDate, useArchive, useGauntlet } from '../../components/DailyBoundary';
+import { WalkthroughPrompt, walkthroughSeen } from '../../components/Walkthrough';
+import PipesTutorial, { PIPES_TUTORIAL_KEY } from './PipesTutorial';
 import { getDailyGridSize } from './dailyConfig.js';
 import DailyResults from '../../components/DailyResults';
 import useUndoShortcut from '../../components/useUndoShortcut';
@@ -138,6 +140,10 @@ export default function Pipes({ onWin }) {
   const [isTimerActive, setIsTimerActive] = useState(false);
 
   const canvasRef = useRef(null);
+  // "Learn to play" walkthrough (never inside the Skeeter Gauntlet).
+  const inGauntlet = !!useGauntlet();
+  const [learning, setLearning] = useState(false);
+  const [seenTutorial, setSeenTutorial] = useState(() => walkthroughSeen(PIPES_TUTORIAL_KEY));
 
   const getCellSize = useCallback((size) => {
     const availableWidth = Math.min(window.innerWidth - 32, 480);
@@ -149,7 +155,7 @@ export default function Pipes({ onWin }) {
   // Timer Effect
   useEffect(() => {
     let interval = null;
-    if (isTimerActive && !isWon) {
+    if (isTimerActive && !isWon && !learning) {
       interval = setInterval(() => {
         setSeconds((prev) => prev + 1);
       }, 1000);
@@ -157,7 +163,7 @@ export default function Pipes({ onWin }) {
       clearInterval(interval);
     }
     return () => clearInterval(interval);
-  }, [isTimerActive, isWon]);
+  }, [isTimerActive, isWon, learning]);
 
   const formatTime = (totalSeconds) => {
     const mins = Math.floor(totalSeconds / 60);
@@ -551,28 +557,39 @@ export default function Pipes({ onWin }) {
   return (
     <div className="pipes-container">
       <Navbar />
-      <DailyResults gameId="pipes" title="Skeeter Piper" daily={gameMode === 'daily'} date={todayStr} finished={isWon} seconds={seconds} ready={userGrid.length > 0} />
+      <DailyResults gameId="pipes" title="Skeeter Piper" daily={gameMode === 'daily'} date={todayStr} finished={isWon} seconds={seconds} ready={userGrid.length > 0} onLearn={() => setLearning(true)} />
       <h1 className="pipes-title">SKEETER PIPER</h1>
       <p className="pipes-instructions">
         Left-click to rotate pipes clockwise. Right-click to lock/darken cells you know are correct!
       </p>
 
       {/* Mode Switcher Buttons */}
-      <div style={{ display: 'flex', gap: '12px', marginBottom: '16px', justifyContent: 'center' }}>
+      <div className="pipes-modes" style={{ display: 'flex', gap: '12px', marginBottom: '16px', justifyContent: 'center', flexWrap: 'wrap' }}>
         <button
-          style={gameMode === 'daily' ? neonPinkBtnStyle : inactiveBtnStyle}
-          onClick={() => handleModeChange('daily')}
+          style={!learning && gameMode === 'daily' ? neonPinkBtnStyle : inactiveBtnStyle}
+          onClick={() => { setLearning(false); handleModeChange('daily'); }}
         >
           📅 Daily Challenge ({gridSize}x{gridSize})
         </button>
         <button
-          style={gameMode === 'custom' ? neonBlueBtnStyle : inactiveBtnStyle}
-          onClick={() => handleModeChange('custom')}
+          style={!learning && gameMode === 'custom' ? neonBlueBtnStyle : inactiveBtnStyle}
+          onClick={() => { setLearning(false); handleModeChange('custom'); }}
         >
           🎲 Custom Game
         </button>
+        {!inGauntlet && <button style={learning ? { ...neonBlueBtnStyle, backgroundColor: '#39ff14' } : inactiveBtnStyle} aria-pressed={learning} onClick={() => setLearning(!learning)}>
+          🎓 Learn to play
+        </button>}
       </div>
 
+      {!learning && !seenTutorial && !inGauntlet && !isWon && <WalkthroughPrompt game="Skeeter Piper" seenKey={PIPES_TUTORIAL_KEY} onStart={() => setLearning(true)} onDismiss={() => setSeenTutorial(true)} />}
+      {learning && <PipesTutorial onDone={action => {
+        setLearning(false); setSeenTutorial(true);
+        if (action === 'daily') handleModeChange('daily');
+        if (action === 'practice') { setGameMode('custom'); setGridSize(5); generatePuzzle(5, 'custom'); }
+      }} />}
+      {/* Kept mounted while learning so the canvas keeps its drawing. */}
+      <div style={{ display: learning ? 'none' : 'contents' }}>
       <div className="pipes-config" style={{ gap: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         {gameMode === 'custom' ? (
           <div>
@@ -624,6 +641,7 @@ export default function Pipes({ onWin }) {
             New Game
           </button>
         )}
+      </div>
       </div>
     </div>
   );

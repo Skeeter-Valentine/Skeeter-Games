@@ -12,6 +12,7 @@ import AdminHome from './pages/AdminHome';
 import Gauntlet from './pages/Gauntlet';
 import SkeedleBeadle from './games/skeedle-beadle/SkeedleBeadle';
 import PepperPlacer from './games/pepper-placer/PepperPlacer';
+import Kakurasu from './games/kakurasu/Kakurasu';
 import Seo from './seo/Seo';
 import GameFeedback from './components/GameFeedback';
 import Navbar from './components/Navbar';
@@ -60,6 +61,7 @@ export default function App() {
         {/* <Route path="/nurikabe" element={<Nurikabe />} /> */}
         <Route path="/skeedle-beadle" element={<DailyBoundary><SkeedleBeadle /></DailyBoundary>} />
         <Route path="/pepper-placer" element={<DailyBoundary><PepperPlacer /></DailyBoundary>} />
+        <Route path="/kakurasu" element={<DailyBoundary><Kakurasu /></DailyBoundary>} />
         {/* About and Privacy: the page text comes from the SEO guide below (src/pages/info). */}
         <Route path="/about" element={<Navbar />} />
         <Route path="/privacy" element={<Navbar />} />

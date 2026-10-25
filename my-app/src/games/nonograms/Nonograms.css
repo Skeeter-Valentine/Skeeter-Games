@@ -226,3 +226,5 @@
   .col-clue { padding: 3px 0; }
   .game-cell { width: auto; height: auto; }
 }
+/* Learn to play: the walkthrough is wider than the page column, so centre it. */
+.nonogram-wrapper > .wt-panel { margin: 4px 0 18px; transform: none; align-self: center; flex-shrink: 0; }

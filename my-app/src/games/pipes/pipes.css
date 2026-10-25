@@ -229,3 +229,5 @@
   background-color: rgba(57, 255, 20, 0.12);
 }
 .pipes-controls button:disabled { opacity: 0.4; cursor: default !important; }
+/* Learn to play: the walkthrough is wider than the page column, so centre it. */
+.pipes-container > .wt-panel { margin: 4px 0 18px; transform: none; align-self: center; flex-shrink: 0; }

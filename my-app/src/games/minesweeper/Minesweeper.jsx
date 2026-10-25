@@ -1,4 +1,6 @@
-import { useDailyDate, useArchive } from '../../components/DailyBoundary';
+import { useDailyDate, useArchive, useGauntlet } from '../../components/DailyBoundary';
+import { WalkthroughPrompt, walkthroughSeen } from '../../components/Walkthrough';
+import MinesTutorial, { MINES_TUTORIAL_KEY } from './MinesTutorial';
 import { dailyLayout, boardFromLayout, restoreMinesweeper, validLayout } from './puzzle.js';
 import { puzzleSnapshot } from '../../utils/archive.js';
 import { readLocal, writeLocal } from '../../utils/dailyStats.js';
@@ -40,6 +42,10 @@ export default function Minesweeper({ onWin }) {
   // Flag mode: taps plant flags instead of digging (long-press or right-click
   // still does the other action). Easier than long-pressing on phones.
   const [flagMode, setFlagMode] = useState(false);
+  // "Learn to play" walkthrough (never inside the Skeeter Gauntlet).
+  const inGauntlet = !!useGauntlet();
+  const [learning, setLearning] = useState(false);
+  const [seenTutorial, setSeenTutorial] = useState(() => walkthroughSeen(MINES_TUTORIAL_KEY));
   
   // Interaction tracking refs to prevent accidental clicks/flags during panning or zooming
   const touchStartDistRef = useRef(null);
@@ -405,27 +411,44 @@ export default function Minesweeper({ onWin }) {
     return String(clamped).padStart(3, '0');
   };
 
+  // The clock stops while learning and picks up again on the next move.
+  const startLearning = () => { stopTimer(); setLearning(true); };
+  const finishLearning = action => {
+    setLearning(false); setSeenTutorial(true);
+    if (action === 'daily') setGameMode('daily');
+    if (action === 'practice') {
+      if (gameMode === 'classic' && difficulty === 'beginner') initBoard();
+      setGameMode('classic'); setDifficulty('beginner');
+    }
+  };
+
   return (
     <div className={`minesweeper-container ${isExpertLayout ? 'expert-mode-active' : ''} ${isIntermediateLayout ? 'intermediate-mode-active' : ''}`}>
       <Navbar />
-      <DailyResults gameId="minesweeper" title="Mineskeeter" daily={gameMode === 'daily'} date={todayStr} finished={gameStatus !== 'playing'} won={gameStatus === 'won'} seconds={timer} ready={board.length > 0} />
+      <DailyResults gameId="minesweeper" title="Mineskeeter" daily={gameMode === 'daily'} date={todayStr} finished={gameStatus !== 'playing'} won={gameStatus === 'won'} seconds={timer} ready={board.length > 0} onLearn={startLearning} />
       <h2 className="ms-title">MINESKEETER</h2>
 
       <div className="diff-toggle">
         <button
-          className={`diff-btn ${gameMode === 'daily' ? 'active' : ''}`}
-          onClick={() => setGameMode('daily')}
+          className={`diff-btn ${!learning && gameMode === 'daily' ? 'active' : ''}`}
+          onClick={() => { setLearning(false); setGameMode('daily'); }}
         >
           Daily Challenge
         </button>
         <button
-          className={`diff-btn ${gameMode === 'classic' ? 'blue' : ''}`}
-          onClick={() => setGameMode('classic')}
+          className={`diff-btn ${!learning && gameMode === 'classic' ? 'blue' : ''}`}
+          onClick={() => { setLearning(false); setGameMode('classic'); }}
         >
           Classic Mode
         </button>
+        {!inGauntlet && <button className={`diff-btn ${learning ? 'active' : ''}`} aria-pressed={learning}
+          onClick={() => (learning ? setLearning(false) : startLearning())}>
+          Learn to play
+        </button>}
       </div>
 
+      {!learning && !seenTutorial && !inGauntlet && gameStatus === 'playing' && <WalkthroughPrompt game="Mineskeeter" seenKey={MINES_TUTORIAL_KEY} onStart={startLearning} onDismiss={() => setSeenTutorial(true)} />}
+      {learning ? <MinesTutorial onDone={finishLearning} /> : <>
       {gameMode === 'classic' && (
         <div className="diff-toggle" style={{ marginTop: '8px' }}>
           <button
@@ -537,6 +560,7 @@ export default function Minesweeper({ onWin }) {
           </div>
         </div>
       </div>
+      </>}
 
     </div>
   );

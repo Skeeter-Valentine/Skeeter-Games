@@ -1,4 +1,6 @@
-import { useDailyDate, useArchive } from '../../components/DailyBoundary';
+import { useDailyDate, useArchive, useGauntlet } from '../../components/DailyBoundary';
+import { WalkthroughPrompt, walkthroughSeen } from '../../components/Walkthrough';
+import StitchesTutorial, { STITCHES_TUTORIAL_KEY } from './StitchesTutorial';
 import DailyResults from '../../components/DailyResults';
 import useUndoShortcut from '../../components/useUndoShortcut';
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -26,6 +28,10 @@ export default function Stitches({ onWin }) {
   const [message, setMessage] = useState('');
   const notified = useRef(false);
   const markDrag = useRef(null);
+  // "Learn to play" walkthrough (never inside the Skeeter Gauntlet).
+  const inGauntlet = !!useGauntlet();
+  const [learning, setLearning] = useState(false);
+  const [seenTutorial, setSeenTutorial] = useState(() => walkthroughSeen(STITCHES_TUTORIAL_KEY));
   const { puzzle, selected, marks } = game;
   const size = puzzle.regions.length;
   const edges = useMemo(() => getEdges(puzzle.regions), [puzzle]);
@@ -36,10 +42,10 @@ export default function Stitches({ onWin }) {
   const holes = new Set(chosen.flatMap(edge => [edge.a, edge.b]));
 
   useEffect(() => {
-    if (won || !game.started) return;
+    if (won || !game.started || learning) return;
     const timer = setInterval(() => setGame(current => ({ ...current, seconds: current.seconds + 1 })), 1000);
     return () => clearInterval(timer);
-  }, [won, game.started]);
+  }, [won, game.started, learning]);
 
   useEffect(() => {
     if (game.mode !== 'daily') return;
@@ -167,7 +173,7 @@ export default function Stitches({ onWin }) {
   return (
     <>
       <Navbar />
-      <DailyResults gameId="stitches" title="Skitches" daily={game.mode === 'daily'} date={game.date} finished={won} started={game.started} seconds={game.seconds} />
+      <DailyResults gameId="stitches" title="Skitches" daily={game.mode === 'daily'} date={game.date} finished={won} started={game.started} seconds={game.seconds} onLearn={() => setLearning(true)} />
       <main className="stitches-page">
         <header className="stitches-heading">
           <h1>SKITCHES</h1>
@@ -176,10 +182,11 @@ export default function Stitches({ onWin }) {
 
         <div className="stitches-toolbar">
           <div className="stitches-mode" aria-label="Game mode">
-            <button aria-pressed={game.mode === 'daily'} onClick={() => changeGame('daily')}>{archive ? 'Archive puzzle' : 'Daily'}</button>
-            <button aria-pressed={game.mode === 'random'} onClick={() => changeGame('random')}>Random</button>
+            <button aria-pressed={!learning && game.mode === 'daily'} onClick={() => { setLearning(false); changeGame('daily'); }}>{archive ? 'Archive puzzle' : 'Daily'}</button>
+            <button aria-pressed={!learning && game.mode === 'random'} onClick={() => { setLearning(false); changeGame('random'); }}>Random</button>
+            {!inGauntlet && <button aria-pressed={learning} onClick={() => setLearning(!learning)}>Learn to play</button>}
           </div>
-          {game.mode === 'random' ? <>
+          {learning ? null : game.mode === 'random' ? <>
             <label className="stitches-size-control">Size <select value={size} onChange={event => changeGame('random', Number(event.target.value))}>
               {[5, 7, 9].map(n => <option key={n} value={n}>{n} × {n}</option>)}
             </select></label>
@@ -187,6 +194,12 @@ export default function Stitches({ onWin }) {
           </> : <span className="stitches-date">{game.date} · {size} × {size}</span>}
         </div>
 
+        {!learning && !seenTutorial && !inGauntlet && !won && <WalkthroughPrompt game="Skitches" seenKey={STITCHES_TUTORIAL_KEY} onStart={() => setLearning(true)} onDismiss={() => setSeenTutorial(true)} />}
+        {learning ? <StitchesTutorial onDone={action => {
+          setLearning(false); setSeenTutorial(true);
+          if (action === 'practice') changeGame('random', 5);
+          if (action === 'daily') changeGame('daily');
+        }} /> : <>
         <section className="stitches-panel" aria-label="Skitches puzzle">
           <div className="stitches-progress">
             <span><strong>{chosen.length}</strong> / {total} connections</span>
@@ -276,6 +289,7 @@ export default function Stitches({ onWin }) {
           </ol>
           <p>Use Tab and Enter/Space to place stitches or marks. Right-click and drag to mark cells empty; start on an × to erase marks. Undo reverses the whole drag.</p>
         </details>
+        </>}
       </main>
     </>
   );

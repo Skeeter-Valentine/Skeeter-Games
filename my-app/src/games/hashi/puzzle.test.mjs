@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { generateUniquePuzzle, mulberry32 } from './puzzle.js';
+import { HARD_STEPS, generateHardPuzzle, generateUniquePuzzle, mulberry32 } from './puzzle.js';
+import { gradePuzzle } from './grader.js';
 import { countSolutions, getPossibleBridges, isConnected } from './solver.js';
 
 const square = (requirements) => [[0, 0], [0, 2], [2, 2], [2, 0]]
@@ -80,4 +81,33 @@ test('pathological RNG terminates with a unique fallback', () => {
     assert.equal(countSolutions(islands), 1);
     assert.equal(islands.length, 3);
     assert.equal(calls, 302);
+});
+
+test('the grader solves easy puzzles by counting and never guesses', () => {
+    // A three-island path: counting alone finishes it.
+    const path = [[0, 0, 1], [0, 4, 3], [4, 4, 2]].map(([r, c, req], id) => ({ id, r, c, req }));
+    assert.deepEqual(gradePuzzle(path), { solved: true, advanced: 0 });
+    // The 3-3-3-3 square has two solutions, so no amount of logic settles it.
+    assert.equal(gradePuzzle(square([3, 3, 3, 3])).solved, false);
+});
+
+test('hard puzzles are unique, need advanced steps, and fit the bigger boards', () => {
+    for (const size of [8, 10, 12]) {
+        for (let seed = 0; seed < 8; seed++) {
+            const islands = generateHardPuzzle(size, mulberry32(seed * 31 + size));
+            assert.ok(islands.every(i => i.r >= 0 && i.r < size && i.c >= 0 && i.c < size));
+            assert.equal(countSolutions(islands, 200000), 1, `size=${size}, seed=${seed}`);
+            const grade = gradePuzzle(islands);
+            assert.ok(grade.solved, `size=${size}, seed=${seed} solvable without guessing`);
+            assert.ok(grade.advanced >= HARD_STEPS[size], `size=${size}, seed=${seed} needed ${grade.advanced}`);
+        }
+    }
+});
+
+test('larger normal puzzles are unique too', () => {
+    for (const size of [10, 12]) {
+        for (let seed = 0; seed < 40; seed++) {
+            assert.equal(countSolutions(generateUniquePuzzle(size, mulberry32(seed))), 1, `size=${size}, seed=${seed}`);
+        }
+    }
 });

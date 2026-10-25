@@ -16,6 +16,7 @@ export function dailyDifficulty(game, date) {
     case 'akari': return scheduledDifficulty('akari', date);
     case 'skeedle-beadle': return scheduledDifficulty('skeedle-beadle', date);
     case 'pepper-placer': return scheduledDifficulty('pepper-placer', date);
+    case 'kakurasu': return scheduledDifficulty('kakurasu', date);
     case 'parshle': {
       const hiddenCount = Array.from({ length: 5 }, (_, row) =>
         hiddenPositions(`parshle:${date}`, row).length).reduce((sum, count) => sum + count, 0);
@@ -30,7 +31,7 @@ export function dailyDifficulty(game, date) {
       const cells = rows * cols;
       return cells <= 144 ? 1 : cells <= 196 ? 2 : 3;
     }
-    case 'hashi': return { 5: 1, 6: 2, 7: 2, 8: 3 }[getDailyConfig(date).size];
+    case 'hashi': return getDailyConfig(date).level;
     default: return 2;
   }
 }

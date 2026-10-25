@@ -1,4 +1,6 @@
-import { useDailyDate, useArchive } from '../../components/DailyBoundary';
+import { useDailyDate, useArchive, useGauntlet } from '../../components/DailyBoundary';
+import { WalkthroughPrompt, walkthroughSeen } from '../../components/Walkthrough';
+import NonogramTutorial, { NONOGRAM_TUTORIAL_KEY } from './NonogramTutorial';
 import { puzzleSnapshot } from '../../utils/archive.js';
 import { readLocal, writeLocal } from '../../utils/dailyStats.js';
 import { nonogramProgressKey, saveNonogram, restoreNonogram } from './progress.js';
@@ -311,6 +313,21 @@ export default function Nonograms({ onWin }) {
   };
   useUndoShortcut(undo);
 
+  // "Learn to play" walkthrough (never inside the Skeeter Gauntlet).
+  const inGauntlet = !!useGauntlet();
+  const [learning, setLearning] = useState(false);
+  const [seenTutorial, setSeenTutorial] = useState(() => walkthroughSeen(NONOGRAM_TUTORIAL_KEY));
+  const finishLearning = action => {
+    setLearning(false); setSeenTutorial(true);
+    if (action === 'daily') loadDailyPuzzle();
+    if (action === 'practice') {
+      setSelectedSize('5x5'); setGameMode('practice');
+      setSolutionGrid(generateUniquePuzzleGrid(5, 5));
+      setPlayerGrid(Array.from({ length: 5 }, () => Array(5).fill(0)));
+      setHistory([]); setHasStarted(false); setIsWon(false);
+    }
+  };
+
 
 
   return (
@@ -318,7 +335,7 @@ export default function Nonograms({ onWin }) {
     <>
 
       <Navbar />
-      <DailyResults started={hasStarted} gameId="nonograms" title="Skeedograms" daily={gameMode === 'daily'} finished={isWon} />
+      <DailyResults started={hasStarted && !learning} gameId="nonograms" title="Skeedograms" daily={gameMode === 'daily'} finished={isWon} onLearn={() => setLearning(true)} />
 
       <div className="nonogram-wrapper">
 
@@ -338,9 +355,9 @@ export default function Nonograms({ onWin }) {
 
           <button
 
-            className={`tool-btn mode-btn ${gameMode === 'daily' ? 'active' : ''}`}
+            className={`tool-btn mode-btn ${!learning && gameMode === 'daily' ? 'active' : ''}`}
 
-            onClick={loadDailyPuzzle}
+            onClick={() => { setLearning(false); loadDailyPuzzle(); }}
 
           >
 
@@ -350,9 +367,9 @@ export default function Nonograms({ onWin }) {
 
           <button
 
-            className={`tool-btn mode-btn ${gameMode === 'practice' ? 'active' : ''}`}
+            className={`tool-btn mode-btn ${!learning && gameMode === 'practice' ? 'active' : ''}`}
 
-            onClick={loadPracticeMode}
+            onClick={() => { setLearning(false); loadPracticeMode(); }}
 
           >
 
@@ -360,11 +377,19 @@ export default function Nonograms({ onWin }) {
 
           </button>
 
+          {!inGauntlet && <button className={`tool-btn mode-btn ${learning ? 'active' : ''}`} aria-pressed={learning} onClick={() => setLearning(!learning)}>
+            🎓 Learn to play
+          </button>}
+
         </div>
 
 
 
         {/* Sub-row: Board Size Dropdown (Visible ONLY in Practice Mode) */}
+
+        {!learning && !seenTutorial && !inGauntlet && !isWon && <WalkthroughPrompt game="Skeedograms" seenKey={NONOGRAM_TUTORIAL_KEY} onStart={() => setLearning(true)} onDismiss={() => setSeenTutorial(true)} />}
+
+        {learning ? <NonogramTutorial onDone={finishLearning} /> : <>
 
         {gameMode === 'practice' && (
 
@@ -526,6 +551,8 @@ export default function Nonograms({ onWin }) {
           </div>
 
         </div>
+
+        </>}
 
       </div>
 

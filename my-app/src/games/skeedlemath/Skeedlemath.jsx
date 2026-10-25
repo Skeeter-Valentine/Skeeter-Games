@@ -230,12 +230,17 @@ export default function Skeedlemath({ onWin }) {
   useEffect(() => {
     const handleKeyDown = (e) => {
       const key = e.key.toUpperCase();
+      // Enter or Space would also "click" an on-screen key that still has
+      // focus (e.g. x² after tapping it), typing it into the next guess.
+      if ((key === 'ENTER' || key === ' ') && e.target.closest?.('.word500-keyboard')) e.preventDefault();
       if (key === 'ENTER') handleInput('ENTER');
       else if (key === 'BACKSPACE') handleInput('DELETE');
       else if (key === 'ARROWLEFT') setActiveCellIndex((prev) => Math.max(0, prev - 1));
       else if (key === 'ARROWRIGHT') setActiveCellIndex((prev) => Math.min(EQUATION_LENGTH - 1, prev + 1));
-      else if (key === '2' && e.shiftKey) handleInput('x²');
-      else if (key === '3' && e.shiftKey) handleInput('x³');
+      // Shift+2 / Shift+3 type squared / cubed. Checked by physical key, since
+      // with Shift held e.key is '@' / '#' (or another symbol on other layouts).
+      else if (e.shiftKey && (e.code === 'Digit2' || e.code === 'Numpad2')) handleInput('x²');
+      else if (e.shiftKey && (e.code === 'Digit3' || e.code === 'Numpad3')) handleInput('x³');
       else handleInput(key);
     };
 
@@ -363,7 +368,9 @@ export default function Skeedlemath({ onWin }) {
                 else if (state === 'used') keyClass += ' used';
 
                 return (
-                  <button key={key} className={keyClass} onClick={() => handleInput(key)}>
+                  <button key={key} className={keyClass} onClick={() => handleInput(key)}
+                    // Keep focus off the on-screen keys so a physical Enter only submits.
+                    onMouseDown={(e) => e.preventDefault()}>
                     {key}
                   </button>
                 );

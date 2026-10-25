@@ -119,3 +119,10 @@
     }
 }
 .hashi-btn:disabled { opacity: 0.4; cursor: default; }
+/* 10x10 and 12x12 boards: a wider card, and the full phone width. */
+.hashi-container.large { max-width: 560px; }
+@media (max-width: 480px) {
+    .hashi-container.large .hashi-canvas { max-width: 100%; }
+}
+/* Learn to play: the walkthrough is wider than the card, so centre it over it. */
+.hashi-container > .wt-panel { margin: 4px 0 18px; transform: none; align-self: center; flex-shrink: 0; }

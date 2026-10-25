@@ -1,4 +1,6 @@
-import { useDailyDate, useArchive } from '../../components/DailyBoundary';
+import { useDailyDate, useArchive, useGauntlet } from '../../components/DailyBoundary';
+import { WalkthroughPrompt, walkthroughSeen } from '../../components/Walkthrough';
+import HashiTutorial, { HASHI_TUTORIAL_KEY } from './HashiTutorial';
 import { puzzleSnapshot } from '../../utils/archive.js';
 import { readLocal, writeLocal } from '../../utils/dailyStats.js';
 import { hashiProgressKey, hashiSolvedKey, islandFingerprint, restoreHashi } from './progress.js';
@@ -10,7 +12,7 @@ import StatsModal from './components/StatsModal';
 import Navbar from '../../components/Navbar';
 import './Hashi.css';
 
-import { generateUniquePuzzle } from './puzzle.js';
+import { generateDailyPuzzle, generateHardPuzzle, generateUniquePuzzle } from './puzzle.js';
 import { getDailyConfig } from './dailyConfig.js';
 import { doSegmentsCross, isConnected } from './solver.js';
 
@@ -36,6 +38,12 @@ export default function Hashi({ onWin }) {
     const canvasRef = useRef(null);
     const [message, setMessage] = useState('');
     const [gridSize, setGridSize] = useState(6);
+    // Random puzzles only: Hard ones can't be finished by counting alone.
+    const [hard, setHard] = useState(false);
+    // "Learn to play" walkthrough (never inside the Skeeter Gauntlet).
+    const inGauntlet = !!useGauntlet();
+    const [learning, setLearning] = useState(false);
+    const [seenTutorial, setSeenTutorial] = useState(() => walkthroughSeen(HASHI_TUTORIAL_KEY));
     const [gameState, setGameState] = useState({ islands: [], bridges: [] });
     // Earlier bridge layouts, for Undo (and Ctrl+Z).
     const [history, setHistory] = useState([]);
@@ -47,8 +55,10 @@ export default function Hashi({ onWin }) {
     const [isStatsOpen, setIsStatsOpen] = useState(false);
     const [stats, setStats] = useState(DEFAULT_STATS);
 
-    const canvasSize = 400;
-    const offset = 35;
+    // Big boards get a bigger canvas so the islands stay easy to tap.
+    const large = gridSize > 8;
+    const canvasSize = large ? 520 : 400;
+    const offset = large ? 26 : 35;
     const cellSize = (canvasSize - offset * 2) / (gridSize - 1);
 
     const todayStr = useDailyDate();
@@ -58,7 +68,7 @@ export default function Hashi({ onWin }) {
     // Each daily (and archive date) keeps the exact islands it was played with.
     const dailyPuzzle = useMemo(() => puzzleSnapshot('hashi', todayStr, () => {
         const config = getDailyConfig(todayStr);
-        return { size: config.size, islands: generateUniquePuzzle(config.size, config.rng) };
+        return { size: config.size, islands: generateDailyPuzzle(config) };
     }), [todayStr]);
 
     useEffect(() => {
@@ -99,7 +109,7 @@ export default function Hashi({ onWin }) {
 
     useEffect(() => {
         let interval = null;
-        if (isActive) {
+        if (isActive && !learning) {
             interval = setInterval(() => {
                 setSeconds(prev => prev + 1);
             }, 1000);
@@ -107,7 +117,7 @@ export default function Hashi({ onWin }) {
             clearInterval(interval);
         }
         return () => clearInterval(interval);
-    }, [isActive]);
+    }, [isActive, learning]);
 
     const startNewGame = (daily = false) => {
         setMessage('');
@@ -134,7 +144,7 @@ export default function Hashi({ onWin }) {
             return;
         }
 
-        const generatedIslands = generateUniquePuzzle(gridSize, Math.random);
+        const generatedIslands = hard ? generateHardPuzzle(gridSize, Math.random) : generateUniquePuzzle(gridSize, Math.random);
         setHistory([]);
         setGameState({ islands: generatedIslands, bridges: [] });
     };
@@ -149,7 +159,7 @@ export default function Hashi({ onWin }) {
         if (!isDailyMode) {
             startNewGame(false);
         }
-    }, [gridSize]);
+    }, [gridSize, hard]);
 
     useEffect(() => {
         startNewGame(true);
@@ -219,7 +229,7 @@ export default function Hashi({ onWin }) {
             });
 
             ctx.beginPath();
-            ctx.arc(x, y, Math.max(12, 18 - gridSize), 0, Math.PI * 2);
+            ctx.arc(x, y, large ? cellSize * 0.36 : Math.max(12, 18 - gridSize), 0, Math.PI * 2);
 
             if (currentDeg === island.req) {
                 ctx.fillStyle = '#2ea043';
@@ -235,13 +245,13 @@ export default function Hashi({ onWin }) {
             ctx.stroke();
 
             ctx.fillStyle = '#f0f6fc';
-            ctx.font = 'bold 12px sans-serif';
+            ctx.font = large ? 'bold 16px sans-serif' : 'bold 12px sans-serif';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             ctx.fillText(island.req, x, y);
         });
 
-    }, [gameState, gridSize]);
+    }, [gameState, gridSize, canvasSize]);
 
     const undo = () => {
         if (isSolved || !history.length) return;
@@ -370,8 +380,8 @@ export default function Hashi({ onWin }) {
     return (
         <>
             <Navbar />
-      <DailyResults gameId="hashi" title="Hashi" daily={isDailyMode} date={todayStr} finished={isSolved} seconds={seconds} ready={gameState.islands.length > 0} manualOpen={isStatsOpen} onClose={() => setIsStatsOpen(false)} legacyStats={archive ? undefined : stats} />
-            <div className="hashi-container">
+      <DailyResults onLearn={() => setLearning(true)} gameId="hashi" title="Hashi" daily={isDailyMode} date={todayStr} finished={isSolved} seconds={seconds} ready={gameState.islands.length > 0} manualOpen={isStatsOpen} onClose={() => setIsStatsOpen(false)} legacyStats={archive ? undefined : stats} />
+            <div className={`hashi-container${large ? ' large' : ''}`}>
                 <div className="skeedle-header">
                     <h2>Hashkeet {isDailyMode && <span style={{ fontSize: '15px', color: '#58a6ff' }}>(Daily)</span>}</h2>
                 </div>
@@ -383,24 +393,36 @@ export default function Hashi({ onWin }) {
 
                 <div className="hashi-controls" style={{ marginBottom: '10px' }}>
                     <button 
-                        onClick={() => startNewGame(true)} 
+                        onClick={() => { setLearning(false); startNewGame(true); }} 
                         className="hashi-btn" 
                         style={{ background: isDailyMode ? '#1f6feb' : '#000000', borderColor: isDailyMode ? '#58a6ff' : '#30363d' }}
                     >
                         Daily
                     </button>
                     <button 
-                        onClick={() => startNewGame(false)} 
+                        onClick={() => { setLearning(false); startNewGame(false); }} 
                         className="hashi-btn" 
                         style={{ background: !isDailyMode ? '#ff69b4' : '#000000', borderColor: !isDailyMode ? '#ffb6c1' : '#30363d' }}
                     >
                         Random
                     </button>
+                    {!inGauntlet && <button onClick={() => setLearning(!learning)} className="hashi-btn" aria-pressed={learning}
+                        style={{ background: learning ? '#2ea043' : '#000000', borderColor: learning ? '#56d364' : '#30363d' }}>Learn to play</button>}
                     <button onClick={undo} disabled={isSolved || !history.length} className="hashi-btn" title="Undo (Ctrl+Z)">↶ Undo</button>
                     <button onClick={resetBoard} disabled={isSolved || !gameState.bridges.length} className="hashi-btn">Reset</button>
                 </div>
 
-                {!isDailyMode && (
+                {!learning && !seenTutorial && !inGauntlet && !isSolved && <WalkthroughPrompt game="Hashkeet" seenKey={HASHI_TUTORIAL_KEY} onStart={() => setLearning(true)} onDismiss={() => setSeenTutorial(true)} />}
+                {learning && <HashiTutorial onDone={action => {
+                    setLearning(false); setSeenTutorial(true);
+                    if (action === 'daily') startNewGame(true);
+                    if (action === 'practice') {
+                        setHard(false); setIsDailyMode(false);
+                        if (gridSize === 5 && !hard) startNewGame(false); else setGridSize(5);
+                    }
+                }} />}
+
+                {!isDailyMode && !learning && (
                     <div className="hashi-controls" style={{ marginBottom: '15px' }}>
                         <label style={{ color: '#f0f6fc', fontWeight: 'bold', fontSize: '15px' }}>Board Size:</label>
                         <select 
@@ -415,10 +437,26 @@ export default function Hashi({ onWin }) {
                             <option value={6}>6 x 6</option>
                             <option value={7}>7 x 7</option>
                             <option value={8}>8 x 8</option>
+                            <option value={10}>10 x 10</option>
+                            <option value={12}>12 x 12</option>
+                        </select>
+                        <label htmlFor="hashi-difficulty" style={{ color: '#f0f6fc', fontWeight: 'bold', fontSize: '15px' }}>Difficulty:</label>
+                        <select
+                            id="hashi-difficulty"
+                            value={hard ? 'hard' : 'normal'}
+                            onChange={(e) => {
+                                setIsDailyMode(false);
+                                setHard(e.target.value === 'hard');
+                            }}
+                            className="hashi-select"
+                        >
+                            <option value="normal">Normal</option>
+                            <option value="hard">Hard</option>
                         </select>
                     </div>
                 )}
 
+                <div style={{ width: '100%', display: learning ? 'none' : 'flex', flexDirection: 'column', alignItems: 'center' }}>
                 <div className="hashi-directions">
                     <strong>How to Play:</strong> Click between two islands to draw a bridge. Click again to make it a double bridge, or a third time to remove it. Total bridges connected to each island must match its number. Bridges cannot cross each other. All islands must form one connected network.
                 </div>
@@ -441,6 +479,7 @@ export default function Hashi({ onWin }) {
                 </div>
                 
                 <div className="hashi-message">{message}</div>
+                </div>
             </div>
         </>
     );

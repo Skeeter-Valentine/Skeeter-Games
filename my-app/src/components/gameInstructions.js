@@ -22,6 +22,14 @@ export const gameInstructions = {
     'Every puzzle has exactly one solution and can be solved without guessing. A patch that fits inside one row or column uses up that line\'s peppers, so the rest of the line stays empty; and a square is empty if a pepper there would leave a neighbouring row, column or patch with no room.',
     'Daily puzzles reset at midnight UTC and save progress in this browser. Mild is 1 pepper on a 6 × 6 board, where every move is either a square next to a pepper or the last open square in a row, column or patch; Medium is 1 pepper on 8 × 8 and Picante 2 peppers on 9 × 9. Practice lets you pick a level and generate another puzzle.',
   ],
+  kakurasu: [
+    'Shade squares so that every row and every column adds up to the clue at its end.',
+    'In a row, each shaded square is worth its column number (1 at the left). In a column, each shaded square is worth its row number (1 at the top). The small numbers along the top and left show these values.',
+    'A clue turns green when its line adds up exactly, and pink when its shaded squares add up to too much.',
+    'Tap or drag to shade squares. Select Mark ×, shift-click, or right-click to cross off a square you know stays empty. Use arrow keys to move, S to shade, X to mark and Delete to erase. Undo, Redo and Reset are under the board.',
+    'Every puzzle has exactly one solution and can be solved one line at a time without guessing: find the ways each clue can be made from the squares still open, and keep what they all agree on.',
+    'Daily puzzles reset at midnight UTC and save progress in this browser. Mild is 5 × 5, Medium is 6 × 6 and Picante is 8 × 8. Practice lets you choose any size from 4 × 4 to 9 × 9.',
+  ],
   akari: [
     'Place bulbs in white squares to light the entire board. Each bulb shines horizontally and vertically until a black wall blocks it.',
     'No bulb may shine directly on another bulb. Conflicting bulbs are highlighted in red.',
@@ -61,7 +69,7 @@ export const gameInstructions = {
   ],
   skeedlemath: [
     'Find the hidden 10-character equation in six guesses. Every guess must be a valid equation with equal values on both sides of the equals sign.',
-    'Use digits, arithmetic operators, parentheses, and the square/cube keys to build your equation.',
+    'Use digits, arithmetic operators, parentheses, and the square/cube keys to build your equation. On a keyboard, Shift+2 types ² and Shift+3 types ³.',
     'Green means the character is in the correct position. Yellow means it appears elsewhere. Other characters are absent or used too many times.',
     'Select a cell to edit it, use Delete to erase, and Enter to submit. Match the exact target equation to win.',
     'Colorblind switch (next to the statistics button): swaps to orange for the right spot, blue for the wrong spot and gray for not in the word. The setting applies to all word games and is remembered in this browser.',

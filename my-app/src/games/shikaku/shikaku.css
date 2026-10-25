@@ -277,3 +277,5 @@
   }
 }
 .shikaku-btn:disabled { opacity: 0.4; cursor: default; }
+/* Learn to play: the walkthrough is wider than the page column, so centre it. */
+.shikaku-container > .wt-panel { margin: 4px 0 18px; transform: none; align-self: center; flex-shrink: 0; }

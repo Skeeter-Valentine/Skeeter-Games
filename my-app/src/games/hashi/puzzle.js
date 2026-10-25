@@ -1,4 +1,5 @@
 import { countSolutions } from './solver.js';
+import { gradePuzzle } from './grader.js';
 
 export function mulberry32(seed) {
     return function() {
@@ -157,3 +158,31 @@ export function generateUniquePuzzle(size, rng = Math.random) {
     ];
 }
 
+
+// How many advanced steps (see grader.js) a Hard puzzle of each size needs.
+export const HARD_STEPS = { 5: 2, 6: 3, 7: 3, 8: 4, 10: 4, 12: 5 };
+
+// A puzzle that needs between `min` and `max` advanced steps: still one
+// solution and still solvable without guessing. It draws puzzles until one
+// fits, keeping the closest so far in case none does.
+export function generateGradedPuzzle(size, rng, [min, max], attempts = 4000) {
+    let best = null, bestMiss = Infinity;
+    for (let attempt = 0; attempt < attempts && bestMiss > 0; attempt++) {
+        const islands = generateUniquePuzzle(size, rng);
+        const { solved, advanced } = gradePuzzle(islands);
+        if (!solved) continue;
+        const miss = advanced < min ? min - advanced : advanced > max ? advanced - max : 0;
+        if (miss < bestMiss) { best = islands; bestMiss = miss; }
+    }
+    return best ?? generateUniquePuzzle(size, rng);
+}
+
+// A Hard puzzle: counting alone won't finish it.
+export function generateHardPuzzle(size, rng = Math.random, attempts = 4000) {
+    return generateGradedPuzzle(size, rng, [HARD_STEPS[size] ?? 4, Infinity], attempts);
+}
+
+// The daily board for a getDailyConfig() result.
+export function generateDailyPuzzle(config) {
+    return config.steps ? generateGradedPuzzle(config.size, config.rng, config.steps) : generateUniquePuzzle(config.size, config.rng);
+}

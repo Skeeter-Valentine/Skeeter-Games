@@ -1,4 +1,6 @@
-import { useDailyDate, useArchive } from '../../components/DailyBoundary';
+import { useDailyDate, useArchive, useGauntlet } from '../../components/DailyBoundary';
+import { WalkthroughPrompt, walkthroughSeen } from '../../components/Walkthrough';
+import SudokuTutorial, { SUDOKU_TUTORIAL_KEY } from './SudokuTutorial';
 import { puzzleSnapshot } from '../../utils/archive.js';
 import { readLocal, writeLocal } from '../../utils/dailyStats.js';
 import { sudokuProgressKey, saveSudoku, restoreSudoku } from './progress.js';
@@ -56,6 +58,10 @@ export default function Skeedoku({ onWin }) {
   const [stats, setStats] = useState({ played: 0, streak: 0, bestTime: null });
 
   const timerRef = useRef(null);
+  // "Learn to play" walkthrough (never inside the Skeeter Gauntlet).
+  const inGauntlet = !!useGauntlet();
+  const [learning, setLearning] = useState(false);
+  const [seenTutorial, setSeenTutorial] = useState(() => walkthroughSeen(SUDOKU_TUTORIAL_KEY));
 
   useEffect(() => {
     const saved = localStorage.getItem('skeedoku_daily_stats');
@@ -242,14 +248,14 @@ export default function Skeedoku({ onWin }) {
 
   useEffect(() => {
     if (timerRef.current) clearInterval(timerRef.current);
-    if (!hasStarted || completed) return;
+    if (!hasStarted || completed || learning) return;
     timerRef.current = setInterval(() => {
       if (!completed) {
         setElapsed(prev => prev + 1);
       }
     }, 1000);
     return () => clearInterval(timerRef.current);
-  }, [completed, hasStarted]);
+  }, [completed, hasStarted, learning]);
 
   useEffect(() => {
     generatePuzzle('daily');
@@ -426,6 +432,7 @@ export default function Skeedoku({ onWin }) {
 
   useEffect(() => {
     const handleKeyDown = (e) => {
+      if (learning) return;
       if (e.key >= '1' && e.key <= String(size)) enterNumber(Number(e.key));
       else if (e.key === 'Backspace' || e.key === 'Delete' || e.key === '0') erase();
       else if (e.key.toLowerCase() === 'n') setNotesMode(m => !m);
@@ -437,7 +444,7 @@ export default function Skeedoku({ onWin }) {
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [selected, notesMode, grid, notes, puzzle, completed, solution, mistakes, size]);
+  }, [selected, notesMode, grid, notes, puzzle, completed, solution, mistakes, size, learning]);
 
   const selectedValue = selected >= 0 ? grid[selected] : 0;
   const activeNums = Array.from({ length: size }, (_, i) => i + 1);
@@ -445,8 +452,14 @@ export default function Skeedoku({ onWin }) {
   return (
     <>
     <Navbar />
-      <DailyResults gameId="sudoku" title="Skeedoku" daily={configKey === 'daily'} finished={completed} seconds={elapsed} ready={grid.length > 0} legacyStats={archive ? undefined : stats} />
+      <DailyResults gameId="sudoku" title="Skeedoku" daily={configKey === 'daily'} finished={completed} seconds={elapsed} ready={grid.length > 0} legacyStats={archive ? undefined : stats} onLearn={() => setLearning(true)} />
     <div className="sudoku-app-wrapper">
+      {!learning && !seenTutorial && !inGauntlet && !completed && <WalkthroughPrompt game="Skeedoku" seenKey={SUDOKU_TUTORIAL_KEY} onStart={() => setLearning(true)} onDismiss={() => setSeenTutorial(true)} />}
+      {learning ? <SudokuTutorial onDone={action => {
+        setLearning(false); setSeenTutorial(true);
+        if (action === 'practice') generatePuzzle('4x4');
+        if (action === 'daily' && configKey !== 'daily') generatePuzzle('daily');
+      }} /> : <>
       <div className="app">
         <section className="card game-card">
           <div className="topbar">
@@ -567,6 +580,7 @@ export default function Skeedoku({ onWin }) {
             {configKey !== 'daily' && (
               <button className="btn primary" onClick={() => generatePuzzle(configKey)}>New puzzle</button>
             )}
+            {!inGauntlet && <button className="btn" onClick={() => setLearning(true)}>Learn to play</button>}
           </div>
 
           <div className="stats">
@@ -590,6 +604,7 @@ export default function Skeedoku({ onWin }) {
           </div>
         </aside>
       </div>
+      </>}
 
       {showModal && configKey !== 'daily' && (
         <div className="modal-overlay">

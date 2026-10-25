@@ -369,3 +369,5 @@ kbd{
   .meta { flex-wrap: wrap; justify-content: flex-end; gap: 6px; margin-left: auto; }
   .controls .btn { min-width: 0; }
 }
+/* Learn to play: the walkthrough sits where the board was. */
+.sudoku-app-wrapper > .wt-panel { margin: 0 0 18px; transform: none; flex-shrink: 0; align-self: flex-start; }

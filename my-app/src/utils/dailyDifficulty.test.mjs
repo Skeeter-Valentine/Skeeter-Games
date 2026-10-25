@@ -4,7 +4,7 @@ import { dailyDifficulty } from './dailyDifficulty.js';
 import { getDailyGridSize } from '../games/shikaku/puzzle.js';
 import { getDailyGridSize as pipesSize } from '../games/pipes/dailyConfig.js';
 import { getDailyBoardConfig } from '../games/minesweeper/dailyConfig.js';
-import { getDailyConfig } from '../games/hashi/dailyConfig.js';
+import { HASHI_LEVELS_FROM, getDailyConfig } from '../games/hashi/dailyConfig.js';
 import { mulberry32 } from '../games/hashi/puzzle.js';
 import { getDailySize as nonogramsSize } from '../games/nonograms/dailyConfig.js';
 import { getDailySize as stitchesSize } from '../games/stitches/dailyConfig.js';
@@ -25,7 +25,7 @@ test('ratings match daily sizes across a year and reach all three levels', () =>
       pipes: { 5: 1, 7: 2, 9: 3 }[pipesSize(date)],
       shikaku: { 5: 1, 7: 1, 10: 2, 15: 3, 20: 3 }[getDailyGridSize(date)],
       minesweeper: { 9: 1, 12: 1, 14: 2, 16: 3 }[mines.rows],
-      hashi: { 5: 1, 6: 2, 7: 2, 8: 3 }[hashi.size],
+      hashi: (date < HASHI_LEVELS_FROM ? { 5: 1, 6: 2, 7: 2, 8: 3 } : { 6: 1, 7: 1, 8: 2, 10: 3 })[hashi.size],
     };
     for (const [id, rating] of Object.entries(expected)) {
       assert.equal(dailyDifficulty(id, date), rating);

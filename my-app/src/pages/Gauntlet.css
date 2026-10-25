@@ -86,7 +86,7 @@
 .gauntlet-stage .marathon-mode-selector,
 .gauntlet-stage .nonogram-wrapper > .mode-toolbar,
 .gauntlet-stage .skeedle-header > .header-actions:has(> button), .gauntlet-stage .header-actions > .mode-toggle,
-.gauntlet-stage .pipes-container > div:has(+ .pipes-config), .gauntlet-stage .pipes-config > div:first-child,
+.gauntlet-stage .pipes-container > div:has(+ .pipes-config), .gauntlet-stage .pipes-modes, .gauntlet-stage .pipes-config > div:first-child,
 .gauntlet-stage .shikaku-container > div:has(+ .shikaku-config), .gauntlet-stage .shikaku-config > div:first-child,
 .gauntlet-stage .quordle-game-container .mode-toggle,
 .gauntlet-stage .minesweeper-container > .diff-toggle,

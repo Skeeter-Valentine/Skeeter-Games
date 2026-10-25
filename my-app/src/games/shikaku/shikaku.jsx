@@ -1,4 +1,6 @@
-import { useDailyDate, useArchive } from '../../components/DailyBoundary';
+import { useDailyDate, useArchive, useGauntlet } from '../../components/DailyBoundary';
+import { WalkthroughPrompt, walkthroughSeen } from '../../components/Walkthrough';
+import ShikakuTutorial, { SHIKAKU_TUTORIAL_KEY } from './ShikakuTutorial';
 import DailyResults from '../../components/DailyResults';
 import useUndoShortcut from '../../components/useUndoShortcut';
 import React, { useState, useEffect, useRef, useCallback } from 'react';
@@ -36,6 +38,10 @@ export default function Shikaku({ onWin }) {
   const [isTimerActive, setIsTimerActive] = useState(false);
 
   const gridRef = useRef(null);
+  // "Learn to play" walkthrough (never inside the Skeeter Gauntlet).
+  const inGauntlet = !!useGauntlet();
+  const [learning, setLearning] = useState(false);
+  const [seenTutorial, setSeenTutorial] = useState(() => walkthroughSeen(SHIKAKU_TUTORIAL_KEY));
 
   const formatTime = (totalSeconds) => {
     const mins = Math.floor(totalSeconds / 60);
@@ -45,7 +51,7 @@ export default function Shikaku({ onWin }) {
 
   useEffect(() => {
     let interval = null;
-    if (isTimerActive && !isWin) {
+    if (isTimerActive && !isWin && !learning) {
       interval = setInterval(() => {
         setSeconds((prevSeconds) => prevSeconds + 1);
       }, 1000);
@@ -53,7 +59,7 @@ export default function Shikaku({ onWin }) {
       clearInterval(interval);
     }
     return () => clearInterval(interval);
-  }, [isTimerActive, isWin]);
+  }, [isTimerActive, isWin, learning]);
 
   const startNewGame = useCallback((overrideMode = gameMode, overrideSize = gridSize) => {
     setStatus('');
@@ -283,34 +289,47 @@ export default function Shikaku({ onWin }) {
   return (
     <div className="shikaku-container">
       <Navbar />
-      <DailyResults gameId="shikaku" title="Shikaku" daily={gameMode === 'daily'} date={todayStr} finished={isWin} seconds={seconds} ready={cluesGrid.length > 0} />
+      <DailyResults gameId="shikaku" title="Shikaku" daily={gameMode === 'daily'} date={todayStr} finished={isWin} seconds={seconds} ready={cluesGrid.length > 0} onLearn={() => setLearning(true)} />
       <h1 className="shikaku-title">SKEEKAKU</h1>
 
-      <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
+      <div style={{ display: 'flex', gap: '8px', marginBottom: '12px', flexWrap: 'wrap', justifyContent: 'center' }}>
         <button
           className={`shikaku-btn ${gameMode === 'daily' ? 'active' : ''}`}
-          onClick={() => handleModeChange('daily')}
+          onClick={() => { setLearning(false); handleModeChange('daily'); }}
           style={{
-            fontWeight: gameMode === 'daily' ? 'bold' : 'normal',
-            backgroundColor: gameMode === 'daily' ? '#00f0ff' : '#333',
-            color: gameMode === 'daily' ? '#333' : '#fff'
+            fontWeight: !learning && gameMode === 'daily' ? 'bold' : 'normal',
+            backgroundColor: !learning && gameMode === 'daily' ? '#00f0ff' : '#333',
+            color: !learning && gameMode === 'daily' ? '#333' : '#fff'
           }}
         >
           Daily Challenge ({gridSize}x{gridSize})
         </button>
         <button
           className={`shikaku-btn ${gameMode === 'custom' ? 'active' : ''}`}
-          onClick={() => handleModeChange('custom')}
+          onClick={() => { setLearning(false); handleModeChange('custom'); }}
           style={{
-            fontWeight: gameMode === 'custom' ? 'bold' : 'normal',
-            backgroundColor: gameMode === 'custom' ? '#ff10f0' : '#333',
-            color: gameMode === 'custom' ? '#fff' : '#fff'
+            fontWeight: !learning && gameMode === 'custom' ? 'bold' : 'normal',
+            backgroundColor: !learning && gameMode === 'custom' ? '#ff10f0' : '#333',
+            color: !learning && gameMode === 'custom' ? '#fff' : '#fff'
           }}
         >
           Custom Game
         </button>
+        {!inGauntlet && <button className={`shikaku-btn ${learning ? 'active' : ''}`} aria-pressed={learning} onClick={() => setLearning(!learning)}
+          style={{ fontWeight: learning ? 'bold' : 'normal', backgroundColor: learning ? '#39ff14' : '#333', color: learning ? '#111' : '#fff' }}>
+          Learn to play
+        </button>}
       </div>
 
+      {!learning && !seenTutorial && !inGauntlet && !isWin && <WalkthroughPrompt game="Skeekaku" seenKey={SHIKAKU_TUTORIAL_KEY} onStart={() => setLearning(true)} onDismiss={() => setSeenTutorial(true)} />}
+      {learning ? <ShikakuTutorial onDone={action => {
+        setLearning(false); setSeenTutorial(true);
+        if (action === 'daily') handleModeChange('daily');
+        if (action === 'practice') {
+          if (gameMode === 'custom' && gridSize === 5) startNewGame('custom', 5);
+          else { setGridSize(5); setGameMode('custom'); }
+        }
+      }} /> : <>
       <div className="shikaku-config" style={{ gap: '16px', flexWrap: 'wrap' }}>
         {gameMode === 'custom' ? (
           <div>
@@ -460,6 +479,7 @@ export default function Shikaku({ onWin }) {
           </button>
         )}
       </div>
+      </>}
 
     </div>
   );

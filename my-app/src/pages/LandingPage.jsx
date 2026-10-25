@@ -25,6 +25,7 @@ import nonogramsImg from '../assets/skeedograms2-blend.webp';
 import skeedlemarathonImg from '../assets/skeedlemarathon-blend.webp';
 import stitchesImg from '../assets/skitches.webp';
 import pepperPlacerImg from '../assets/pepper-placer.webp';
+import kakurasuImg from '../assets/add-em-up.webp';
 import gauntletBannerImg from '../assets/gauntlet-banner.webp';
 import gauntletBannerNarrowImg from '../assets/gauntlet-banner-narrow.webp';
 
@@ -34,9 +35,10 @@ import GauntletCountdown from '../components/GauntletCountdown';
 import { readLocal } from '../utils/dailyStats.js';
 
 const GAMES = [
+  { id: 'kakurasu', title: 'Add ’em Up', path: '/kakurasu', image: kakurasuImg, isNew: true },
   { id: 'pepper-placer', title: 'Pepper Placer', path: '/pepper-placer', image: pepperPlacerImg, isNew: true },
   { id: 'akari', title: 'Skeeluminate', path: '/akari', image: skeeluminateImg, isNew: true },
-  { id: 'skeedle-beadle', title: 'Skeedle Beadle', path: '/skeedle-beadle', image: skeedleBeadleImg, isNew: true },
+  { id: 'skeedle-beadle', title: 'Skeedle Beadle', path: '/skeedle-beadle', image: skeedleBeadleImg },
   { id: 'map', title: 'Cartograskeet', path: '/map', image: cartograskeetImg },
   { id: 'parshle', title: 'Parshle', path: '/parshle', image: parshleImg },
   { id: 'stitches', title: 'Skitches', path: '/stitches', image: stitchesImg },
