@@ -26,11 +26,16 @@ export default function DailyResults({ daily, date, ...props }) {
 // Reports a finished gauntlet game once. Practice-mode finishes never count.
 // Word games also pass `guesses` (guesses used) for the gauntlet's guess
 // bonus; Skeedle Beadle passes `hints`, reported as they're used so the
-// gauntlet clock shows their cost straight away.
-function GauntletReport({ gauntlet, gameId, daily, finished, won = true, ready = true, guesses, hints }) {
+// gauntlet clock shows their cost straight away. Word games also pass
+// `answer` (the word, words or equation), shown if the game is lost or
+// given up.
+function GauntletReport({ gauntlet, gameId, daily, finished, won = true, ready = true, guesses, hints, answer }) {
   useEffect(() => {
     if (daily && Number.isInteger(hints)) gauntlet.onHints?.(gameId, hints);
   }, [gauntlet, gameId, daily, hints]);
+  useEffect(() => {
+    if (daily && answer) gauntlet.onAnswer?.(gameId, answer);
+  }, [gauntlet, gameId, daily, answer]);
   useEffect(() => {
     if (daily && ready && finished) gauntlet.onResult(gameId, won ? 'won' : 'lost', { guesses, hints });
   }, [gauntlet, gameId, daily, ready, finished, won, guesses, hints]);

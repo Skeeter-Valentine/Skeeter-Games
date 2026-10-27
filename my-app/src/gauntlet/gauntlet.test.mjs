@@ -173,3 +173,16 @@ test('How to play pauses the clock, up to the pause allowance per run', async ()
   assert.equal(run.pausedAt, null);
   assert.equal(pauseRun(run, 5), run, 'no pausing between games');
 });
+
+test('a lost or given-up word game keeps its answer; a won one does not', () => {
+  const t = 1_000_000;
+  let run = newRun('2026-10-09', t);
+  const [first, second] = run.lineup;
+  const won = recordResult(run, { gameId: first, status: 'won', now: t + 5000, answer: 'stone' });
+  assert.equal('answer' in won.results[0], false);
+  run = recordResult(run, { gameId: first, status: 'lost', now: t + 5000, answer: 'stone' });
+  assert.equal(run.results[0].answer, 'stone');
+  run = startNextGame(run, t + 6000);
+  run = recordResult(run, { gameId: second, status: 'gave-up', now: t + 9000 });
+  assert.equal('answer' in run.results[1], false, 'games without an answer add nothing');
+});

@@ -32,6 +32,10 @@
 .gauntlet-result { font-size: 22px; margin: 6px 0 10px; }
 .gauntlet-result.won { color: #3ddc84; }
 .gauntlet-result.lost { color: #ff8fbd; }
+.gauntlet-answer { font-size: 18px; margin: 0 0 12px; color: #e9e2f2; overflow-wrap: anywhere; }
+.gauntlet-answer strong { color: #ffe390; letter-spacing: 0.08em; }
+.gauntlet-table-answer { display: block; margin-top: 2px; overflow-wrap: anywhere; }
+.gauntlet-table-answer strong { color: #ffe390; letter-spacing: 0.06em; }
 .gauntlet-total { color: #cfc4e0; margin-bottom: 18px; }
 .gauntlet-total strong { color: #fff; font-size: 22px; font-variant-numeric: tabular-nums; }
 .gauntlet-up-next { display: flex; justify-content: center; align-items: center; gap: 10px; font-size: 20px; margin-bottom: 20px; }

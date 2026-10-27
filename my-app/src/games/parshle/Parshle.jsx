@@ -82,7 +82,7 @@ function Session({ daily, date }) {
   });
 
   return <>
-    <DailyResults gameId="parshle" title="Parshle" daily={daily} date={date} finished={finished} won={won} started={started} guesses={guesses.length} />
+    <DailyResults gameId="parshle" title="Parshle" daily={daily} date={date} finished={finished} won={won} started={started} guesses={guesses.length} answer={answer} />
     <div className="parshle-board" aria-label="Parshle guess board">
       {Array.from({ length: 6 }, (_, row) => {
         const guess = guesses[row];

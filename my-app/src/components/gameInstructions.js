@@ -79,6 +79,7 @@ export const gameInstructions = {
     'Leave at least one empty cell between runs. A clue of 0 means the whole line is empty.',
     'Choose Fill or Cross, then click and drag across cells. Right-click places or removes a cross.',
     'Crosses are optional notes. Fill exactly the correct cells to complete the puzzle.',
+    'Tap a clue number to cross it off once that run is placed. The row and column you\'re on are highlighted.',
   ],
   pipes: [
     'Rotate the pipe tiles to connect the entire network to the server.',

@@ -281,7 +281,7 @@ export default function Skeedlemath({ onWin }) {
   return (
     <>
       <Navbar />
-      <DailyResults started={hasStarted} gameId="skeedlemath" title="Skeedle+" daily={isDailyMode} finished={gameStatus !== 'IN_PROGRESS'} won={gameStatus === 'WON'} ready={!!targetEquation} guesses={guesses.length} />
+      <DailyResults started={hasStarted} gameId="skeedlemath" title="Skeedle+" daily={isDailyMode} finished={gameStatus !== 'IN_PROGRESS'} won={gameStatus === 'WON'} ready={!!targetEquation} guesses={guesses.length} answer={targetEquation} />
       <div className="word500-container skeedlemath-game">
         <div className="skeedle-header">
           <h1 className="skeedle-title-btn" style={{ cursor: 'default' }}>SKEEDLE+</h1>
@@ -307,7 +307,9 @@ export default function Skeedlemath({ onWin }) {
           </div>
         </div>
 
-        <div style={{ minHeight: '24px', fontSize: '15px', fontWeight: 'bold', color: 'var(--neon-yellow)', marginBottom: '12px', textAlign: 'center' }}>
+        {/* Kept in the gauntlet's view (see FOCUS in Gauntlet.jsx), so a
+            rejected guess always says why. */}
+        <div className="skeedlemath-message" role="status" style={{ width: 'min(100%, 480px)', minHeight: '24px', fontSize: '15px', fontWeight: 'bold', color: 'var(--neon-yellow)', marginBottom: '12px', textAlign: 'center' }}>
           {message}
         </div>
 
@@ -381,4 +383,4 @@ export default function Skeedlemath({ onWin }) {
       </div>
     </>
   );
-}
+}

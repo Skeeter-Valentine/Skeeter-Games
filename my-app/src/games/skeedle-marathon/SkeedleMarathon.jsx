@@ -388,7 +388,8 @@ export default function SkeedleMarathon() {
   return (
     <>
       <Navbar />
-      <DailyResults gameId="skeedle-marathon" title="Skeedle Marathon" daily={gameMode === 'daily'} finished={!!loss || allSolved} won={gameWon} seconds={loss?.seconds ?? secondsElapsed} autoOpen={!loss} ready={answers.length === BOARD_COUNT} />
+      <DailyResults gameId="skeedle-marathon" title="Skeedle Marathon" daily={gameMode === 'daily'} finished={!!loss || allSolved} won={gameWon} seconds={loss?.seconds ?? secondsElapsed} autoOpen={!loss} ready={answers.length === BOARD_COUNT}
+        answer={answers.filter((_, index) => !solvedBoards[index]).join(', ')} />
       {loss && !continuePlaying && <GameModal titleId="marathon-loss-title" closeLabel="Continue playing" onClose={() => {
         setContinuePlaying(true);
         requestAnimationFrame(() => gameRef.current?.focus());

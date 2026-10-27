@@ -28,9 +28,9 @@ export function useDailyMode(daily) {
 // daily statistics. Games read the date through useDailyDate as usual.
 const noop = () => {};
 export const useGauntlet = () => useContext(DailyContext)?.gauntlet ?? null;
-export function GauntletBoundary({ date, onResult, onHints, children }) {
+export function GauntletBoundary({ date, onResult, onHints, onAnswer, children }) {
   const value = useMemo(() => ({ date, today: date, archive: false, archiveEnabled: false, setDaily: noop, selectDate: noop,
-    gauntlet: { onResult, onHints } }), [date, onResult, onHints]);
+    gauntlet: { onResult, onHints, onAnswer } }), [date, onResult, onHints, onAnswer]);
   return <DailyContext.Provider value={value}>{children}</DailyContext.Provider>;
 }
 

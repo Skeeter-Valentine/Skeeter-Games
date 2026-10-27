@@ -195,7 +195,7 @@ export default function Word500({ onWin }) {
   return (
     <div className="word500-container">
       <Navbar />
-      <DailyResults started={hasStarted} gameId="word500" title="Skeedle500" daily={gameMode === 'daily'} date={todayStr} finished={gameOver} won={guesses.includes(targetWord)} ready={!!targetWord} guesses={guesses.length} legacyStats={archive ? undefined : stats} />
+      <DailyResults started={hasStarted} gameId="word500" title="Skeedle500" daily={gameMode === 'daily'} date={todayStr} finished={gameOver} won={guesses.includes(targetWord)} ready={!!targetWord} guesses={guesses.length} answer={targetWord} legacyStats={archive ? undefined : stats} />
       
       {/* Hidden input to trigger mobile virtual keyboard cleanly */}
       <input

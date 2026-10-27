@@ -226,5 +226,30 @@
   .col-clue { padding: 3px 0; }
   .game-cell { width: auto; height: auto; }
 }
+/* Clue numbers: a bold sans-serif with even-width digits, sized to stay
+   readable on phones; the column clues use a lighter pink so they stand out
+   from the dark background. */
+.puzzle-container .clue-cell { font: 700 0.95rem/1.1 system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif; font-variant-numeric: tabular-nums; }
+.puzzle-container .col-clue { color: #ff8fbd; gap: 1px; }
+.puzzle-container .row-clue { gap: 0.45em; letter-spacing: 0; }
+@media (max-width: 480px) {
+  .puzzle-container .clue-cell { font-size: 13px; }
+  .puzzle-container .row-clue { gap: 0.35em; padding-left: 3px; }
+  .puzzle-container .col-clue { padding: 3px 0 4px; }
+}
+@media (max-width: 360px) {
+  .puzzle-container .clue-cell { font-size: 12px; }
+}
+/* The row and column under the pointer (or last tapped) are tinted, clues
+   included, to make lining things up easier. */
+.puzzle-container .game-cell.hl { background: #c9def7; }
+.puzzle-container .game-cell.hl.filled { background: #e0207a; border-color: #e0207a; }
+.puzzle-container .game-cell.hl.crossed { background: #3a3a46; }
+.puzzle-container .clue-cell.hl { background: #3b3352; box-shadow: inset 0 0 0 1px #6a5a8c; }
+/* Tap a clue number to cross it off. */
+.puzzle-container .clue-num { font: inherit; color: inherit; background: none; border: 0; padding: 0 1px; margin: 0; line-height: inherit; cursor: pointer; border-radius: 3px; touch-action: manipulation; }
+.puzzle-container button.clue-num:hover { background: rgba(255, 255, 255, 0.1); }
+.puzzle-container button.clue-num:focus-visible { outline: 2px solid #9cc9f5; outline-offset: 1px; }
+.puzzle-container .clue-num.done { opacity: 0.35; text-decoration: line-through; text-decoration-thickness: 2px; }
 /* Learn to play: the walkthrough is wider than the page column, so centre it. */
 .nonogram-wrapper > .wt-panel { margin: 4px 0 18px; transform: none; align-self: center; flex-shrink: 0; }

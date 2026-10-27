@@ -79,7 +79,9 @@ const FOCUS = {
   hashi: ['.hashi-canvas-wrapper'],
   'pepper-placer': ['.pp-board'],
   parshle: ['.parshle-board', '.parshle-keyboard'],
-  skeedlemath: ['.word500-board', '.word500-keyboard'],
+  // Skeedle+'s message sits above its board: keep it in view, since it
+  // explains a rejected guess.
+  skeedlemath: ['.skeedlemath-message', '.word500-board', '.word500-keyboard'],
   word500: ['.word500-board', '.word500-keyboard'],
   quordle: ['.quordle-grid', '.keyboard'],
 };
@@ -185,6 +187,14 @@ function FittedStage({ game, children }) {
         ? { width: fit.width, left: 0, transformOrigin: '0 0', transform: `translate(${fit.x}px, ${fit.y}px) scale(${fit.scale})`, '--frame-h': `${fit.height}px` }
         : { width: fit.width, transform: `translateX(-50%) scale(${fit.scale})`, '--frame-h': `${fit.height}px` }}>{children}</div>
   </div>;
+}
+
+// The answer to a word game that was lost or given up.
+const answerLabel = result => result.game === 'skeedlemath' ? 'The equation was'
+  : result.answer.includes(',') ? 'The words were' : 'The word was';
+function AnswerNote({ result }) {
+  if (!result?.answer) return null;
+  return <p className="gauntlet-answer">{answerLabel(result)} <strong>{result.answer.toUpperCase()}</strong></p>;
 }
 
 // Sign-in and nickname for the leaderboard.
@@ -372,10 +382,14 @@ export default function Gauntlet() {
     const guessCount = Number.isInteger(extras.guesses) ? extras.guesses : undefined;
     const live = hintsRef.current;
     const hintCount = Number.isInteger(extras.hints) ? extras.hints : live.game === gameId ? live.count : undefined;
-    save(recordResult(active, { gameId, status, now: Date.now(), penalty: penaltySeconds, guesses: guessCount, hints: hintCount }));
+    const answer = answersRef.current[gameId];
+    save(recordResult(active, { gameId, status, now: Date.now(), penalty: penaltySeconds, guesses: guessCount, hints: hintCount, answer }));
     setConfirming(false);
     if (active.ranked) send({ action: 'finish', day: active.date, game: gameId, status, penalty: penaltySeconds, guesses: guessCount, hints: hintCount });
   }, [save, send]);
+  // Word games' answers (see GauntletReport), shown after a loss or give-up.
+  const answersRef = useRef({});
+  const onAnswer = useCallback((gameId, answer) => { answersRef.current[gameId] = answer; }, []);
   // Hints used so far in the current game, so the clock shows their cost live.
   const [liveHints, setLiveHints] = useState({ game: null, count: 0 });
   const hintsRef = useRef(liveHints);
@@ -651,7 +665,7 @@ export default function Gauntlet() {
         <thead><tr><th>Game</th><th>Result</th><th>Time</th></tr></thead>
         <tbody>{run.results.map((result, index) => <tr key={result.game} className={result.status === 'won' ? 'won' : 'lost'}>
           <td><span className="gauntlet-lineup-number">{index + 1}</span>{gameTitle(result.game)}</td>
-          <td>{statusLabel[result.status]}</td>
+          <td>{statusLabel[result.status]}{result.answer && <small className="gauntlet-table-answer">{answerLabel(result)} <strong>{result.answer.toUpperCase()}</strong></small>}</td>
           <td>{formatClock(result.total)}{result.penalty > 0 && <small> ({formatClock(result.seconds)} + {formatClock(result.penalty)} penalty)</small>}
             {result.bonus > 0 && <small> ({formatClock(result.seconds)} − {result.bonus}s guess bonus)</small>}
             {result.hintPenalty > 0 && <small> (includes +{result.hintPenalty}s for hints)</small>}</td>
@@ -682,6 +696,7 @@ export default function Gauntlet() {
         {last.status === 'won' ? `${gameTitle(last.game)} solved in ${formatClock(last.seconds)}${last.hintPenalty > 0 ? ` + ${last.hintPenalty}s for hints` : ''}${last.bonus > 0 ? ` − ${last.bonus}s guess bonus` : ''}${last.bonus > 0 || last.hintPenalty > 0 ? ` = ${formatClock(last.total)}` : ''}`
           : `${gameTitle(last.game)}: ${statusLabel[last.status].toLowerCase()} — ${formatClock(last.seconds)}${last.penalty > 0 ? ` + ${formatClock(last.penalty)} penalty` : ', no penalty'}${last.hintPenalty > 0 ? ` + ${last.hintPenalty}s for hints` : ''}`}
       </p>
+      <AnswerNote result={last} />
       <p className="gauntlet-total">Total so far <strong>{formatClock(runTotal(run))}</strong></p>
       {showPar && <p className="gauntlet-pace">{ahead(paceVersusPar(run, par))} after {run.results.length} {run.results.length === 1 ? 'game' : 'games'}</p>}
       <p className="gauntlet-up-next">Up next: <strong>{upcoming.title}</strong> <ChiliRating level={upcoming.level} /></p>
@@ -708,7 +723,7 @@ export default function Gauntlet() {
               </span>}
         </div>
       </div>
-      <GauntletBoundary date={gauntletPuzzleDate(date)} onResult={onResult} onHints={onHints}>
+      <GauntletBoundary date={gauntletPuzzleDate(date)} onResult={onResult} onHints={onHints} onAnswer={onAnswer}>
         <div className={`gauntlet-pausable${run.pausedAt ? ' paused' : ''}`}>
           <FittedStage key={`${current.id}:${run.index}`} game={current.id}><Game /></FittedStage>
           {run.pausedAt && <p className="gauntlet-paused-note">Paused · close How to play to continue</p>}

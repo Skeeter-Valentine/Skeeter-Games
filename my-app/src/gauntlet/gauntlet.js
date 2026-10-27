@@ -168,14 +168,17 @@ export function hintPenalty(gameId, hints) {
   return HINT_SECONDS * Math.min(hints, 1000);
 }
 
-export function recordResult(run, { gameId, status, now, penalty = 0, guesses, hints }) {
+export function recordResult(run, { gameId, status, now, penalty = 0, guesses, hints, answer }) {
   if (!run || run.finishedAt || run.waiting || run.lineup[run.index] !== gameId) return run;
   run = resumeRun(run, now);
   const spent = Math.max(0, Math.round((now - run.gameStartedAt) / 1000));
   const added = status === 'won' ? 0 : remainingPenalty(penalty, spent);
   const bonus = status === 'won' ? guessBonus(gameId, guesses) : 0;
   const hinted = hintPenalty(gameId, hints);
-  const results = [...run.results, { game: gameId, status, seconds: spent, penalty: added, hintPenalty: hinted, bonus, total: Math.max(0, spent + added + hinted - bonus) }];
+  const result = { game: gameId, status, seconds: spent, penalty: added, hintPenalty: hinted, bonus, total: Math.max(0, spent + added + hinted - bonus) };
+  // A word game that wasn't solved keeps its answer, to show the player.
+  if (status !== 'won' && typeof answer === 'string' && answer) result.answer = answer;
+  const results = [...run.results, result];
   const finished = results.length === run.lineup.length;
   return { ...run, results, index: run.index + 1, waiting: !finished, finishedAt: finished ? now : null };
 }

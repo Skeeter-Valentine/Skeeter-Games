@@ -62,6 +62,26 @@ export default function Nonograms({ onWin }) {
   const [currentTool, setCurrentTool] = useState(1); // 1 = fill, 2 = cross
 
   const [isWon, setIsWon] = useState(initialProgress.isWon);
+  // The square under the pointer (or last tapped): its row and column are
+  // highlighted, clues included.
+  const [focus, setFocus] = useState(null);
+  // Clue numbers the player has crossed off (tap a number), as 'r3-1' (row 3,
+  // second number) or 'c0-0'. The daily keeps them with its progress.
+  const cluesKey = `${progressKey}:clues`;
+  const isDailyBoard = gameMode === 'daily' && solutionGrid === dailySolution;
+  const [doneClues, setDoneClues] = useState(() => new Set(readLocal(cluesKey, []) || []));
+  useEffect(() => {
+    setDoneClues(new Set(isDailyBoard ? readLocal(cluesKey, []) || [] : []));
+    setFocus(null);
+  }, [solutionGrid]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (isDailyBoard) writeLocal(cluesKey, [...doneClues]);
+  }, [isDailyBoard, cluesKey, doneClues]);
+  const toggleClue = id => setDoneClues(current => {
+    const next = new Set(current);
+    if (!next.delete(id)) next.add(id);
+    return next;
+  });
   // Earlier boards, for Undo (and Ctrl+Z). A whole drag is one step.
   const [history, setHistory] = useState([]);
 
@@ -305,6 +325,7 @@ export default function Nonograms({ onWin }) {
     if (isWon) return;
     setHistory(previous => [...previous, playerGrid].slice(-500));
     setPlayerGrid(Array.from({ length: height }, () => Array(width).fill(0)));
+    setDoneClues(new Set());
   };
   const undo = () => {
     if (isWon || !history.length) return;
@@ -461,6 +482,7 @@ export default function Nonograms({ onWin }) {
           <div
 
             className="grid-layout"
+            onPointerLeave={(e) => { if (e.pointerType === 'mouse') setFocus(null); }}
 
             style={{ '--grid-cols': width }}
 
@@ -472,9 +494,8 @@ export default function Nonograms({ onWin }) {
 
             {colClues.map((clues, cIdx) => (
 
-              <div key={`col-${cIdx}`} className="clue-cell col-clue">
-
-                {clues.map((val, i) => <span key={i}>{val}</span>)}
+              <div key={`col-${cIdx}`} className={`clue-cell col-clue${focus?.c === cIdx ? ' hl' : ''}`}>
+                {clues.map((val, i) => <ClueNumber key={i} id={`c${cIdx}-${i}`} value={val} done={doneClues} onToggle={toggleClue} />)}
 
               </div>
 
@@ -486,9 +507,8 @@ export default function Nonograms({ onWin }) {
 
               <React.Fragment key={`row-${rIdx}`}>
 
-                <div className="clue-cell row-clue">
-
-                  {clues.join('\u00A0\u00A0')}
+                <div className={`clue-cell row-clue${focus?.r === rIdx ? ' hl' : ''}`}>
+                  {clues.map((val, i) => <ClueNumber key={i} id={`r${rIdx}-${i}`} value={val} done={doneClues} onToggle={toggleClue} />)}
 
                 </div>
 
@@ -501,6 +521,7 @@ export default function Nonograms({ onWin }) {
                   if (cellState === 1) className += ' filled';
 
                   if (cellState === 2) className += ' crossed';
+                  if (focus && (focus.r === rIdx || focus.c === cIdx)) className += ' hl';
 
 
 
@@ -529,10 +550,10 @@ export default function Nonograms({ onWin }) {
                       onPointerDown={(e) => {
                         // Touch: let the finger move across cells (no implicit capture), so dragging fills a line.
                         e.currentTarget.releasePointerCapture?.(e.pointerId);
+                        setFocus({ r: rIdx, c: cIdx });
                         handleMouseDown(e, rIdx, cIdx);
                       }}
-
-                      onPointerEnter={() => handleMouseEnter(rIdx, cIdx)}
+                      onPointerEnter={() => { setFocus({ r: rIdx, c: cIdx }); handleMouseEnter(rIdx, cIdx); }}
 
                     >
 
@@ -560,5 +581,13 @@ export default function Nonograms({ onWin }) {
 
   );
 
-} 
+}
 
+// One clue number: tap it to cross it off once that run is placed (and again
+// to bring it back). A clue of 0 (an empty line) can't be crossed off.
+function ClueNumber({ id, value, done, onToggle }) {
+  if (!value) return <span className="clue-num">{value}</span>;
+  const crossed = done.has(id);
+  return <button type="button" className={`clue-num${crossed ? ' done' : ''}`} aria-pressed={crossed}
+    aria-label={`Clue ${value}${crossed ? ', crossed off' : ''}`} onClick={() => onToggle(id)}>{value}</button>;
+}
