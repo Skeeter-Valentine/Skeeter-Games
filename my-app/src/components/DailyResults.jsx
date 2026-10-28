@@ -9,6 +9,8 @@ import { archiveStatsId } from '../utils/archive.js';
 import { sendPuzzleResult, puzzleLoggingEnabled } from '../services/puzzleResults.js';
 import { dailyBoardEnabled } from '../services/dailyBoard.js';
 import DailyLeaderboard from './DailyLeaderboard';
+import { RATED_GAMES, dailyShareText, shareResult } from '../utils/share.js';
+import { dailyDifficulty } from '../utils/dailyDifficulty.js';
 
 // Icons remain available in every mode. Only daily sessions record results
 // or run the shared clock; existing game timers remain authoritative.
@@ -43,7 +45,7 @@ function GauntletReport({ gauntlet, gameId, daily, finished, won = true, ready =
 }
 
 function DailySession({ gameId, title, date, daily, finished, won = true, seconds, ready = true,
-  manualOpen = false, onClose, legacyStats, started = false, autoOpen = true, onLearn }) {
+  manualOpen = false, onClose, legacyStats, started = false, autoOpen = true, onLearn, guesses, maxGuesses, shareGrid }) {
   const archive = !!useArchive()?.archive;
   const statsId = archiveStatsId(gameId, archive);
   const [stats, setStats] = useState(() => readDailyStats(statsId));
@@ -114,6 +116,18 @@ function DailySession({ gameId, title, date, daily, finished, won = true, second
   const result = stats.results[date];
   // Today's fastest times: live daily puzzles only (not archive or practice).
   const showBoard = dailyBoardEnabled && daily && !archive;
+  // Share result: word games add guesses used (and an emoji grid); rated
+  // puzzles add their peppers. Links to this game (and this archive date).
+  const [shareNote, setShareNote] = useState('');
+  const share = async () => {
+    const url = `${window.location.origin}${window.location.pathname.replace(/\/$/, '')}${archive ? `?date=${date}` : ''}`;
+    const level = RATED_GAMES.includes(gameId) ? dailyDifficulty(gameId, date) : null;
+    const text = dailyShareText({ title, date, archive, won: result.won, seconds: result.seconds,
+      guesses, maxGuesses, level, grid: result.won || maxGuesses ? shareGrid : [], url });
+    const outcome = await shareResult(text);
+    setShareNote(outcome === 'copied' ? 'Copied! Paste it anywhere to share.' : outcome === 'failed' ? 'Couldn\'t copy automatically. Select the text below to share it.' : '');
+    if (outcome === 'failed') setShareNote(text);
+  };
   return <>
     <GameToolbar gameId={gameId} title={title} onStats={() => { setStats(readDailyStats(statsId)); setOpen(true); }}
       onBoard={showBoard ? () => setBoardOpen(true) : undefined} onLearn={onLearn}>
@@ -123,6 +137,11 @@ function DailySession({ gameId, title, date, daily, finished, won = true, second
         <p className="daily-results-eyebrow">{title} · {archive ? 'Archive · ' : ''}{date}</p>
         <h2 id={`daily-title-${gameId}`}>{result ? result.won ? 'Puzzle complete!' : 'Game finished' : archive ? 'Your archive statistics' : 'Your daily statistics'}</h2>
         {result && <div className="daily-results-time"><span>{result.won ? 'Completion time' : 'Time played'}</span><strong>{formatDuration(result.seconds)}</strong></div>}
+        {result && daily && <div className="daily-results-share">
+          <button type="button" className="daily-results-share-btn" onClick={share}>Share result</button>
+          {shareNote && (shareNote.includes('\n') ? <textarea readOnly value={shareNote} rows={6} aria-label="Result to share" onFocus={event => event.target.select()} />
+            : <p role="status">{shareNote}</p>)}
+        </div>}
         <div className="daily-results-grid">
           {[[summary.played, 'Finished'], [summary.wins, 'Wins'], [`${summary.winRate}%`, 'Win rate'],
             ...(!archive ? [[summary.currentStreak, 'Current streak'], [summary.maxStreak, 'Best streak']] : []),

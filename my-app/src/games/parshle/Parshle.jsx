@@ -1,4 +1,5 @@
 import { useDailyDate, useArchive } from '../../components/DailyBoundary';
+import { emojiRow } from '../../utils/share.js';
 import { useEffect, useState } from 'react';
 import Navbar from '../../components/Navbar';
 import DailyResults from '../../components/DailyResults';
@@ -82,7 +83,8 @@ function Session({ daily, date }) {
   });
 
   return <>
-    <DailyResults gameId="parshle" title="Parshle" daily={daily} date={date} finished={finished} won={won} started={started} guesses={guesses.length} answer={answer} />
+    <DailyResults gameId="parshle" title="Parshle" daily={daily} date={date} finished={finished} won={won} started={started} guesses={guesses.length} answer={answer}
+      maxGuesses={6} shareGrid={guesses.map((guess, row) => emojiRow(guess === answer ? Array(5).fill('correct') : visibleFeedback(guess, answer, seed, row, masks)))} />
     <div className="parshle-board" aria-label="Parshle guess board">
       {Array.from({ length: 6 }, (_, row) => {
         const guess = guesses[row];

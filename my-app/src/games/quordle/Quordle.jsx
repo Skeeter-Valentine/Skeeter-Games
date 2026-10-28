@@ -1,4 +1,5 @@
 import { useDailyDate, useArchive } from '../../components/DailyBoundary';
+import { quordleShareGrid } from '../../utils/share.js';
 import DailyResults from '../../components/DailyResults';
 import React, { useState, useEffect, useRef } from 'react';
 import Board from './components/Board';
@@ -212,7 +213,8 @@ export default function Quordle({ onWin }) {
   return (
     <div className="game-container quordle-game-container" onClick={focusHiddenInput}>
       <Navbar />
-      <DailyResults started={hasStarted} gameId="quordle" title="Ske4dle" daily={gameMode === 'daily'} date={sessionDate} finished={gameOver} won={targetWords.length === 4 && targetWords.every(word => guesses.includes(word))} ready={targetWords.length === 4} guesses={guesses.length} answer={targetWords.join(', ')} />
+      <DailyResults started={hasStarted} gameId="quordle" title="Ske4dle" daily={gameMode === 'daily'} date={sessionDate} finished={gameOver} won={targetWords.length === 4 && targetWords.every(word => guesses.includes(word))} ready={targetWords.length === 4} guesses={guesses.length} answer={targetWords.join(', ')}
+        maxGuesses={MAX_ATTEMPTS} shareGrid={quordleShareGrid(targetWords, guesses)} />
 
       {/* 5. HIDDEN INPUT ELEMENT FOR MOBILE VIRTUAL KEYBOARD */}
       <input

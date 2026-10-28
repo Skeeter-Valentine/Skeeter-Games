@@ -21,3 +21,9 @@
 .daily-results-community strong { font-size: 20px; color: #00f0ff; font-variant-numeric: tabular-nums; }
 .daily-results-community span { font-size: 15px; color: #c5b6d5; }
 .daily-results-community + p { margin-top: 12px; }
+/* Share result */
+.daily-results-share { margin: -8px 0 20px; }
+.daily-results-content .daily-results-share-btn { padding: 10px 22px; background: #00c46a; color: #0b1a10; font-size: 17px; font-weight: bold; border-radius: 999px; cursor: pointer; }
+.daily-results-content .daily-results-share-btn:hover { background: #00e07a; }
+.daily-results-share p { margin-top: 8px; font-size: 15px; color: #9ff5c8; }
+.daily-results-share textarea { margin-top: 10px; width: 100%; box-sizing: border-box; padding: 8px; font: 15px/1.4 system-ui, sans-serif; color: #f8f3ff; background: #0f0b17; border: 1px solid #675279; border-radius: 8px; resize: none; }

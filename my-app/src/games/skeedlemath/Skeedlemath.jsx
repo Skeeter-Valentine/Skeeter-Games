@@ -1,4 +1,5 @@
 import { useDailyDate, useArchive } from '../../components/DailyBoundary';
+import { emojiRow } from '../../utils/share.js';
 import { puzzleSnapshot } from '../../utils/archive.js';
 import { readLocal, writeLocal } from '../../utils/dailyStats.js';
 import { mathProgressKey, restoreMathGuesses } from './progress.js';
@@ -281,7 +282,8 @@ export default function Skeedlemath({ onWin }) {
   return (
     <>
       <Navbar />
-      <DailyResults started={hasStarted} gameId="skeedlemath" title="Skeedle+" daily={isDailyMode} finished={gameStatus !== 'IN_PROGRESS'} won={gameStatus === 'WON'} ready={!!targetEquation} guesses={guesses.length} answer={targetEquation} />
+      <DailyResults started={hasStarted} gameId="skeedlemath" title="Skeedle+" daily={isDailyMode} finished={gameStatus !== 'IN_PROGRESS'} won={gameStatus === 'WON'} ready={!!targetEquation} guesses={guesses.length} answer={targetEquation}
+        maxGuesses={MAX_ATTEMPTS} shareGrid={guesses.map(entry => emojiRow(entry.colors))} />
       <div className="word500-container skeedlemath-game">
         <div className="skeedle-header">
           <h1 className="skeedle-title-btn" style={{ cursor: 'default' }}>SKEEDLE+</h1>
