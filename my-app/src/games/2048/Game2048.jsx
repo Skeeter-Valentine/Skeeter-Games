@@ -1,6 +1,7 @@
 import { useDailyDate, useArchive } from '../../components/DailyBoundary';
 import { puzzleSnapshot } from '../../utils/archive.js';
 import DailyResults from '../../components/DailyResults';
+import CloudRuns, { SaveHint } from './CloudRuns';
 import useUndoShortcut from '../../components/useUndoShortcut';
 // src/pages/Game2048.jsx
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
@@ -102,6 +103,9 @@ export default function Game2048({ onWin }) {
   const lastMoveTimeRef = useRef(Date.now());
   const [slideSpeed, setSlideSpeed] = useState(120);
   const touchStartRef = useRef({ x: 0, y: 0 });
+  // A run loaded from the player's account that needs a mode change first:
+  // initGame applies it instead of starting a fresh board.
+  const pendingRunRef = useRef(null);
 
   const [theme, setTheme] = useState(() => {
     return localStorage.getItem('2048-theme') || 'skeeter';
@@ -151,6 +155,23 @@ export default function Game2048({ onWin }) {
     return () => stopTimer();
   }, [stopTimer]);
 
+  // Puts a saved run (see CloudRuns and runSave.js) on the board. The timer
+  // stays stopped until the next move.
+  const applyRun = useCallback((run) => {
+    stopTimer();
+    setIsTestMode(false);
+    setTiles(run.tiles);
+    setScore(run.score);
+    setHistory(run.history);
+    setUndoCount(run.undoCount);
+    setGameWon(run.gameWon);
+    setCompletionTimeKnown(run.completionTimeKnown);
+    setElapsedTime(run.elapsedTime);
+    setWinTimeFormatted('');
+    const ids = [...run.tiles, ...run.history.flatMap((step) => step.tiles)].map((tile) => tile.id);
+    nextId.current = Math.max(0, ...ids) + 1;
+  }, [stopTimer]);
+
   // Initialize board for Daily Challenge, Unlimited Puzzles, or Classic Mode
   const initGame = useCallback(() => {
     stopTimer();
@@ -159,6 +180,13 @@ export default function Game2048({ onWin }) {
     setIsTestMode(false);
     setGameWon(false);
     setWinTimeFormatted('');
+
+    if (pendingRunRef.current) {
+      const run = pendingRunRef.current;
+      pendingRunRef.current = null;
+      applyRun(run);
+      return;
+    }
 
     // 1. Purge old live daily keys. Never purge while showing an archive date,
     // or today's live daily would be deleted. Archive keys use their own prefix.
@@ -234,7 +262,26 @@ export default function Game2048({ onWin }) {
 
       setTiles([first, second]);
     }
-  }, [gameMode, todayStr, archive, saveKey, dailyStart, unlimitedSeed, createTile, stopTimer]);
+  }, [gameMode, todayStr, archive, saveKey, dailyStart, unlimitedSeed, createTile, stopTimer, applyRun]);
+
+  // Account saves (signed-in players): the run as it stands, and loading one.
+  const runSnapshot = {
+    version: 1, gameMode, date: todayStr, unlimitedSeed, tiles, score, undoCount,
+    elapsedTime, gameWon, completionTimeKnown, history,
+  };
+  const loadRun = (run) => {
+    if (run.gameMode === 'daily' && run.date !== todayStr) {
+      throw new Error(`That run is from the ${run.date} daily, so it can only be resumed on that day's puzzle.`);
+    }
+    if (run.gameMode === gameMode && (run.gameMode !== 'unlimited' || run.unlimitedSeed === unlimitedSeed)) {
+      applyRun(run);
+      return;
+    }
+    // Switching modes restarts the board, so initGame applies the run instead.
+    pendingRunRef.current = run;
+    setGameMode(run.gameMode);
+    if (run.gameMode === 'unlimited') setUnlimitedSeed(run.unlimitedSeed);
+  };
 
   useEffect(() => {
     initGame();
@@ -575,6 +622,7 @@ export default function Game2048({ onWin }) {
               <span className="theme-label">Classic</span>
             </div>
           </div>
+          <SaveHint onPause={stopTimer} />
         </div>
 
         {(gameMode === 'daily' || gameMode === 'unlimited') && !gameWon && (
@@ -651,6 +699,8 @@ export default function Game2048({ onWin }) {
             })}
           </div>
         </div>
+
+        <CloudRuns snapshot={runSnapshot} onLoad={loadRun} onPause={stopTimer} disabled={tiles.length === 0 || isTestMode} />
       </main>
     </div>
   );

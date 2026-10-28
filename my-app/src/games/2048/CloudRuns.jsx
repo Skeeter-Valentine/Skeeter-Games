@@ -5,6 +5,34 @@ import { firebaseConfigured, firebaseServices } from '../../services/firebase';
 import { encodeRun, validateRun } from './runSave';
 import './CloudRuns.css';
 
+// Signed-in state, shared by the save panel and the hint above the board.
+function useAccount() {
+  const [user, setUser] = useState(null);
+  const [ready, setReady] = useState(false);
+  useEffect(() => {
+    if (!firebaseConfigured) return undefined;
+    return onAuthStateChanged(firebaseServices().auth, account => { setUser(account); setReady(true); });
+  }, []);
+  return { user, ready };
+}
+
+// A one-line prompt near the top of the game, so signed-out players know
+// runs can be saved. It signs in straight away.
+export function SaveHint({ onPause }) {
+  const { user, ready } = useAccount();
+  const [error, setError] = useState('');
+  if (!firebaseConfigured || !ready || user) return null;
+  return <p className="cloud-runs-hint">
+    <button type="button" onClick={async () => {
+      setError('');
+      onPause();
+      try { await signInWithPopup(firebaseServices().auth, new GoogleAuthProvider()); }
+      catch (failure) { if (failure?.code !== 'auth/popup-closed-by-user' && failure?.code !== 'auth/cancelled-popup-request') setError('Sign-in didn\'t finish. Please try again.'); }
+    }}>Sign in with Google</button> to save your progress and pick it up on any device.
+    {error && <span role="alert"> {error}</span>}
+  </p>;
+}
+
 export default function CloudRuns({ snapshot, onLoad, onPause, disabled }) {
   const [user, setUser] = useState(null);
   const [ready, setReady] = useState(false);
@@ -41,7 +69,7 @@ export default function CloudRuns({ snapshot, onLoad, onPause, disabled }) {
     <h2>Save your runs</h2>
     {!firebaseConfigured ? <p>Account saves are coming soon. Daily progress still saves in this browser.</p>
       : !ready ? <p>Checking sign-in…</p> : !user ? <>
-        <p>Sign in to save runs and resume them on another device.</p>
+        <p>Sign in with Google to save your progress and resume your runs on any device.</p>
         <button disabled={busy} onClick={() => action(() => { onPause(); return signInWithPopup(firebaseServices().auth, new GoogleAuthProvider()); })}>Sign in with Google</button>
       </> : <>
         <p>Signed in as {user.displayName || user.email}</p>
