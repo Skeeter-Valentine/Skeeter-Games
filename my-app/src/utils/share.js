@@ -3,7 +3,7 @@
 import { formatDuration } from './dailyStats.js';
 
 // Games whose daily puzzle has a pepper (difficulty) rating.
-export const RATED_GAMES = ['map', 'akari', 'skeedle-beadle', 'pepper-placer', 'kakurasu', 'parshle',
+export const RATED_GAMES = ['map', 'akari', 'skeedle-beadle', 'pepper-placer', 'kakurasu', 'slitherlink', 'parshle',
   'nonograms', 'stitches', 'pipes', 'shikaku', 'minesweeper', 'hashi'];
 
 export const shareDay = date => new Date(`${date}T00:00:00Z`).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' });

@@ -1,6 +1,8 @@
+import { isLaunched } from '../utils/launch.js';
 import { gameInstructions } from '../components/gameInstructions.js';
 
 const entries = [
+  ['slitherlink', 'Skeeterlink', 'Daily Slitherlink Puzzle', 'Draw one closed loop through the dotted grid so every number counts the sides of its square the loop uses, in this daily Slitherlink logic puzzle.', 'A 0 means the loop skips all four sides of that square. A 3 next to a 0 uses its other three sides, since the side it shares with the 0 is out.'],
   ['kakurasu', 'Add ’em Up', 'Daily Kakurasu Puzzle', 'Shade squares so every row and column adds up to its clue, counting each square by its position, in this daily Kakurasu logic puzzle.', 'On a 5 × 5 board a row clue of 15 shades the whole row, since 1 + 2 + 3 + 4 + 5 = 15. A clue of 2 can only be the square in column 2, because each square counts once.'],
   ['pepper-placer', 'Pepper Placer', 'Daily Star Battle Puzzle', 'Place 1 or 2 peppers in every row, column and patch, with no two peppers touching, in this daily Star Battle logic puzzle.', 'If a patch lies entirely inside one row on a 1-pepper board, that row\'s pepper must be in the patch, so every other square in the row stays empty.'],
   ['skeedle-beadle', 'Skeedle Beadle', 'Daily Bead Sort Puzzle', 'Slide shaped beads between sticks until every stick holds one kind of bead in this daily sorting logic puzzle.', 'If one stick has a star bead on top and another stick ends in a star with room to spare, slide the star across. Keep an empty stick free for beads you need to move out of the way.'],
@@ -20,7 +22,8 @@ const entries = [
   ['skeedle-marathon', 'Skeedle Marathon', '26 Word Puzzle Challenge', 'Solve 26 five-letter words with a shared pool of guesses in this extended word challenge.', 'A guess that solves one board also gives feedback on every unsolved board. Use that feedback before spending another guess.'],
   ['map', 'Cartograskeet', 'Daily Four Color Map Puzzle', 'Play a new daily map or practice with four colors so that regions sharing an edge have different colors.', 'If a region borders fixed red, blue, and green regions, choose the fourth color. A neighbor touching only at a corner does not restrict it.'],
 ];
-export const pages = Object.fromEntries(entries.map(([id, name, topic, description, example]) => [`/${id}`, {
+// Games not launched yet (utils/launch.js) get no page, sitemap entry or links.
+export const pages = Object.fromEntries(entries.filter(([id]) => isLaunched(id)).map(([id, name, topic, description, example]) => [`/${id}`, {
   path: `/${id}`, name, title: `${name} — ${topic} | Skeeter Games`, topic, description, example, rules: gameInstructions[id],
 }]));
 pages['/'] = { path: '/', name: 'Skeeter Games', title: 'Free Logic, Word & Number Puzzles | Skeeter Games', topic: 'Free online logic, word, and number puzzles', description: 'Play Sudoku, nonograms, Hashi, Stitches, word puzzles, and more at Skeeter Games. Explore daily challenges and sharpen your puzzle-solving skills.' };

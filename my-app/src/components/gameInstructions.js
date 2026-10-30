@@ -30,6 +30,14 @@ export const gameInstructions = {
     'Every puzzle has exactly one solution and can be solved one line at a time without guessing: find the ways each clue can be made from the squares still open, and keep what they all agree on.',
     'Daily puzzles reset at midnight UTC and save progress in this browser. Mild is 5 × 5, Medium is 6 × 6 and Picante is 8 × 8. Practice lets you choose any size from 4 × 4 to 9 × 9.',
   ],
+  slitherlink: [
+    'Draw a single closed loop along the sides between the dots. The loop never branches, crosses or touches itself, so every dot has either 0 or 2 lines.',
+    'A number in a square says how many of that square\'s four sides the loop uses. Squares without a number can use any number of sides.',
+    'Numbers fade when they have exactly the right number of lines and turn pink when they have too many. A dot with more than two lines turns pink.',
+    'Tap a side to draw a line, or drag along the grid to draw several. Select Cross ×, shift-click, or right-click to mark a side the loop skips; tap a line again to clear it. Undo, Redo and Reset are under the board.',
+    'Every puzzle has exactly one solution. Mild and Medium can be solved with the basic rules alone: full numbers, dots with 0 or 2 lines, and never closing a small loop early. Picante sometimes needs a "what if": try a side one way, and if that breaks a rule, it goes the other way.',
+    'Daily puzzles reset at midnight UTC and save progress in this browser. Mild is 6 × 6, Medium is 8 × 8 and Picante is 10 × 10. Practice lets you choose a size from 5 × 5 to 10 × 10.',
+  ],
   akari: [
     'Place bulbs in white squares to light the entire board. Each bulb shines horizontally and vertically until a black wall blocks it.',
     'No bulb may shine directly on another bulb. Conflicting bulbs are highlighted in red.',

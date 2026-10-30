@@ -76,11 +76,11 @@ export default function CloudRuns({ snapshot, onLoad, onPause, disabled }) {
         <label>Save name <input maxLength={60} value={name} onChange={event => setName(event.target.value)} placeholder="My 2048 run" /></label>
         <div className="cloud-runs-actions">
           <button disabled={busy || disabled} onClick={() => action(async active => {
-            const payload = encodeRun(snapshot);
+            const { payload, kept, dropped } = encodeRun(snapshot);
             const { db } = firebaseServices();
             const ref = doc(collection(db, 'users', user.uid, 'runs2048'));
             await setDoc(ref, { version: 1, name: name.trim() || `${snapshot.gameMode} · ${snapshot.score} points`, payload, updatedAt: serverTimestamp() });
-            if (active()) setMessage('Run saved to your account. Save again after more moves to keep your latest progress.');
+            if (active()) setMessage(`Run saved to your account.${dropped ? ` It keeps your most recent ${kept.toLocaleString()} undo steps; ${dropped.toLocaleString()} older ones were left out.` : ''} Save again after more moves to keep your latest progress.`);
           })}>Save run</button>
           <button disabled={busy} onClick={list}>Show saved runs</button>
           <button disabled={busy} onClick={() => action(() => signOut(firebaseServices().auth))}>Sign out</button>

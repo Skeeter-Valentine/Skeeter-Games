@@ -1,0 +1,44 @@
+/* Skeeterlink (Slitherlink). Same frame as the newer games: a dark panel,
+   cream numbers, a glowing cyan loop. */
+.sl-page { max-width: 670px; margin: auto; padding: 24px 16px 48px; }
+.sl-heading { text-align: center; margin-bottom: 20px; }
+.sl-eyebrow { color: #6fe3ff; letter-spacing: 0.3em; font-size: 15px; }
+.sl-heading h1 { font-size: clamp(44px, 9vw, 64px); margin: 0; color: #f4ecd8; }
+.sl-heading p:last-child, .sl-date, .sl-help { color: #c5bed2; text-align: center; }
+.sl-date { font-size: 15px; margin: 14px 0; }
+.sl-controls { display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: 8px; }
+.sl-controls button, .sl-controls select { color: #f5f0fb; background: #272134; border: 1px solid #5b4e70; border-radius: 8px; min-height: 40px; padding: 8px 12px; cursor: pointer; font: inherit; }
+.sl-controls button[aria-pressed="true"] { background: #123c4a; color: #c9f4ff; border-color: #3fc9ee; }
+.sl-controls button:disabled { opacity: 0.4; cursor: default; }
+.sl-controls :focus-visible { outline: 2px solid #8fe6ff; outline-offset: 3px; }
+.sl-panel { padding: 18px; border: 1px solid #50435f; border-radius: 16px; background: #191525; }
+.sl-progress { display: flex; justify-content: space-between; margin-bottom: 10px; color: #ded4e8; font-variant-numeric: tabular-nums; }
+.sl-progress strong { color: #6fe3ff; }
+.sl-tools { margin-top: 14px; }
+
+/* The board: an SVG one unit per square. */
+.sl-board { display: block; width: 100%; max-width: 560px; margin: 0 auto; touch-action: none; user-select: none; -webkit-user-select: none; -webkit-tap-highlight-color: transparent; cursor: pointer; }
+.sl-dot { fill: #e9e2f2; }
+.sl-dot.branch { fill: #ff4f9a; }
+.sl-clue { fill: #f4ecd8; font: 700 0.56px system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif; text-anchor: middle; dominant-baseline: middle; pointer-events: none; }
+.sl-clue.met { fill: #7f7891; }
+.sl-clue.over { fill: #ff4f9a; }
+.sl-line { stroke: #3fd0ff; stroke-width: 0.13; stroke-linecap: round; filter: drop-shadow(0 0 0.06px #3fd0ff); }
+.sl-board.won .sl-line { stroke: #3ddc84; filter: drop-shadow(0 0 0.08px #3ddc84); }
+.sl-cross { stroke: #ff7ab0; stroke-width: 0.045; stroke-linecap: round; fill: none; }
+.sl-target { stroke: #ffe390; stroke-width: 0.16; stroke-linecap: round; opacity: 0.55; animation: sl-pulse 1.1s ease-in-out infinite alternate; }
+.sl-focus { fill: #fff2d6; opacity: 0.12; }
+@keyframes sl-pulse { from { opacity: 0.25; } to { opacity: 0.85; } }
+@media (prefers-reduced-motion: reduce) { .sl-target { animation: none; } }
+.sl-message { text-align: center; color: #d5cada; line-height: 1.5; min-height: 3em; margin: 16px 0 0; }
+.sl-message.won { color: #3ddc84; font-weight: bold; }
+.sl-help { font-size: 15px; line-height: 1.7; margin-top: 20px; }
+@media (max-width: 420px) {
+  .sl-page { padding: 16px 8px 36px; }
+  .sl-panel { padding: 10px 6px; }
+  .sl-controls { gap: 6px; }
+  .sl-controls button { padding: 8px 10px; font-size: 15px; }
+}
+/* Learn to play */
+/* (The walkthrough panel centres itself.) */
+.wt-sl .sl-board { max-width: 300px; }

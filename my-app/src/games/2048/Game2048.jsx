@@ -2,6 +2,7 @@ import { useDailyDate, useArchive } from '../../components/DailyBoundary';
 import { puzzleSnapshot } from '../../utils/archive.js';
 import DailyResults from '../../components/DailyResults';
 import CloudRuns, { SaveHint } from './CloudRuns';
+import { encodeRun, validateRun } from './runSave';
 import useUndoShortcut from '../../components/useUndoShortcut';
 // src/pages/Game2048.jsx
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
@@ -204,6 +205,11 @@ export default function Game2048({ onWin }) {
       if (saved) {
         try {
           const parsed = JSON.parse(saved);
+          // Newer saves use the compact format shared with account saves.
+          if (parsed.version === 2) {
+            applyRun(validateRun(parsed));
+            return;
+          }
           setTiles(parsed.tiles || []);
           setScore(parsed.score || 0);
           setHistory(parsed.history || []);
@@ -289,18 +295,19 @@ export default function Game2048({ onWin }) {
 
   useEffect(() => {
     if (gameMode === 'daily' && tiles.length > 0) {
-      const dailyPayload = {
-        tiles,
-        score,
-        history,
-        undoCount,
-        gameWon,
-        elapsedTime,
-        completionTimeKnown,
-      };
-      localStorage.setItem(saveKey, JSON.stringify(dailyPayload));
+      // Compact format (see runSave.js): about 25 bytes per undo step, so even
+      // very long daily runs stay well inside the browser's storage limit.
+      try {
+        const { payload } = encodeRun({
+          version: 1, gameMode: 'daily', date: todayStr, unlimitedSeed: 0, tiles, score, undoCount,
+          elapsedTime, gameWon, completionTimeKnown, history,
+        });
+        localStorage.setItem(saveKey, payload);
+      } catch {
+        // Storage full or blocked: the game keeps going, just unsaved.
+      }
     }
-  }, [tiles, score, history, undoCount, gameWon, gameMode, saveKey, elapsedTime, completionTimeKnown]);
+  }, [tiles, score, history, undoCount, gameWon, gameMode, saveKey, todayStr, elapsedTime, completionTimeKnown]);
 
   const handleUndo = () => {
     if (history.length === 0 || isTestMode) return;
