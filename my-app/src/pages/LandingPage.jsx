@@ -26,6 +26,8 @@ import skeedlemarathonImg from '../assets/skeedlemarathon-blend.webp';
 import stitchesImg from '../assets/skitches.webp';
 import pepperPlacerImg from '../assets/pepper-placer.webp';
 import kakurasuImg from '../assets/add-em-up.webp';
+import slitherlinkImg from '../assets/skeeterlink.webp';
+import { isLaunched } from '../utils/launch.js';
 import gauntletBannerImg from '../assets/gauntlet-banner.webp';
 import gauntletBannerNarrowImg from '../assets/gauntlet-banner-narrow.webp';
 
@@ -35,9 +37,10 @@ import GauntletCountdown from '../components/GauntletCountdown';
 import { readLocal } from '../utils/dailyStats.js';
 
 const GAMES = [
+  { id: 'slitherlink', title: 'Skeeterlink', path: '/slitherlink', image: slitherlinkImg, isNew: true },
   { id: 'kakurasu', title: 'Add ’em Up', path: '/kakurasu', image: kakurasuImg, isNew: true },
   { id: 'pepper-placer', title: 'Pepper Placer', path: '/pepper-placer', image: pepperPlacerImg, isNew: true },
-  { id: 'akari', title: 'Skeeluminate', path: '/akari', image: skeeluminateImg, isNew: true },
+  { id: 'akari', title: 'Skeeluminate', path: '/akari', image: skeeluminateImg },
   { id: 'skeedle-beadle', title: 'Skeedle Beadle', path: '/skeedle-beadle', image: skeedleBeadleImg },
   { id: 'map', title: 'Cartograskeet', path: '/map', image: cartograskeetImg },
   { id: 'parshle', title: 'Parshle', path: '/parshle', image: parshleImg },
@@ -124,7 +127,7 @@ export default function LandingPage() {
             : <span className="gauntlet-feature-status" aria-hidden="true">{gauntletStatus} · <strong>{gauntletAction} →</strong></span>}
         </Link>
         <div className="landing-grid">
-          {GAMES.map((game, index) => (
+          {GAMES.filter(game => isLaunched(game.id)).map((game, index) => (
             <Link key={game.id} to={game.path} className="landing-card" aria-label={`${game.title}, daily difficulty ${dailyDifficulty(game.id, date)} of 3 chilis`}>
               {game.isNew && <span className="new-badge">NEW</span>}
               <img src={game.image} alt={game.title} width="640" height="640" loading={index < 3 ? "eager" : "lazy"} decoding="async" className="landing-card-image" />
