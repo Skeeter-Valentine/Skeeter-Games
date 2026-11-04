@@ -15,12 +15,21 @@
 // Earlier days keep the original per-day draw (and its original 13 games),
 // so past gauntlets, and any times recorded for them, never change.
 
-// The games before Pepper Placer joined: the original draw uses these.
+// The games before Pepper Placer joined: the original per-day draw uses these.
 const ORIGINAL_GAME_IDS = ['akari', 'skeedle-beadle', 'map', 'parshle', 'stitches', 'nonograms', 'skeedlemath',
   'pipes', 'shikaku', 'quordle', 'word500', 'minesweeper', 'hashi'];
-export const GAUNTLET_GAME_IDS = [...ORIGINAL_GAME_IDS, 'pepper-placer'];
 export const WORD_GAMES = ['skeedlemath', 'quordle', 'parshle', 'word500'];
-export const OTHER_GAMES = GAUNTLET_GAME_IDS.filter(id => !WORD_GAMES.includes(id));
+// The other puzzles in the weekly plan, from the Monday each list starts.
+// Only add a list from a later Monday, so weeks already seen never change.
+export const OTHER_GAME_POOLS = [
+  { from: '2026-10-26', games: ['akari', 'skeedle-beadle', 'map', 'stitches', 'nonograms', 'pipes', 'shikaku', 'minesweeper', 'hashi', 'pepper-placer'] },
+  // Add 'em Up (Kakurasu) takes Mineskeeter's place.
+  { from: '2026-11-09', games: ['akari', 'skeedle-beadle', 'map', 'stitches', 'nonograms', 'pipes', 'shikaku', 'kakurasu', 'hashi', 'pepper-placer'] },
+];
+export const otherGamesFor = monday => OTHER_GAME_POOLS.filter(pool => pool.from <= monday).at(-1).games;
+// The current list, and every game that has ever been in a gauntlet.
+export const OTHER_GAMES = OTHER_GAME_POOLS.at(-1).games;
+export const GAUNTLET_GAME_IDS = [...new Set([...ORIGINAL_GAME_IDS, ...OTHER_GAME_POOLS.flatMap(pool => pool.games)])];
 export const GAUNTLET_SIZE = 6;
 export const WORDS_PER_DAY = 2;
 // A Monday. Change only to a later Monday, and only for days nobody has seen.
@@ -73,12 +82,12 @@ function planWords(rng) {
 
 // Seven different sets of puzzles for the week, each puzzle playing its
 // share of the slots (as even as possible), otherwise at random.
-function planOthers(rng) {
+function planOthers(rng, games) {
   const shuffle = shuffler(rng);
   const perDay = GAUNTLET_SIZE - WORDS_PER_DAY;
-  const slots = perDay * 7, base = Math.floor(slots / OTHER_GAMES.length), extra = slots % OTHER_GAMES.length;
+  const slots = perDay * 7, base = Math.floor(slots / games.length), extra = slots % games.length;
   for (;;) {
-    const left = Object.fromEntries(shuffle(OTHER_GAMES).map((id, i) => [id, base + (i < extra ? 1 : 0)]));
+    const left = Object.fromEntries(shuffle(games).map((id, i) => [id, base + (i < extra ? 1 : 0)]));
     const days = [];
     for (let d = 0; d < 7; d++) {
       const remainingDays = 7 - d;
@@ -101,7 +110,7 @@ export function weekPlan(monday) {
   if (!plans.has(monday)) {
     const rng = seeded(`skeeter-gauntlet-week-v4:${monday}`);
     const words = planWords(rng);
-    const others = planOthers(rng);
+    const others = planOthers(rng, otherGamesFor(monday));
     plans.set(monday, words.map((pair, d) => ({ words: pair, others: others[d] })));
   }
   return plans.get(monday);

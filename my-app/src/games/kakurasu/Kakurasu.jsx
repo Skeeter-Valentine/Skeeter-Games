@@ -150,7 +150,7 @@ export default function Kakurasu({ onWin }) {
     <Navbar />
     <header className="kk-heading"><p className="kk-eyebrow">KAKURASU</p><h1>{KAKURASU_TITLE}</h1><p>Every square counts. Some count more.</p></header>
     <DailyResults gameId="kakurasu" title={KAKURASU_TITLE} daily={game.mode === 'daily'} date={date} finished={won} seconds={game.seconds} started={game.started} onLearn={() => setLearning(true)} />
-    <div className="kk-controls">
+    <div className="kk-controls kk-modes">
       <button aria-pressed={!learning && game.mode === 'daily'} onClick={() => changeMode('daily')}>{archive ? 'Archive puzzle' : 'Daily'}</button>
       <button aria-pressed={!learning && game.mode === 'practice'} onClick={() => changeMode('practice')}>Practice</button>
       {!inGauntlet && <button aria-pressed={learning} onClick={() => setLearning(!learning)}>Learn to play</button>}

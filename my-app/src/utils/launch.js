@@ -3,6 +3,6 @@
 // live site (it still opens at its path under `npm run dev`, for testing).
 // To launch one, set it to true and push.
 export const LAUNCHED = {
-  slitherlink: false,
+  slitherlink: true,
 };
 export const isLaunched = id => LAUNCHED[id] !== false;

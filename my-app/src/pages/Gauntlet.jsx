@@ -30,12 +30,13 @@ import Minesweeper from '../games/minesweeper/Minesweeper';
 import Game2048 from '../games/2048/Game2048';
 import Hashi from '../games/hashi/Hashi';
 import PepperPlacer from '../games/pepper-placer/PepperPlacer';
+import Kakurasu from '../games/kakurasu/Kakurasu';
 import GauntletCountdown from '../components/GauntletCountdown';
 import './Gauntlet.css';
 
 const COMPONENTS = { akari: Akari, 'skeedle-beadle': SkeedleBeadle, map: MapGame, parshle: Parshle, stitches: Stitches,
   'skeedle-marathon': SkeedleMarathon, nonograms: Nonograms, skeedlemath: Skeedlemath, pipes: Pipes, shikaku: Shikaku,
-  quordle: Quordle, word500: Word500, minesweeper: Minesweeper, '2048': Game2048, hashi: Hashi, 'pepper-placer': PepperPlacer };
+  quordle: Quordle, word500: Word500, minesweeper: Minesweeper, '2048': Game2048, hashi: Hashi, 'pepper-placer': PepperPlacer, kakurasu: Kakurasu };
 const runKey = date => `${STORAGE_PREFIX}${isTestDay(date) ? 'test-run' : 'run'}:${date}`;
 const HISTORY_KEY = `${STORAGE_PREFIX}history`;
 const statusLabel = { won: 'Solved', lost: 'Lost', 'gave-up': 'Gave up' };
@@ -78,6 +79,7 @@ const FOCUS = {
   minesweeper: ['.ms-classic-window'],
   hashi: ['.hashi-canvas-wrapper'],
   'pepper-placer': ['.pp-board'],
+  kakurasu: ['.kk-board'],
   parshle: ['.parshle-board', '.parshle-keyboard'],
   // Skeedle+'s message sits above its board: keep it in view, since it
   // explains a rejected guess.

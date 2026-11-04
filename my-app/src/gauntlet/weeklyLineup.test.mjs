@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { LINEUP_RULES_FROM, OTHER_GAMES, WORD_GAMES, addDays, lineupFor, seeded, weekStart } from './weeklyLineup.js';
+import { LINEUP_RULES_FROM, OTHER_GAMES, WORD_GAMES, addDays, lineupFor, otherGamesFor, seeded, weekStart } from './weeklyLineup.js';
 import { gauntletLineup } from './gauntlet.js';
 import { lineupIds } from '../../functions/gauntlet.js';
 
@@ -25,7 +25,7 @@ test('every day has six different games: two word games and four others', () => 
   for (const day of weeks.flat()) {
     assert.equal(new Set(day).size, 6);
     assert.equal(day.filter(id => WORD_GAMES.includes(id)).length, 2);
-    assert.ok(day.every(id => [...ALL, 'pepper-placer'].includes(id)));
+    assert.ok(day.every(id => [...ALL, 'pepper-placer', 'kakurasu'].includes(id)));
   }
 });
 
@@ -45,13 +45,14 @@ test('each week the other puzzles are a new set every day, spread evenly', () =>
   assert.equal(OTHER_GAMES.length, 10);
   assert.ok(OTHER_GAMES.includes('pepper-placer'));
   const lighter = new Set();
-  for (const week of weeks) {
+  for (const [w, week] of weeks.entries()) {
+    const games = otherGamesFor(addDays(LINEUP_RULES_FROM, w * 7));
     const sets = week.map(day => day.filter(id => !WORD_GAMES.includes(id)).sort().join('+'));
     assert.equal(new Set(sets).size, 7, 'a different set of puzzles every day');
     // 28 slots over 10 puzzles: eight play 3 times, two play twice.
-    const plays = OTHER_GAMES.map(game => week.filter(day => day.includes(game)).length);
+    const plays = games.map(game => week.filter(day => day.includes(game)).length);
     assert.deepEqual([...plays].sort(), [2, 2, 3, 3, 3, 3, 3, 3, 3, 3]);
-    OTHER_GAMES.forEach((game, i) => { if (plays[i] === 2) lighter.add(game); });
+    if (w >= 2) games.forEach((game, i) => { if (plays[i] === 2) lighter.add(game); });
   }
   // The two lighter puzzles change from week to week.
   assert.equal(lighter.size, OTHER_GAMES.length);
@@ -72,5 +73,16 @@ test('the site and the server always agree on the games', () => {
   for (let n = 0; n < 9; n++) {
     const day = addDays('2099-01-01', n);
     assert.deepEqual(gauntletLineup(day).map(game => game.id), lineupIds(day), day);
+  }
+});
+
+test("Add 'em Up replaces Mineskeeter from the week of 2026-11-09", () => {
+  for (const [w, week] of weeks.entries()) {
+    const days = week.flat();
+    if (addDays(LINEUP_RULES_FROM, w * 7) < '2026-11-09') {
+      assert.ok(!days.includes('kakurasu') && days.includes('minesweeper'), `week ${w}`);
+    } else {
+      assert.ok(days.includes('kakurasu') && !days.includes('minesweeper'), `week ${w}`);
+    }
   }
 });

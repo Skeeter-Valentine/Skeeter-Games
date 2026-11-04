@@ -94,6 +94,7 @@
 .gauntlet-stage .shikaku-container > div:has(+ .shikaku-config), .gauntlet-stage .shikaku-config > div:first-child,
 .gauntlet-stage .quordle-game-container .mode-toggle,
 .gauntlet-stage .minesweeper-container > .diff-toggle,
+.gauntlet-stage .kk-modes, .gauntlet-stage .kk-date,
 .gauntlet-stage .game2048-header > .diff-toggle,
 .gauntlet-stage .hashi-controls > .hashi-btn:not(:last-child) { display: none !important; }
 /* Games sized for a full page sit a little closer under the gauntlet bar. */

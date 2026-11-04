@@ -40,8 +40,9 @@ export function gauntletOpensAt(day) {
 }
 export const nextGauntletAt = day => gauntletOpensAt(addDays(day, 1));
 
-// Every game except Skeedoku, 2048 and Skeedle Marathon (the last two are
-// left out for now because they run much longer). Titles are what players see.
+// Every game that has been in a gauntlet (weeklyLineup.js decides which play
+// each week; from 2026-11-09 Add 'em Up replaces Mineskeeter, which stays here
+// for older runs). Titles are what players see.
 export const GAUNTLET_GAMES = [
   { id: 'akari', title: 'Skeeluminate' },
   { id: 'skeedle-beadle', title: 'Skeedle Beadle' },
@@ -57,6 +58,7 @@ export const GAUNTLET_GAMES = [
   { id: 'minesweeper', title: 'Mineskeeter' },
   { id: 'hashi', title: 'Hashkeet' },
   { id: 'pepper-placer', title: 'Pepper Placer' },
+  { id: 'kakurasu', title: 'Add ’em Up' },
 ];
 export const gameTitle = id => GAUNTLET_GAMES.find(game => game.id === id)?.title ?? id;
 
@@ -91,7 +93,7 @@ export const isTestDay = day => typeof day === 'string' && day.startsWith('2099-
 const FIXED_LINEUPS = {
   '2099-01-01': ['akari', 'skeedle-beadle', 'map', 'parshle', 'stitches', 'nonograms'],
   '2099-01-02': ['skeedlemath', 'pipes', 'shikaku', 'quordle', 'word500', 'minesweeper'],
-  '2099-01-03': ['hashi', 'map', 'word500', 'stitches', 'akari', 'pepper-placer'],
+  '2099-01-03': ['hashi', 'kakurasu', 'word500', 'stitches', 'akari', 'pepper-placer'],
 };
 
 // Word games: every gauntlet has exactly two of these.
@@ -114,7 +116,7 @@ export const DEFAULT_AVERAGE_SECONDS = {
   stitches: [150, 300, 540], 'skeedle-marathon': [1200, 1200, 1500], nonograms: [60, 240, 540],
   skeedlemath: [180, 180, 240], pipes: [60, 150, 330], shikaku: [90, 210, 480], quordle: [300, 300, 360],
   word500: [300, 300, 360], minesweeper: [60, 150, 300], '2048': [420, 480, 600], hashi: [120, 240, 540],
-  'pepper-placer': [90, 240, 480],
+  'pepper-placer': [90, 240, 480], kakurasu: [60, 150, 360],
 };
 export const MIN_COMMUNITY_SOLVES = 5;
 

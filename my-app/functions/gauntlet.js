@@ -9,12 +9,12 @@
 import { WORD_GAMES, lineupFor } from './shared/gauntlet/weeklyLineup.js';
 
 export const GAUNTLET_GAMES = ['akari', 'skeedle-beadle', 'map', 'parshle', 'stitches', 'nonograms', 'skeedlemath',
-  'pipes', 'shikaku', 'quordle', 'word500', 'minesweeper', 'hashi', 'pepper-placer'];
+  'pipes', 'shikaku', 'quordle', 'word500', 'minesweeper', 'hashi', 'pepper-placer', 'kakurasu'];
 export const GAUNTLET_SIZE = 6;
 const FIXED_LINEUPS = {
   '2099-01-01': ['akari', 'skeedle-beadle', 'map', 'parshle', 'stitches', 'nonograms'],
   '2099-01-02': ['skeedlemath', 'pipes', 'shikaku', 'quordle', 'word500', 'minesweeper'],
-  '2099-01-03': ['hashi', 'map', 'word500', 'stitches', 'akari', 'pepper-placer'],
+  '2099-01-03': ['hashi', 'kakurasu', 'word500', 'stitches', 'akari', 'pepper-placer'],
 };
 export const isDay = day => typeof day === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(day)
   && new Date(`${day}T00:00:00Z`).toISOString().slice(0, 10) === day;
