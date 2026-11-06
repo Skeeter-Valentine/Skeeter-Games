@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { cluesFor, dailyPuzzle, dailySize, evaluateBoard, generatePuzzle, geometry, hEdge, solve, vEdge } from './puzzle.js';
+import { cluesFor, dailyPuzzle, dailySize, evaluateBoard, generatePuzzle, geometry, hEdge, solve, vEdge, zeroCrosses } from './puzzle.js';
 
 // A 2 x 2 board whose loop runs round the outside.
 const outer = (() => {
@@ -55,4 +55,19 @@ test('the walkthrough steps solve its board, each one by logic', async () => {
   const crossed = TUTORIAL_STEPS.flatMap(step => step.action === 'cross' ? [...step.targets, ...step.auto] : step.auto);
   assert.ok(crossed.every(edge => !TUTORIAL_SOLUTION.includes(edge)), 'crossed sides are not in the loop');
   assert.equal(solve(TUTORIAL_PUZZLE).solved, true);
+});
+
+test('games start with every side of every 0 crossed off, none of them in the loop', () => {
+  // Two 0s side by side share a side: 7 sides in all.
+  assert.deepEqual(zeroCrosses({ rows: 1, cols: 3, clues: [0, 0, -1] }).length, 7);
+  for (const [size, level] of [[6, 1], [8, 2], [10, 3]]) {
+    const puzzle = generatePuzzle(size, size, `zeros-${size}`, level);
+    const crossed = zeroCrosses(puzzle);
+    assert.ok(crossed.every(edge => !puzzle.solution.includes(edge)));
+    const zeros = puzzle.clues.filter(clue => clue === 0).length;
+    assert.ok(crossed.length >= zeros * 2 && crossed.length <= zeros * 4);
+    // With the crosses in place, every 0 shows as done.
+    const state = evaluateBoard(puzzle, [], crossed).clueState;
+    puzzle.clues.forEach((clue, cell) => { if (clue === 0) assert.equal(state[cell], 'met'); });
+  }
 });

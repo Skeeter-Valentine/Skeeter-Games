@@ -8,7 +8,7 @@ import SlitherlinkTutorial, { SLITHERLINK_TUTORIAL_KEY } from './SlitherlinkTuto
 import SlitherBoard from './SlitherBoard';
 import { readLocal, writeLocal } from '../../utils/dailyStats.js';
 import { puzzleSnapshot } from '../../utils/archive.js';
-import { PRACTICE_SIZES, dailyPuzzle, evaluateBoard, generatePuzzle, geometry } from './puzzle.js';
+import { PRACTICE_SIZES, dailyPuzzle, evaluateBoard, generatePuzzle, geometry, zeroCrosses } from './puzzle.js';
 import './Slitherlink.css';
 
 // Skeeterlink: the site's Slitherlink. Draw one loop along the dotted grid;
@@ -17,16 +17,19 @@ export const SLITHERLINK_TITLE = 'Skeeterlink';
 const saveKey = (date, archive) => `${archive ? 'archive:v1:' : ''}slitherlink-daily-v1:${date}`;
 const fingerprint = puzzle => JSON.stringify([puzzle.rows, puzzle.cols, puzzle.clues]);
 
+// A new game starts with every side of every 0 crossed off, since the loop
+// can't use any of them.
 export function restoreProgress(puzzle, saved) {
-  const empty = { lines: [], crosses: [], seconds: 0, started: false };
+  const empty = { lines: [], crosses: zeroCrosses(puzzle), seconds: 0, started: false };
   const edges = geometry(puzzle.rows, puzzle.cols).E;
   const valid = list => Array.isArray(list) && new Set(list).size === list.length
     && list.every(id => Number.isInteger(id) && id >= 0 && id < edges);
   if (!saved || saved.fingerprint !== fingerprint(puzzle) || !valid(saved.lines) || !valid(saved.crosses)
     || saved.lines.some(id => saved.crosses.includes(id))) return empty;
-  return { lines: saved.lines, crosses: saved.crosses,
-    seconds: Number.isInteger(saved.seconds) && saved.seconds >= 0 ? saved.seconds : 0,
-    started: !!saved.started || saved.lines.length > 0 || saved.crosses.length > 0 };
+  const seconds = Number.isInteger(saved.seconds) && saved.seconds >= 0 ? saved.seconds : 0;
+  // A board saved before this (nothing drawn yet) also gets its 0s crossed off.
+  if (!saved.lines.length && !saved.crosses.length) return { ...empty, seconds, started: !!saved.started };
+  return { lines: saved.lines, crosses: saved.crosses, seconds, started: !!saved.started || saved.lines.length > 0 };
 }
 
 function newGame(date, mode = 'daily', size = 6, archive = false) {
@@ -123,7 +126,7 @@ export default function Slitherlink({ onWin }) {
   useUndoShortcut(() => travel('undo'), () => travel('redo'));
 
   function reset() {
-    setGame(current => ({ ...current, lines: [], crosses: [],
+    setGame(current => ({ ...current, lines: [], crosses: zeroCrosses(current.puzzle),
       past: [...current.past, { lines: current.lines, crosses: current.crosses }], future: [] }));
   }
 
@@ -166,7 +169,7 @@ export default function Slitherlink({ onWin }) {
         <button aria-pressed={tool === 'erase'} onClick={() => setTool('erase')}>Erase</button>
         <button disabled={won || !game.past.length} onClick={() => travel('undo')}>Undo</button>
         <button disabled={won || !game.future.length} onClick={() => travel('redo')}>Redo</button>
-        <button disabled={won || (!lines.length && !crosses.length)} onClick={reset}>Reset</button>
+        <button disabled={won || (!lines.length && [...crosses].sort((a, b) => a - b).join() === zeroCrosses(puzzle).join())} onClick={reset}>Reset</button>
       </div>
       <p className={`sl-message${won ? ' won' : ''}`} role="status">{message}</p>
     </section>

@@ -47,6 +47,13 @@ export function geometry(rows, cols) {
   return g;
 }
 export const hEdge = (cols, r, c) => r * cols + c;
+// Every side of every 0: crossed off for the player when a game starts.
+export function zeroCrosses(puzzle) {
+  const g = geometry(puzzle.rows, puzzle.cols);
+  const edges = new Set();
+  puzzle.clues.forEach((clue, cell) => { if (clue === 0) g.cellEdges[cell].forEach(e => edges.add(e)); });
+  return [...edges].sort((a, b) => a - b);
+}
 export const vEdge = (rows, cols, r, c) => (rows + 1) * cols + r * (cols + 1) + c;
 
 // ----- Checking a player's lines -----
