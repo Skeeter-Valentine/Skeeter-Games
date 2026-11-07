@@ -45,7 +45,7 @@ function GauntletReport({ gauntlet, gameId, daily, finished, won = true, ready =
 }
 
 function DailySession({ gameId, title, date, daily, finished, won = true, seconds, ready = true,
-  manualOpen = false, onClose, legacyStats, started = false, autoOpen = true, onLearn, guesses, maxGuesses, shareGrid }) {
+  manualOpen = false, onClose, legacyStats, started, clockRunning, autoOpen = true, onLearn, guesses, maxGuesses, shareGrid }) {
   const archive = !!useArchive()?.archive;
   const statsId = archiveStatsId(gameId, archive);
   const [stats, setStats] = useState(() => readDailyStats(statsId));
@@ -59,7 +59,13 @@ function DailySession({ gameId, title, date, daily, finished, won = true, second
   const elapsed = useRef(clock);
   const handled = useRef(false);
   const hasTimer = seconds !== undefined;
-  const attemptStarted = started || (hasTimer && seconds > 0) || finished;
+  // An attempt starts with the first move. Games that time themselves from
+  // load (dailies, see useDailyClock.js) say so with `started`; older ones
+  // without it count any time on their clock.
+  const attemptStarted = !!started || finished || (started === undefined && hasTimer && seconds > 0);
+  // This built-in clock (for games without their own) runs while
+  // `clockRunning` says so, or else once the player has started.
+  const running = clockRunning ?? !!started;
   useEffect(() => {
     if (!daily || !ready || !attemptStarted) return;
     let active = true, retry;
@@ -75,7 +81,7 @@ function DailySession({ gameId, title, date, daily, finished, won = true, second
   }, [gameId, date, archive, daily, ready, attemptStarted, finished, won]);
 
   useEffect(() => {
-    if (!daily || !started || hasTimer || finished || !ready || stats.results[date]) return;
+    if (!daily || !running || hasTimer || finished || !ready || stats.results[date]) return;
     let last = performance.now();
     const tick = () => {
       const now = performance.now();
@@ -94,7 +100,7 @@ function DailySession({ gameId, title, date, daily, finished, won = true, second
       if (document.visibilityState !== 'hidden') elapsed.current += (performance.now() - last) / 1000;
       writeLocal(clockKey(statsId, date), elapsed.current);
     };
-  }, [gameId, date, daily, started, finished, ready, hasTimer, stats]);
+  }, [gameId, date, daily, running, finished, ready, hasTimer, stats]);
 
   useEffect(() => {
     if (!daily || !finished || !ready) { handled.current = false; return; }

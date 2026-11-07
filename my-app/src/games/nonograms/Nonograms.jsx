@@ -356,7 +356,7 @@ export default function Nonograms({ onWin }) {
     <>
 
       <Navbar />
-      <DailyResults started={hasStarted && !learning} gameId="nonograms" title="Skeedograms" daily={gameMode === 'daily'} finished={isWon} onLearn={() => setLearning(true)} />
+      <DailyResults started={hasStarted && !learning} clockRunning={!learning && !isWon && (seenTutorial || inGauntlet)} gameId="nonograms" title="Skeedograms" daily={gameMode === 'daily'} finished={isWon} onLearn={() => setLearning(true)} />
 
       <div className="nonogram-wrapper">
 

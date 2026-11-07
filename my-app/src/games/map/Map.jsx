@@ -163,7 +163,7 @@ export default function Map({ initialSeed, initialSize = 'Medium' }) {
         <p className="skeedomap-subtitle">Let's make a map.</p>
         <p className="skeedomap-description">Four colors. No matching neighbors.</p>
       </header>
-      {daily ? <DailyResults gameId="map" title="Cartograskeet" daily date={date} started={!learning && history.length > 1} finished={won} onLearn={() => setLearning(true)} /> : <MapGameTools puzzleId={`${settings.seed}:${settings.size}`} won={won} onLearn={() => setLearning(true)} filled={filled} total={board.colors.length} actions={cursor} />}
+      {daily ? <DailyResults gameId="map" title="Cartograskeet" daily date={date} started={!learning && history.length > 1} clockRunning={!learning && !won && (seenTutorial || inGauntlet)} finished={won} onLearn={() => setLearning(true)} /> : <MapGameTools puzzleId={`${settings.seed}:${settings.size}`} won={won} onLearn={() => setLearning(true)} filled={filled} total={board.colors.length} actions={cursor} />}
       <div className="skeedomap-heading">
         <div className="skeedomap-session-controls">
           <button className="skeedomap-primary" aria-pressed={!learning && daily} onClick={() => { setLearning(false); playDaily(); }}>{archive ? 'Archive puzzle' : 'Daily'}</button>

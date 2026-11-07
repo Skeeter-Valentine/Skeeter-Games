@@ -9,6 +9,7 @@ import { dailyLevel as dailyLevelFor } from './dailyConfig.js';
 import { LEVELS, checkBoard, dailyPuzzle, generatePuzzle } from './puzzle.js';
 import { PATCH_COLORS, Pepper, colourPatches } from './board.jsx';
 import { WalkthroughPrompt } from '../../components/Walkthrough';
+import { useClockRunning } from '../../components/useDailyClock';
 import PepperTutorial, { PEPPER_TUTORIAL_KEY, tutorialSeen } from './PepperTutorial.jsx';
 import './PepperPlacer.css';
 
@@ -72,11 +73,15 @@ export default function PepperPlacer() {
   const colours = useMemo(() => puzzle ? colourPatches(puzzle) : null, [puzzle]);
   const won = !!status?.won;
 
+  // Dailies time from when the puzzle appears; practice from the first move
+  // (see useDailyClock.js).
+  const clockOn = useClockRunning({ daily: game?.mode === 'daily', moved: !!game?.started, done: won, learning,
+    promptOpen: !seenTutorial && !inGauntlet });
   useEffect(() => {
-    if (!game?.started || won || learning) return undefined;
+    if (!clockOn) return undefined;
     const timer = setInterval(() => setGame(current => ({ ...current, seconds: current.seconds + 1 })), 1000);
     return () => clearInterval(timer);
-  }, [game?.started, won, learning]);
+  }, [clockOn]);
 
   useEffect(() => {
     if (game?.mode === 'daily') writeLocal(saveKey(date, archive), {

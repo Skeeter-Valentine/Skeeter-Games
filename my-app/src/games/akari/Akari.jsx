@@ -4,6 +4,7 @@ import DailyResults from '../../components/DailyResults';
 import useUndoShortcut from '../../components/useUndoShortcut';
 import { useDailyDate, useArchive, useGauntlet } from '../../components/DailyBoundary';
 import { WalkthroughPrompt, walkthroughSeen } from '../../components/Walkthrough';
+import { useClockRunning } from '../../components/useDailyClock';
 import AkariTutorial, { AKARI_TUTORIAL_KEY } from './AkariTutorial';
 import { readLocal, writeLocal } from '../../utils/dailyStats.js';
 import { PRACTICE_SIZES, dailyPuzzle, evaluateBoard, generatePuzzle } from './puzzle.js';
@@ -51,11 +52,15 @@ export default function Akari() {
   const status = useMemo(() => evaluateBoard(puzzle, bulbs), [puzzle, bulbs]);
   const { won, lit, conflicts, clues, whiteCount } = status;
 
+  // Dailies time from when the puzzle appears; practice from the first move
+  // (see useDailyClock.js).
+  const clockOn = useClockRunning({ daily: game.mode === 'daily', moved: game.started, done: won, learning,
+    promptOpen: !seenTutorial && !inGauntlet });
   useEffect(() => {
-    if (!game.started || won || learning) return;
+    if (!clockOn) return;
     const timer = setInterval(() => setGame(current => ({ ...current, seconds: current.seconds + 1 })), 1000);
     return () => clearInterval(timer);
-  }, [game.started, won, learning]);
+  }, [clockOn]);
 
   useEffect(() => {
     if (game.mode === 'daily') writeLocal(saveKey(date, archive), {

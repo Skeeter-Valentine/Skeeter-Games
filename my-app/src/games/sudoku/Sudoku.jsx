@@ -1,5 +1,6 @@
 import { useDailyDate, useArchive, useGauntlet } from '../../components/DailyBoundary';
 import { WalkthroughPrompt, walkthroughSeen } from '../../components/Walkthrough';
+import { useClockRunning } from '../../components/useDailyClock';
 import SudokuTutorial, { SUDOKU_TUTORIAL_KEY } from './SudokuTutorial';
 import { puzzleSnapshot } from '../../utils/archive.js';
 import { readLocal, writeLocal } from '../../utils/dailyStats.js';
@@ -246,16 +247,20 @@ export default function Skeedoku({ onWin }) {
     writeLocal(progressKey, saveSudoku({ puzzle, grid, notes, mistakes, elapsed, completed, hasStarted }));
   }, [configKey, progressKey, puzzle, grid, notes, mistakes, elapsed, completed, hasStarted]);
 
+  // Dailies time from when the puzzle appears; practice from the first move
+  // (see useDailyClock.js).
+  const clockOn = useClockRunning({ daily: configKey === 'daily' && grid.length > 0, moved: hasStarted, done: completed, learning,
+    promptOpen: !seenTutorial && !inGauntlet });
   useEffect(() => {
     if (timerRef.current) clearInterval(timerRef.current);
-    if (!hasStarted || completed || learning) return;
+    if (!clockOn) return;
     timerRef.current = setInterval(() => {
       if (!completed) {
         setElapsed(prev => prev + 1);
       }
     }, 1000);
     return () => clearInterval(timerRef.current);
-  }, [completed, hasStarted, learning]);
+  }, [clockOn, completed]);
 
   useEffect(() => {
     generatePuzzle('daily');
@@ -452,7 +457,7 @@ export default function Skeedoku({ onWin }) {
   return (
     <>
     <Navbar />
-      <DailyResults gameId="sudoku" title="Skeedoku" daily={configKey === 'daily'} finished={completed} seconds={elapsed} ready={grid.length > 0} legacyStats={archive ? undefined : stats} onLearn={() => setLearning(true)} />
+      <DailyResults gameId="sudoku" title="Skeedoku" daily={configKey === 'daily'} finished={completed} seconds={elapsed} started={hasStarted} ready={grid.length > 0} legacyStats={archive ? undefined : stats} onLearn={() => setLearning(true)} />
     <div className="sudoku-app-wrapper">
       {!learning && !seenTutorial && !inGauntlet && !completed && <WalkthroughPrompt game="Skeedoku" seenKey={SUDOKU_TUTORIAL_KEY} onStart={() => setLearning(true)} onDismiss={() => setSeenTutorial(true)} />}
       {learning ? <SudokuTutorial onDone={action => {

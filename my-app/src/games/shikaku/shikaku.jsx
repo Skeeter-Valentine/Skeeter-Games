@@ -1,5 +1,6 @@
 import { useDailyDate, useArchive, useGauntlet } from '../../components/DailyBoundary';
 import { WalkthroughPrompt, walkthroughSeen } from '../../components/Walkthrough';
+import { useClockRunning } from '../../components/useDailyClock';
 import ShikakuTutorial, { SHIKAKU_TUTORIAL_KEY } from './ShikakuTutorial';
 import DailyResults from '../../components/DailyResults';
 import useUndoShortcut from '../../components/useUndoShortcut';
@@ -49,9 +50,13 @@ export default function Shikaku({ onWin }) {
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
+  // Dailies time from when the puzzle appears; practice from the first move
+  // (see useDailyClock.js).
+  const clockOn = useClockRunning({ daily: gameMode === 'daily' && cluesGrid.length > 0, moved: isTimerActive, done: isWin, learning,
+    promptOpen: !seenTutorial && !inGauntlet });
   useEffect(() => {
     let interval = null;
-    if (isTimerActive && !isWin && !learning) {
+    if (clockOn) {
       interval = setInterval(() => {
         setSeconds((prevSeconds) => prevSeconds + 1);
       }, 1000);
@@ -59,7 +64,7 @@ export default function Shikaku({ onWin }) {
       clearInterval(interval);
     }
     return () => clearInterval(interval);
-  }, [isTimerActive, isWin, learning]);
+  }, [clockOn]);
 
   const startNewGame = useCallback((overrideMode = gameMode, overrideSize = gridSize) => {
     setStatus('');
@@ -289,7 +294,7 @@ export default function Shikaku({ onWin }) {
   return (
     <div className="shikaku-container">
       <Navbar />
-      <DailyResults gameId="shikaku" title="Shikaku" daily={gameMode === 'daily'} date={todayStr} finished={isWin} seconds={seconds} ready={cluesGrid.length > 0} onLearn={() => setLearning(true)} />
+      <DailyResults gameId="shikaku" title="Shikaku" daily={gameMode === 'daily'} date={todayStr} finished={isWin} seconds={seconds} started={isTimerActive} ready={cluesGrid.length > 0} onLearn={() => setLearning(true)} />
       <h1 className="shikaku-title">SKEEKAKU</h1>
 
       <div style={{ display: 'flex', gap: '8px', marginBottom: '12px', flexWrap: 'wrap', justifyContent: 'center' }}>

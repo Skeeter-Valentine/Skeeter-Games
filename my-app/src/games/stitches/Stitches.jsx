@@ -1,5 +1,6 @@
 import { useDailyDate, useArchive, useGauntlet } from '../../components/DailyBoundary';
 import { WalkthroughPrompt, walkthroughSeen } from '../../components/Walkthrough';
+import { useClockRunning } from '../../components/useDailyClock';
 import StitchesTutorial, { STITCHES_TUTORIAL_KEY } from './StitchesTutorial';
 import DailyResults from '../../components/DailyResults';
 import useUndoShortcut from '../../components/useUndoShortcut';
@@ -41,11 +42,15 @@ export default function Stitches({ onWin }) {
   const won = checkSolution(puzzle, selected);
   const holes = new Set(chosen.flatMap(edge => [edge.a, edge.b]));
 
+  // Dailies time from when the puzzle appears; practice from the first move
+  // (see useDailyClock.js).
+  const clockOn = useClockRunning({ daily: game.mode === 'daily', moved: game.started, done: won, learning,
+    promptOpen: !seenTutorial && !inGauntlet });
   useEffect(() => {
-    if (won || !game.started || learning) return;
+    if (!clockOn) return;
     const timer = setInterval(() => setGame(current => ({ ...current, seconds: current.seconds + 1 })), 1000);
     return () => clearInterval(timer);
-  }, [won, game.started, learning]);
+  }, [clockOn]);
 
   useEffect(() => {
     if (game.mode !== 'daily') return;

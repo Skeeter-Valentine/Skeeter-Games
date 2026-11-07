@@ -4,6 +4,7 @@ import DailyResults from '../../components/DailyResults';
 import useUndoShortcut from '../../components/useUndoShortcut';
 import { useDailyDate, useArchive, useGauntlet } from '../../components/DailyBoundary';
 import { WalkthroughPrompt, walkthroughSeen } from '../../components/Walkthrough';
+import { useClockRunning } from '../../components/useDailyClock';
 import SlitherlinkTutorial, { SLITHERLINK_TUTORIAL_KEY } from './SlitherlinkTutorial';
 import SlitherBoard from './SlitherBoard';
 import { readLocal, writeLocal } from '../../utils/dailyStats.js';
@@ -57,11 +58,15 @@ export default function Slitherlink({ onWin }) {
   const clueCount = puzzle.clues.filter(clue => clue >= 0).length;
   const metCount = status.clueState.filter(state => state === 'met').length;
 
+  // Dailies time from when the puzzle appears; practice from the first move
+  // (see useDailyClock.js).
+  const clockOn = useClockRunning({ daily: game.mode === 'daily', moved: game.started, done: won, learning,
+    promptOpen: !seenTutorial && !inGauntlet });
   useEffect(() => {
-    if (!game.started || won || learning) return;
+    if (!clockOn) return;
     const timer = setInterval(() => setGame(current => ({ ...current, seconds: current.seconds + 1 })), 1000);
     return () => clearInterval(timer);
-  }, [game.started, won, learning]);
+  }, [clockOn]);
 
   useEffect(() => {
     if (game.mode === 'daily') writeLocal(saveKey(date, archive), {

@@ -1,5 +1,6 @@
 import { useDailyDate, useArchive, useGauntlet } from '../../components/DailyBoundary';
 import { WalkthroughPrompt, walkthroughSeen } from '../../components/Walkthrough';
+import { useClockRunning } from '../../components/useDailyClock';
 import HashiTutorial, { HASHI_TUTORIAL_KEY } from './HashiTutorial';
 import { puzzleSnapshot } from '../../utils/archive.js';
 import { readLocal, writeLocal } from '../../utils/dailyStats.js';
@@ -107,9 +108,13 @@ export default function Hashi({ onWin }) {
         return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
     };
 
+    // Dailies time from when the puzzle appears; practice from the first move
+    // (see useDailyClock.js).
+    const clockOn = useClockRunning({ daily: isDailyMode && gameState.islands.length > 0, moved: isActive, done: isSolved, learning,
+        promptOpen: !seenTutorial && !inGauntlet });
     useEffect(() => {
         let interval = null;
-        if (isActive && !learning) {
+        if (clockOn) {
             interval = setInterval(() => {
                 setSeconds(prev => prev + 1);
             }, 1000);
@@ -117,7 +122,7 @@ export default function Hashi({ onWin }) {
             clearInterval(interval);
         }
         return () => clearInterval(interval);
-    }, [isActive, learning]);
+    }, [clockOn]);
 
     const startNewGame = (daily = false) => {
         setMessage('');
@@ -380,7 +385,7 @@ export default function Hashi({ onWin }) {
     return (
         <>
             <Navbar />
-      <DailyResults onLearn={() => setLearning(true)} gameId="hashi" title="Hashi" daily={isDailyMode} date={todayStr} finished={isSolved} seconds={seconds} ready={gameState.islands.length > 0} manualOpen={isStatsOpen} onClose={() => setIsStatsOpen(false)} legacyStats={archive ? undefined : stats} />
+      <DailyResults onLearn={() => setLearning(true)} gameId="hashi" title="Hashi" daily={isDailyMode} date={todayStr} finished={isSolved} seconds={seconds} started={isActive} ready={gameState.islands.length > 0} manualOpen={isStatsOpen} onClose={() => setIsStatsOpen(false)} legacyStats={archive ? undefined : stats} />
             <div className={`hashi-container${large ? ' large' : ''}`}>
                 <div className="skeedle-header">
                     <h2>Hashkeet {isDailyMode && <span style={{ fontSize: '15px', color: '#58a6ff' }}>(Daily)</span>}</h2>

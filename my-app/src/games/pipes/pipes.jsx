@@ -1,5 +1,6 @@
 import { useDailyDate, useArchive, useGauntlet } from '../../components/DailyBoundary';
 import { WalkthroughPrompt, walkthroughSeen } from '../../components/Walkthrough';
+import { useClockRunning } from '../../components/useDailyClock';
 import PipesTutorial, { PIPES_TUTORIAL_KEY } from './PipesTutorial';
 import { getDailyGridSize } from './dailyConfig.js';
 import DailyResults from '../../components/DailyResults';
@@ -152,10 +153,13 @@ export default function Pipes({ onWin }) {
 
   const [cellSize, setCellSize] = useState(() => getCellSize(gridSize));
 
-  // Timer Effect
+  // Timer effect. Dailies time from when the puzzle appears; practice from the first move
+  // (see useDailyClock.js).
+  const clockOn = useClockRunning({ daily: gameMode === 'daily' && userGrid.length > 0, moved: isTimerActive, done: isWon, learning,
+    promptOpen: !seenTutorial && !inGauntlet });
   useEffect(() => {
     let interval = null;
-    if (isTimerActive && !isWon && !learning) {
+    if (clockOn) {
       interval = setInterval(() => {
         setSeconds((prev) => prev + 1);
       }, 1000);
@@ -163,7 +167,7 @@ export default function Pipes({ onWin }) {
       clearInterval(interval);
     }
     return () => clearInterval(interval);
-  }, [isTimerActive, isWon, learning]);
+  }, [clockOn]);
 
   const formatTime = (totalSeconds) => {
     const mins = Math.floor(totalSeconds / 60);
@@ -557,7 +561,7 @@ export default function Pipes({ onWin }) {
   return (
     <div className="pipes-container">
       <Navbar />
-      <DailyResults gameId="pipes" title="Skeeter Piper" daily={gameMode === 'daily'} date={todayStr} finished={isWon} seconds={seconds} ready={userGrid.length > 0} onLearn={() => setLearning(true)} />
+      <DailyResults gameId="pipes" title="Skeeter Piper" daily={gameMode === 'daily'} date={todayStr} finished={isWon} seconds={seconds} started={isTimerActive} ready={userGrid.length > 0} onLearn={() => setLearning(true)} />
       <h1 className="pipes-title">SKEETER PIPER</h1>
       <p className="pipes-instructions">
         Left-click to rotate pipes clockwise. Right-click to lock/darken cells you know are correct!
