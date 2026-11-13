@@ -13,7 +13,7 @@ import { publishPar, readPar, watchOwner } from '../services/gauntletPar.js';
 import { BOARD_SIZE, boardEnabled, boardStanding, friendlyError, readBoard, readMyEntry, readMyRun, saveNickname, sendEvent, signOutPlayer, watchPlayer } from '../services/gauntletBoard.js';
 import SignInDialog from '../components/SignInDialog';
 import { fromServerRun, pauseRun, resumeRun, GAUNTLET_START, PAR_NAME, STORAGE_PREFIX, TEST_GAUNTLETS, addToHistory, remainingPenalty, gauntletLaunched, isTestDay, testDay, gauntletDay, gauntletOpensAt, paceVersusPar, parVerdict, validPar, averageSolveSeconds, currentGameSeconds, formatClock, gameTitle, hintPenalty,
-  gauntletLineup, gauntletPuzzleDate, historySummary, newRun, recordResult, restoreRun, runTotal, shareText, startNextGame } from '../gauntlet/gauntlet.js';
+  gauntletLineup, gauntletPuzzleDate, historySummary, keepAnswers, newRun, recordResult, restoreRun, runTotal, shareText, startNextGame } from '../gauntlet/gauntlet.js';
 import Akari from '../games/akari/Akari';
 import SkeedleBeadle from '../games/skeedle-beadle/SkeedleBeadle';
 import MapGame from '../games/map/Map';
@@ -341,7 +341,7 @@ export default function Gauntlet() {
   const adopt = useCallback(result => {
     if (!result) return;
     skew.current = Number.isFinite(result.now) ? result.now - Date.now() : skew.current;
-    const serverRun = fromServerRun(result.run, skew.current);
+    const serverRun = keepAnswers(fromServerRun(result.run, skew.current), runRef.current);
     if (serverRun) save(serverRun);
     // A finished run is on the board now: show where it landed.
     if (result.entry) loadBoard(serverRun);

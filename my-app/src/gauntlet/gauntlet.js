@@ -283,6 +283,20 @@ export function fromServerRun(serverRun, skew = 0) {
     pausedAt: local(serverRun.pausedAt), pausedSeconds: serverRun.pausedSeconds ?? 0 }, serverRun.day);
 }
 
+// The leaderboard server doesn't keep word-game answers, so when its copy of
+// a run replaces this page's, carry over the answers the page already had.
+export function keepAnswers(run, previous) {
+  if (!run || !Array.isArray(previous?.results) || previous.date !== run.date) return run;
+  let changed = false;
+  const results = run.results.map((result, i) => {
+    const known = previous.results[i];
+    if (result.answer || result.status === 'won' || !known?.answer || known.game !== result.game) return result;
+    changed = true;
+    return { ...result, answer: known.answer };
+  });
+  return changed ? { ...run, results } : run;
+}
+
 export function restoreRun(saved, date) {
   if (!saved || saved.version !== 1 || saved.date !== date || !Array.isArray(saved.lineup) || !Array.isArray(saved.results)) return null;
   const expected = gauntletLineup(date).map(game => game.id);

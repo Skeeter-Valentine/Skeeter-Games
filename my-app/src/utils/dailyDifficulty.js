@@ -18,6 +18,7 @@ export function dailyDifficulty(game, date) {
     case 'pepper-placer': return scheduledDifficulty('pepper-placer', date);
     case 'kakurasu': return scheduledDifficulty('kakurasu', date);
     case 'slitherlink': return scheduledDifficulty('slitherlink', date);
+    case 'chess': return scheduledDifficulty('chess', date);
     case 'parshle': {
       const hiddenCount = Array.from({ length: 5 }, (_, row) =>
         hiddenPositions(`parshle:${date}`, row).length).reduce((sum, count) => sum + count, 0);

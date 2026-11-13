@@ -46,4 +46,9 @@ test('players, their favourite games and game trends', () => {
   assert.equal(stats.games[0].game, 'akari', 'sorted by plays this week');
   assert.deepEqual(stats.daily, [{ date: '2026-10-12', plays: 0 }, { date: '2026-10-13', plays: 3 }, { date: '2026-10-14', plays: 5 }]);
   assert.equal(stats.summary.plays, 11);
+  const map = stats.games.find(game => game.game === 'map');
+  assert.equal(map.players, 2, 'Ann and z have played Map');
+  assert.equal(map.players7, 1, 'only z in the last 7 days');
+  assert.equal(akari.players, 1, 'Ann twice is still one player');
+  assert.equal(akari.players7, 1);
 });

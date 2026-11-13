@@ -30,6 +30,13 @@ export const gameInstructions = {
     'Every puzzle has exactly one solution and can be solved one line at a time without guessing: find the ways each clue can be made from the squares still open, and keep what they all agree on.',
     'Daily puzzles reset at midnight UTC and save progress in this browser. Mild is 5 × 5, Medium is 6 × 6 and Picante is 8 × 8. Practice lets you choose any size from 4 × 4 to 9 × 9.',
   ],
+  chess: [
+    'Your opponent has just moved. Find the best reply. Your opponent answers each of your moves on their own, and you keep finding the best move until the puzzle is done.',
+    'Tap a piece, then the square it should go to, or drag it there. Pawns reaching the last rank ask which piece to become.',
+    'A wrong move doesn\'t end the puzzle: it bounces back and is counted, and you try again. Hint lights up the piece to move (and counts as a hint). Show solution plays out the answer and ends the puzzle unsolved.',
+    'When the best move is a checkmate, any checkmate counts.',
+    'Daily puzzles reset at midnight UTC and save progress in this browser. Mild, Medium and Picante puzzles come from the free Lichess puzzle database, sorted by rating. Practice gives you a random puzzle at the level you choose.',
+  ],
   slitherlink: [
     'Draw a single closed loop along the sides between the dots. The loop never branches, crosses or touches itself, so every dot has either 0 or 2 lines.',
     'A number in a square says how many of that square\'s four sides the loop uses. Squares without a number can use any number of sides.',

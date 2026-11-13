@@ -27,6 +27,7 @@ import stitchesImg from '../assets/skitches.webp';
 import pepperPlacerImg from '../assets/pepper-placer.webp';
 import kakurasuImg from '../assets/add-em-up.webp';
 import slitherlinkImg from '../assets/skeeterlink.webp';
+import chessImg from '../assets/skeetmate.webp';
 import { isLaunched } from '../utils/launch.js';
 import gauntletBannerImg from '../assets/gauntlet-banner.webp';
 import gauntletBannerNarrowImg from '../assets/gauntlet-banner-narrow.webp';
@@ -37,6 +38,7 @@ import GauntletCountdown from '../components/GauntletCountdown';
 import { readLocal } from '../utils/dailyStats.js';
 
 const GAMES = [
+  { id: 'chess', title: 'Skeetmate', path: '/chess', image: chessImg, isNew: true },
   { id: 'slitherlink', title: 'Skeeterlink', path: '/slitherlink', image: slitherlinkImg, isNew: true },
   { id: 'kakurasu', title: 'Add ’em Up', path: '/kakurasu', image: kakurasuImg, isNew: true },
   { id: 'pepper-placer', title: 'Pepper Placer', path: '/pepper-placer', image: pepperPlacerImg, isNew: true },

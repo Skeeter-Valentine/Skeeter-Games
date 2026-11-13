@@ -1,0 +1,119 @@
+/* Skeetmate (chess puzzles). Same frame as the newer games: dark panel, a
+   purple-and-cream board. */
+.ch-page { max-width: 670px; margin: auto; padding: 24px 16px 48px; }
+.ch-heading { text-align: center; margin-bottom: 20px; }
+.ch-eyebrow { color: #c9a7ff; letter-spacing: 0.3em; font-size: 15px; }
+.ch-heading h1 { font-size: clamp(44px, 9vw, 64px); margin: 0; color: #f4ecd8; }
+.ch-heading p:last-child, .ch-date, .ch-help, .ch-credit { color: #c5bed2; text-align: center; }
+.ch-date { font-size: 15px; margin: 14px 0; }
+.ch-controls { display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: 8px; }
+.ch-controls button, .ch-controls select { color: #f5f0fb; background: #272134; border: 1px solid #5b4e70; border-radius: 8px; min-height: 40px; padding: 8px 12px; cursor: pointer; font: inherit; }
+.ch-controls button[aria-pressed="true"] { background: #3a2a5c; color: #eadcff; border-color: #a77bf0; }
+.ch-controls button:disabled { opacity: 0.4; cursor: default; }
+.ch-controls :focus-visible { outline: 2px solid #d2b8ff; outline-offset: 3px; }
+.ch-panel { padding: 18px; border: 1px solid #50435f; border-radius: 16px; background: #191525; }
+.ch-progress { display: flex; justify-content: space-between; margin-bottom: 10px; color: #ded4e8; font-variant-numeric: tabular-nums; }
+.ch-progress strong { color: #c9a7ff; }
+.ch-tools { margin-top: 12px; }
+
+.ch-board-wrap { position: relative; width: 100%; max-width: 520px; margin: 0 auto; }
+.ch-board { display: grid; grid-template-columns: repeat(8, 1fr); width: 100%; aspect-ratio: 1; border-radius: 6px; overflow: hidden;
+  box-shadow: 0 0 0 3px #3a2f4d; user-select: none; -webkit-user-select: none; touch-action: none; }
+.ch-square { position: relative; display: flex; align-items: center; justify-content: center; padding: 0; margin: 0; border: 0;
+  aspect-ratio: 1; min-width: 0; cursor: pointer; font: inherit; -webkit-tap-highlight-color: transparent; }
+.ch-square.idle { cursor: default; }
+.ch-square.light { background: #ece2d0; }
+.ch-square.dark { background: #8c6fb6; }
+.ch-square.last.light { background: #f3e39a; }
+.ch-square.last.dark { background: #c2a65e; }
+.ch-square.selected { box-shadow: inset 0 0 0 4px #ffd84a; }
+.ch-square.hint { box-shadow: inset 0 0 0 4px #4fd1ff; animation: ch-pulse 0.9s ease-in-out infinite alternate; }
+.ch-square.check { background: radial-gradient(circle, #ff4f7a 0%, #e0335e 45%, transparent 75%); }
+.ch-square.wrong { animation: ch-shake 0.35s ease; }
+.ch-square.target::after { content: ''; width: 28%; height: 28%; border-radius: 50%; background: rgba(30, 20, 45, 0.35); }
+.ch-square.capture::after { content: ''; position: absolute; inset: 6%; border-radius: 50%; border: 5px solid rgba(30, 20, 45, 0.35); }
+.ch-square:focus-visible { outline: 3px solid #4fd1ff; outline-offset: -3px; }
+.ch-coord { position: absolute; font: 700 clamp(9px, 2.2vw, 12px) system-ui, sans-serif; pointer-events: none; }
+.ch-coord.rank { top: 2px; left: 3px; }
+.ch-coord.file { bottom: 1px; right: 3px; }
+.ch-square.light .ch-coord { color: #8c6fb6; }
+.ch-square.dark .ch-coord { color: #ece2d0; }
+.ch-piece { font-size: clamp(30px, 8.6vw, 54px); line-height: 1; pointer-events: none;
+  font-family: 'Segoe UI Symbol', 'DejaVu Sans', 'Noto Sans Symbols 2', 'Apple Symbols', serif; font-variant-emoji: text; }
+.ch-piece.white { color: #fffdf6; text-shadow: 0 0 1px #1d1726, 0 0 1px #1d1726, 0 0 2px #1d1726, 0 1px 1px #1d1726; }
+.ch-piece.black { color: #1b1524; text-shadow: 0 0 1px #f4ecd8, 0 0 2px rgba(244, 236, 216, 0.6); }
+
+/* Grabbing a piece: it follows the pointer, its square shows a faint copy,
+   and the square under it is outlined. */
+.ch-floating { position: fixed; z-index: 50; transform: translate(-50%, -50%); display: flex; align-items: center; justify-content: center;
+  pointer-events: none; filter: drop-shadow(0 6px 6px rgba(0, 0, 0, 0.45)); }
+.ch-piece.lifted { opacity: 0.25; }
+.ch-board.dragging, .ch-board.dragging .ch-square { cursor: grabbing; }
+.ch-square.over { box-shadow: inset 0 0 0 4px rgba(255, 255, 255, 0.85); }
+/* Planning marks: arrows and circles drawn over the board. */
+.ch-board-stack { position: relative; }
+.ch-marks { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.ch-mark-arrow { stroke: rgba(46, 204, 113, 0.85); stroke-width: 0.17; stroke-linecap: round; }
+.ch-mark-arrow.sketch { opacity: 0.6; }
+.ch-marks marker path { fill: rgba(46, 204, 113, 0.85); }
+.ch-mark-circle { fill: none; stroke: rgba(46, 204, 113, 0.85); stroke-width: 0.08; }
+.ch-board.drawing, .ch-board.drawing .ch-square { cursor: crosshair; }
+/* The engine's best move: a blue arrow, so it's never mistaken for yours. */
+.ch-mark-arrow.engine { stroke: rgba(79, 160, 255, 0.85); stroke-width: 0.2; }
+.ch-marks marker.engine path { fill: rgba(79, 160, 255, 0.85); }
+
+/* Review: the evaluation bar beside the board (White's share, from the
+   bottom, or from the top when you play Black). */
+.ch-board-row { display: flex; gap: 8px; align-items: stretch; max-width: 520px; margin: 0 auto; }
+.ch-board-row.with-eval { max-width: 542px; }
+.ch-board-row .ch-board-wrap { flex: 1; min-width: 0; }
+.ch-eval { position: relative; flex: 0 0 14px; border-radius: 4px; overflow: hidden; background: #2a2236; box-shadow: 0 0 0 1px #3a2f4d; }
+.ch-eval-white { position: absolute; left: 0; right: 0; bottom: 0; background: #f4ecd8; transition: height 0.35s ease; }
+.ch-eval.flipped .ch-eval-white { bottom: auto; top: 0; }
+.ch-eval::after { content: ''; position: absolute; left: 0; right: 0; top: 50%; height: 1px; background: rgba(201, 167, 255, 0.6); }
+.ch-step { display: flex; align-items: center; justify-content: center; gap: 6px; margin-top: 12px; }
+.ch-step button { min-width: 44px; min-height: 40px; font: 700 20px/1 system-ui, sans-serif; color: #f5f0fb; background: #272134;
+  border: 1px solid #5b4e70; border-radius: 8px; cursor: pointer; }
+.ch-step button:disabled { opacity: 0.35; cursor: default; }
+.ch-step button:focus-visible, .ch-moves button:focus-visible, .ch-lines button:focus-visible, .ch-variation button:focus-visible { outline: 2px solid #d2b8ff; outline-offset: 2px; }
+.ch-step-place { flex: 0 1 auto; min-width: 9.5em; text-align: center; color: #ded4e8; font: 15px system-ui, sans-serif; }
+.ch-analysis { margin-top: 12px; padding: 10px 12px; border: 1px solid #3f4f7a; border-radius: 10px; background: #141a2b; font: 15px system-ui, sans-serif; }
+.ch-analysis-head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; color: #ded4e8; }
+.ch-score { font-size: 22px; color: #9cc8ff; font-variant-numeric: tabular-nums; min-width: 3.2em; }
+.ch-depth { margin-left: auto; color: #8f9bbd; font-size: 13px; }
+.ch-lines { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 4px; }
+.ch-lines button { width: 100%; text-align: left; padding: 6px 8px; border: 0; border-radius: 6px; background: transparent; color: #c5cde4;
+  font: inherit; cursor: pointer; line-height: 1.4; }
+.ch-lines button:hover { background: #1e2740; }
+.ch-lines b { display: inline-block; min-width: 3.4em; color: #9cc8ff; font-variant-numeric: tabular-nums; }
+.ch-moves button { padding: 2px 6px; border: 0; border-radius: 5px; background: transparent; color: inherit; font: inherit; cursor: pointer; }
+.ch-moves button:hover { background: #2b2440; }
+.ch-moves button[aria-current] { background: #3a2a5c; color: #fff; outline: 1px solid #a77bf0; }
+.ch-variation { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 6px 12px; margin: 10px 0 0;
+  color: #9cc8ff; font: 15px system-ui, sans-serif; }
+.ch-variation button { color: #f5f0fb; background: #272134; border: 1px solid #5b4e70; border-radius: 8px; padding: 5px 10px; font: inherit; cursor: pointer; }
+.ch-promotion { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; gap: 8px;
+  background: rgba(16, 12, 24, 0.75); border-radius: 6px; }
+.ch-promotion button { width: 18%; aspect-ratio: 1; border-radius: 10px; border: 2px solid #c9a7ff; background: #ece2d0; cursor: pointer; }
+
+.ch-message { text-align: center; color: #d5cada; line-height: 1.5; min-height: 1.5em; margin: 14px 0 0; }
+.ch-message.won { color: #3ddc84; font-weight: bold; }
+.ch-message.bad { color: #ff8fbd; }
+.ch-moves { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 10px; list-style: none; padding: 0; margin: 14px 0 0;
+  font: 15px system-ui, sans-serif; color: #c5bed2; }
+.ch-moves li.mine { color: #eadcff; font-weight: bold; }
+.ch-help { font-size: 15px; line-height: 1.7; margin-top: 20px; }
+.ch-credit { font-size: 13px; opacity: 0.8; }
+.ch-credit a { color: #c9a7ff; }
+@keyframes ch-pulse { from { box-shadow: inset 0 0 0 2px #4fd1ff; } to { box-shadow: inset 0 0 0 6px #4fd1ff; } }
+@keyframes ch-shake { 0%, 100% { transform: none; } 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }
+@media (prefers-reduced-motion: reduce) { .ch-square.hint, .ch-square.wrong { animation: none; } }
+@media (max-width: 420px) {
+  .ch-page { padding: 16px 8px 36px; }
+  .ch-board-row { gap: 5px; }
+  .ch-eval { flex-basis: 9px; }
+  .ch-step-place { min-width: 0; font-size: 14px; }
+  .ch-panel { padding: 10px 6px; }
+  .ch-controls { gap: 6px; }
+  .ch-controls button { padding: 8px 10px; font-size: 15px; }
+}

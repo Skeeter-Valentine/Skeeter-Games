@@ -4,5 +4,8 @@
 // To launch one, set it to true and push.
 export const LAUNCHED = {
   slitherlink: true,
+  // Skeetmate: switch on once the puzzle bank is filled from Lichess
+  // (scripts/build-chess-puzzles.mjs).
+  chess: false,
 };
 export const isLaunched = id => LAUNCHED[id] !== false;

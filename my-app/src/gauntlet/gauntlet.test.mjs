@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { WORD_GAMES, fromServerRun, remainingPenalty, TEST_GAUNTLETS, testDay, isTestDay, gauntletLaunched, GAUNTLET_START, gauntletDay, gauntletOpensAt, nextGauntletAt, parRecord, parVerdict, paceVersusPar, validPar, PAR_NAME, GAUNTLET_GAMES, GAUNTLET_SIZE, averageSolveSeconds, addToHistory, currentGameSeconds, gauntletLineup, gauntletPuzzleDate,
-  historySummary, newRun, recordResult, restoreRun, runTotal, shareText, startNextGame, formatClock } from './gauntlet.js';
+  historySummary, keepAnswers, newRun, recordResult, restoreRun, runTotal, shareText, startNextGame, formatClock } from './gauntlet.js';
 import { dailyDifficulty } from '../utils/dailyDifficulty.js';
 
 test('every game except Skeedoku, 2048 and Skeedle Marathon can appear, six a day, same for everyone', () => {
@@ -185,4 +185,22 @@ test('a lost or given-up word game keeps its answer; a won one does not', () => 
   run = startNextGame(run, t + 6000);
   run = recordResult(run, { gameId: second, status: 'gave-up', now: t + 9000 });
   assert.equal('answer' in run.results[1], false, 'games without an answer add nothing');
+});
+
+test('answers to lost word games survive the server copy of the run', () => {
+  const date = testDay(1);
+  const lineup = gauntletLineup(date).map(game => game.id);
+  const t = 1_000_000;
+  let run = newRun(date, t);
+  run = recordResult(run, { gameId: lineup[0], status: 'lost', now: t + 60_000, answer: 'crane' });
+  assert.equal(run.results[0].answer, 'crane');
+  // The server's copy has the same result, minus the answer.
+  const server = { ...run, ranked: true, results: run.results.map(({ answer, ...rest }) => rest) };
+  const kept = keepAnswers(server, run);
+  assert.equal(kept.results[0].answer, 'crane');
+  assert.equal(kept.ranked, true);
+  assert.equal(keepAnswers(server, null), server, 'nothing to carry over');
+  assert.equal(keepAnswers(server, { ...run, date: '2026-01-01' }), server, 'a different day is ignored');
+  const won = { ...server, results: [{ ...server.results[0], status: 'won' }] };
+  assert.equal(keepAnswers(won, run).results[0].answer, undefined, 'solved games never show the answer');
 });

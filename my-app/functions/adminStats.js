@@ -62,8 +62,20 @@ export function buildStats({ players = [], attempts = [], runs = [], rates = [],
     else if (rate.date > addDays(today, -14) && rate.date <= addDays(today, -7)) game.prev7 += starts;
     if (perDay.has(rate.date)) perDay.set(rate.date, perDay.get(rate.date) + starts);
   }
+  // Unique players per game (everyone with a recorded attempt, signed in or
+  // not), all time and in the last 7 days.
+  const playerSets = new Map();
+  const weekAgo = addDays(today, -7);
+  for (const attempt of attempts) {
+    const sets = playerSets.get(attempt.game) ?? { all: new Set(), last7: new Set() };
+    playerSets.set(attempt.game, sets);
+    sets.all.add(attempt.uid);
+    if (attempt.date > weekAgo && attempt.date <= today) sets.last7.add(attempt.uid);
+  }
   const gameList = [...games.values()].map(game => ({
     ...game,
+    players: playerSets.get(game.game)?.all.size ?? 0,
+    players7: playerSets.get(game.game)?.last7.size ?? 0,
     winRate: game.plays ? game.wins / game.plays : null,
     change: game.prev7 ? (game.last7 - game.prev7) / game.prev7 : game.last7 ? null : 0,
   })).sort((a, b) => b.last7 - a.last7 || b.plays - a.plays);

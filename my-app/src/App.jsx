@@ -14,6 +14,7 @@ import SkeedleBeadle from './games/skeedle-beadle/SkeedleBeadle';
 import PepperPlacer from './games/pepper-placer/PepperPlacer';
 import Kakurasu from './games/kakurasu/Kakurasu';
 import Slitherlink from './games/slitherlink/Slitherlink';
+import Chess from './games/chess/Chess';
 import { isLaunched } from './utils/launch.js';
 import Seo from './seo/Seo';
 import GameFeedback from './components/GameFeedback';
@@ -66,6 +67,7 @@ export default function App() {
         <Route path="/kakurasu" element={<DailyBoundary><Kakurasu /></DailyBoundary>} />
         {/* Not launched yet (see utils/launch.js): only under npm run dev. */}
         {(isLaunched('slitherlink') || import.meta.env.DEV) && <Route path="/slitherlink" element={<DailyBoundary><Slitherlink /></DailyBoundary>} />}
+        {(isLaunched('chess') || import.meta.env.DEV) && <Route path="/chess" element={<DailyBoundary><Chess /></DailyBoundary>} />}
         {/* About and Privacy: the page text comes from the SEO guide below (src/pages/info). */}
         <Route path="/about" element={<Navbar />} />
         <Route path="/privacy" element={<Navbar />} />

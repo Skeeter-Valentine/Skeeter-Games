@@ -15,6 +15,7 @@ import './AdminStats.css';
 const ADMIN_UIDS = (import.meta.env.VITE_ADMIN_UIDS || '').split(',').map(id => id.trim()).filter(Boolean);
 const gameName = id => GAME_TITLES[id] || id;
 const shortDate = date => date ? new Date(`${date}T12:00:00Z`).toLocaleDateString(undefined, { month: 'short', day: 'numeric', timeZone: 'UTC' }) : '—';
+const count = value => typeof value === 'number' ? value.toLocaleString() : '—';
 const percent = value => value === null || value === undefined ? '—' : `${Math.round(value * 100)}%`;
 
 // One line, one hue: plays per day, with a hover read-out.
@@ -80,7 +81,7 @@ function mockStats() {
   const weekStarts = Array.from({ length: 8 }, (_, i) => day(7 * (7 - i)));
   const list = games.map((game, g) => {
     const weekly = weekStarts.map((_, w) => Math.max(0, Math.round(20 + 15 * Math.sin(g + w / 2) + w * (g % 3 - 1) * 3)));
-    return { game, weekly, plays: weekly.reduce((s, v) => s + v, 0) * 2, wins: weekly.reduce((s, v) => s + v, 0), last7: weekly[7], prev7: weekly[6],
+    return { game, weekly, players: 40 - g * 2, players7: Math.max(1, Math.round(weekly[7] / 3)), plays: weekly.reduce((s, v) => s + v, 0) * 2, wins: weekly.reduce((s, v) => s + v, 0), last7: weekly[7], prev7: weekly[6],
       change: weekly[6] ? (weekly[7] - weekly[6]) / weekly[6] : null, winRate: 0.5 + (g % 4) / 10, daily: weekly[7] * 6, archive: weekly[7] };
   }).sort((a, b) => b.last7 - a.last7);
   return { today, weekStarts, users, unnamedTotal: 1, games: list,
@@ -151,17 +152,19 @@ export default function AdminStats() {
       <DailyChart days={stats.daily} />
 
       <h2>Game popularity</h2>
-      <p className="admin-archive-note">Ranked by puzzles played in the last 7 days. Change compares with the 7 days before. Trend: puzzles per week, {weekLabel}.</p>
+      <p className="admin-archive-note">Ranked by puzzles played in the last 7 days. Change compares with the 7 days before. Trend: puzzles per week, {weekLabel}. Players counts each person once, however many puzzles they played.</p>
       <div className="admin-archive-scroll">
         <table className="stats-table">
-          <thead><tr><th>#</th><th>Game</th><th>Last 7 days</th><th>Change</th><th>8-week trend</th><th>All time</th><th>Solved</th><th>Daily / archive</th></tr></thead>
+          <thead><tr><th>#</th><th>Game</th><th>Last 7 days</th><th>Players, 7 days</th><th>Change</th><th>8-week trend</th><th>All time</th><th>Players, all time</th><th>Solved</th><th>Daily / archive</th></tr></thead>
           <tbody>{stats.games.map((game, index) => <tr key={game.game}>
             <td>{index + 1}</td>
             <td><strong>{gameName(game.game)}</strong></td>
             <td className="stats-num">{game.last7.toLocaleString()}</td>
+            <td className="stats-num">{count(game.players7)}</td>
             <td><Change value={game.change} last7={game.last7} /></td>
             <td><Sparkline values={game.weekly} label={`${gameName(game.game)} per week: ${game.weekly.join(', ')}`} /></td>
             <td className="stats-num">{game.plays.toLocaleString()}</td>
+            <td className="stats-num">{count(game.players)}</td>
             <td className="stats-num">{percent(game.winRate)}</td>
             <td className="stats-num">{game.daily.toLocaleString()} / {game.archive.toLocaleString()}</td>
           </tr>)}</tbody>
