@@ -14,6 +14,7 @@ const PAGES = [
   { to: '/admin/stats', title: 'Player stats', text: 'Players with nicknames, who plays what, and which games are trending.' },
   { to: '/admin/gauntlets', title: 'Upcoming gauntlets', text: 'Play future gauntlets early to record your time to beat.' },
   { to: '/admin/archive', title: 'Puzzle archive', text: 'Community results for every past daily puzzle, hardest first.' },
+  { to: '/admin/creators', title: 'Creators', text: 'Invite creators and choose which gauntlets they can play before they go live.' },
   { to: '/gauntlet?test=1', title: 'Test gauntlets', text: 'Replayable practice gauntlets, never published or ranked.' },
 ];
 

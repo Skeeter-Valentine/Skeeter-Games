@@ -1,6 +1,7 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    function isOwner() { return request.auth != null && request.auth.uid in ['QtQwYuCN4vWR1XNyz9K6fe9G7jl1']; }
     match /puzzleRates/{puzzleId} {
       allow read: if true;
       allow write: if false;
@@ -46,6 +47,44 @@ service cloud.firestore {
       allow read: if request.auth != null
         && runId.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}_' + request.auth.uid + '$');
       allow write: if false;
+    }
+    // Custom gauntlets: the owner's own six games (and name) for a day, made
+    // at /admin/gauntlets. Everyone reads them; the gauntletEvent function
+    // uses the same record for the leaderboard.
+    match /customGauntlets/{day} {
+      allow read: if true;
+      allow create, update: if isOwner()
+        && day.matches('^20[0-9]{2}-[0-9]{2}-[0-9]{2}$') && !day.matches('^2099-.*')
+        && request.resource.data.keys().hasOnly(['day', 'title', 'games', 'updatedAt'])
+        && request.resource.data.day == day
+        && request.resource.data.title is string && request.resource.data.title.size() <= 40
+        && request.resource.data.games is list && request.resource.data.games.size() == 6;
+      allow delete: if isOwner();
+    }
+    // Creator accounts (invite only). The owner makes invites and edits or
+    // removes creators from /admin/creators; a creator can read their own
+    // record. Invites are turned into creators by the redeemCreatorInvite
+    // Cloud Function, so nobody else can read or use them directly.
+    match /creatorInvites/{code} {
+      allow read, delete: if isOwner();
+      allow create: if isOwner()
+        && code.matches('^[A-Za-z0-9]{16,40}$')
+        && request.resource.data.keys().hasOnly(['name', 'allDays', 'days', 'createdAt', 'usedBy'])
+        && request.resource.data.name is string && request.resource.data.name.size() <= 60
+        && request.resource.data.allDays is bool
+        && request.resource.data.days is list && request.resource.data.days.size() <= 120
+        && request.resource.data.usedBy == null;
+      allow update: if false;
+    }
+    match /creators/{userId} {
+      allow read: if request.auth != null && (request.auth.uid == userId || isOwner());
+      allow update: if isOwner()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'allDays', 'days', 'updatedAt'])
+        && request.resource.data.name is string && request.resource.data.name.size() <= 60
+        && request.resource.data.allDays is bool
+        && request.resource.data.days is list && request.resource.data.days.size() <= 120;
+      allow delete: if isOwner();
+      allow create: if false;
     }
     match /players/{userId} {
       allow read: if request.auth != null && request.auth.uid == userId;

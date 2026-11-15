@@ -204,3 +204,24 @@ test('answers to lost word games survive the server copy of the run', () => {
   const won = { ...server, results: [{ ...server.results[0], status: 'won' }] };
   assert.equal(keepAnswers(won, run).results[0].answer, undefined, 'solved games never show the answer');
 });
+
+test('custom gauntlets: the owner\'s six games and name for a day', async () => {
+  const { setCustomGauntlets, cleanCustomGauntlet, customGauntlet, gauntletTitle, DEFAULT_TITLE } = await import('./gauntlet.js');
+  const day = '2026-11-19';
+  const games = ['map', 'akari', 'parshle', 'hashi', 'kakurasu', 'pipes'];
+  const normal = gauntletLineup(day).map(game => game.id);
+  assert.equal(cleanCustomGauntlet({ day, games: games.slice(0, 5) }), null);
+  assert.equal(cleanCustomGauntlet({ day: '2099-01-01', games }), null);
+  assert.equal(cleanCustomGauntlet({ day, games, title: '  ' }).title, DEFAULT_TITLE);
+  setCustomGauntlets([{ day, title: 'Sam\'s Gauntlet', games }, { day: '2026-11-20', games: ['oops'] }]);
+  assert.deepEqual(gauntletLineup(day).map(game => game.id), games);
+  assert.equal(gauntletLineup(day)[0].level, dailyDifficulty('map', gauntletPuzzleDate(day)), 'spice comes from the day as usual');
+  assert.equal(gauntletTitle(day), 'Sam\'s Gauntlet');
+  assert.equal(customGauntlet('2026-11-20'), null, 'a bad record is ignored');
+  assert.equal(gauntletTitle('2026-11-20'), DEFAULT_TITLE);
+  const run = newRun(day, 1000);
+  assert.deepEqual(run.lineup, games);
+  assert.match(shareText({ ...run, results: [] }), /^Sam's Gauntlet · Nov 19/);
+  setCustomGauntlets([]);
+  assert.deepEqual(gauntletLineup(day).map(game => game.id), normal, 'removing it brings the usual games back');
+});

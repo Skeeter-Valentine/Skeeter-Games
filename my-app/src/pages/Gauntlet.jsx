@@ -12,8 +12,12 @@ import { puzzleLoggingEnabled, readGameRates } from '../services/puzzleResults.j
 import { publishPar, readPar, watchOwner } from '../services/gauntletPar.js';
 import { BOARD_SIZE, boardEnabled, boardStanding, friendlyError, readBoard, readMyEntry, readMyRun, saveNickname, sendEvent, signOutPlayer, watchPlayer } from '../services/gauntletBoard.js';
 import SignInDialog from '../components/SignInDialog';
+import { watchCreator } from '../services/creator.js';
+import { canPreviewDay } from '../utils/creatorAccess.js';
+import { useCustomGauntlets } from '../services/customGauntlets.js';
+import { gauntletAnswer } from '../gauntlet/answers.js';
 import { fromServerRun, pauseRun, resumeRun, GAUNTLET_START, PAR_NAME, STORAGE_PREFIX, TEST_GAUNTLETS, addToHistory, remainingPenalty, gauntletLaunched, isTestDay, testDay, gauntletDay, gauntletOpensAt, paceVersusPar, parVerdict, validPar, averageSolveSeconds, currentGameSeconds, formatClock, gameTitle, hintPenalty,
-  gauntletLineup, gauntletPuzzleDate, historySummary, keepAnswers, newRun, recordResult, restoreRun, runTotal, shareText, startNextGame } from '../gauntlet/gauntlet.js';
+  customGauntlet, gauntletLineup, gauntletPuzzleDate, gauntletTitle, historySummary, keepAnswers, newRun, recordResult, restoreRun, runTotal, shareText, startNextGame } from '../gauntlet/gauntlet.js';
 import Akari from '../games/akari/Akari';
 import SkeedleBeadle from '../games/skeedle-beadle/SkeedleBeadle';
 import MapGame from '../games/map/Map';
@@ -194,9 +198,9 @@ function FittedStage({ game, children }) {
 // The answer to a word game that was lost or given up.
 const answerLabel = result => result.game === 'skeedlemath' ? 'The equation was'
   : result.answer.includes(',') ? 'The words were' : 'The word was';
-function AnswerNote({ result }) {
+function AnswerNote({ result, named = false }) {
   if (!result?.answer) return null;
-  return <p className="gauntlet-answer">{answerLabel(result)} <strong>{result.answer.toUpperCase()}</strong></p>;
+  return <p className="gauntlet-answer">{named ? `${gameTitle(result.game)}: ${answerLabel(result).toLowerCase()}` : answerLabel(result)} <strong>{result.answer.toUpperCase()}</strong></p>;
 }
 
 // Sign-in and nickname for the leaderboard.
@@ -255,21 +259,41 @@ function Leaderboard({ title, board, uid }) {
   </section>;
 }
 
+// Custom gauntlets (a day's own games and name, from /admin/gauntlets) load
+// first, so the page always shows the right lineup.
 export default function Gauntlet() {
+  const custom = useCustomGauntlets();
+  if (custom.state === 'ready') return <GauntletPage />;
+  return <main className="gauntlet-page">
+    <Navbar />
+    <section className="gauntlet-card gauntlet-intro">
+      <h1>Skeeter Gauntlet</h1>
+      {custom.state === 'error'
+        ? <><p>Couldn't load the gauntlet. Check your connection and try again.</p>
+          <button type="button" className="gauntlet-btn" onClick={custom.reload}>Try again</button></>
+        : <p>Loading…</p>}
+    </section>
+  </main>;
+}
+
+function GauntletPage() {
   const [params] = useSearchParams();
   // Gauntlet days start at 4am Mountain Time. The day is fixed when the page
   // opens, so a run that crosses the reset finishes normally.
   // ?test=1 … ?test=9 opens a replayable test gauntlet instead of today's.
   const testNumber = Number(params.get('test'));
   const test = Number.isInteger(testNumber) && testNumber >= 1 && testNumber <= TEST_GAUNTLETS ? testNumber : 0;
-  // ?day=YYYY-MM-DD opens a future gauntlet early, for the site owner only
-  // (from /admin/gauntlets). It's timed in the browser; the finished run is
-  // published as that day's time to beat and posted to that day's leaderboard
-  // as if played when the day opened.
+  // ?day=YYYY-MM-DD opens a future gauntlet early, for the site owner (from
+  // /admin/gauntlets) and for creators given that day (from /creator). It's
+  // timed in the browser; the owner's finished run is published as that
+  // day's time to beat and posted to that day's leaderboard as if played when
+  // the day opened. A creator's run stays on their device.
   const dayParam = params.get('day');
   const [advance] = useState(() => !test && /^\d{4}-\d{2}-\d{2}$/.test(dayParam ?? '') && dayParam > gauntletDay() ? dayParam : null);
   const [date] = useState(() => test ? testDay(test) : advance ?? gauntletDay());
   const [lineup] = useState(() => gauntletLineup(date));
+  const title = gauntletTitle(date);
+  const special = !!customGauntlet(date);
   const [run, setRun] = useState(() => restoreRun(readLocal(runKey(date), null), date));
   const [history, setHistory] = useState(() => readLocal(HISTORY_KEY, {}) || {});
   const [now, setNow] = useState(() => Date.now());
@@ -290,7 +314,12 @@ export default function Gauntlet() {
     return () => { active = false; };
   }, [date]);
   useEffect(() => watchOwner(setOwner), []);
-  const open = !!test || (advance ? owner : gauntletLaunched(date) || params.get('preview') === '1');
+  // An invited creator (undefined while checking): see /admin/creators.
+  const [creator, setCreator] = useState(undefined);
+  useEffect(() => watchCreator(setCreator), []);
+  const creatorRun = !owner && !!advance && canPreviewDay(creator, advance);
+  const open = !!test || (advance ? owner || creatorRun : gauntletLaunched(date) || params.get('preview') === '1');
+  const filming = owner || !!creator;
   // The leaderboard is off for advance runs (the server only times today's).
   const boardOn = boardEnabled && !advance;
 
@@ -392,6 +421,14 @@ export default function Gauntlet() {
   // Word games' answers (see GauntletReport), shown after a loss or give-up.
   const answersRef = useRef({});
   const onAnswer = useCallback((gameId, answer) => { answersRef.current[gameId] = answer; }, []);
+  // A lost word game's result with its answer: the one saved with it, the one
+  // the game reported this visit, or else worked out from the puzzle date
+  // (so it shows even if the run was saved without it).
+  const withAnswer = result => {
+    if (!result || result.answer || result.status === 'won') return result;
+    const answer = answersRef.current[result.game] || gauntletAnswer(result.game, gauntletPuzzleDate(date));
+    return answer ? { ...result, answer } : result;
+  };
   // Hints used so far in the current game, so the clock shows their cost live.
   const [liveHints, setLiveHints] = useState({ game: null, count: 0 });
   const hintsRef = useRef(liveHints);
@@ -583,10 +620,12 @@ export default function Gauntlet() {
 
   const advanceLabel = advance && new Date(`${advance}T12:00:00Z`).toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric', timeZone: 'UTC' });
   let body;
-  if (advance && !open) {
+  if (advance && !open && creator === undefined) {
+    body = <section className="gauntlet-card gauntlet-intro"><h1>{title}</h1><p>Checking access…</p></section>;
+  } else if (advance && !open) {
     body = <section className="gauntlet-card gauntlet-intro">
       <p className="gauntlet-eyebrow">Not open yet</p>
-      <h1>Skeeter Gauntlet</h1>
+      <h1>{title}</h1>
       <p>This gauntlet opens {new Date(gauntletOpensAt(advance)).toLocaleString(undefined, { weekday: 'long', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}.</p>
       <Link className="gauntlet-btn" to="/gauntlet">Play today's gauntlet</Link>
     </section>;
@@ -622,12 +661,14 @@ export default function Gauntlet() {
     </>;
   } else if (!run) {
     body = <section className="gauntlet-card gauntlet-intro">
-      <p className="gauntlet-eyebrow">Daily challenge</p>
-      <h1>Skeeter Gauntlet</h1>
-      <p className="gauntlet-lede">Six puzzles. One clock. One attempt a day.</p>
+      <p className="gauntlet-eyebrow">{special ? 'Special edition' : 'Daily challenge'}</p>
+      <h1>{title}</h1>
+      <p className="gauntlet-lede">{special ? 'Six hand-picked puzzles. One clock. One attempt.' : 'Six puzzles. One clock. One attempt a day.'}</p>
       {showPar && <p className="gauntlet-par">{PAR_NAME}'s time today: <strong>{formatClock(par.total)}</strong> · Can you beat it?</p>}
       {isOwner && <p className="gauntlet-par">Signed in as the owner: your finished time will be published as {PAR_NAME}'s time to beat{advance ? ' and posted to that day\'s leaderboard' : ''}.</p>}
       {isOwner && recordStatus && <p className="gauntlet-par">{recordStatus}</p>}
+      {creatorRun && <p className="gauntlet-par">Creator preview: this run stays on your device. It isn't published or put on the leaderboard,
+        and on the day it counts as your attempt on this device.</p>}
       {boardOn && <PlayerBar player={player} busy={playerBusy} error={playerError} onSignIn={signIn} onNickname={chooseNickname}
         onSignOut={() => { setPlayerError(''); signOutPlayer().catch(() => {}); }} />}
       <ol className="gauntlet-lineup">
@@ -646,8 +687,9 @@ export default function Gauntlet() {
       </ul>
       <button type="button" className="gauntlet-btn gauntlet-btn-primary" onClick={() => start()} disabled={startBlocked}>
         {starting ? 'Starting…' : 'Start the gauntlet'}</button>
-      {owner && <button type="button" className="gauntlet-btn gauntlet-framing-open" onClick={() => { setFraming(true); window.scrollTo(0, 0); }}>Show playing area for filming</button>}
+      {filming && <button type="button" className="gauntlet-btn gauntlet-framing-open" onClick={() => { setFraming(true); window.scrollTo(0, 0); }}>Show playing area for filming</button>}
       {owner && !advance && <Link className="gauntlet-btn gauntlet-framing-open" to="/admin/gauntlets">Record upcoming gauntlets</Link>}
+      {creator && !owner && !advance && <Link className="gauntlet-btn gauntlet-framing-open" to="/creator">Your upcoming gauntlets</Link>}
       {boardOn && player && !player.nickname && <p className="gauntlet-note">Choose a nickname above to start.</p>}
       {boardOn && !player && player !== undefined && <p className="gauntlet-note">Playing without signing in? Your time won't be on the leaderboard.</p>}
       {syncNote && ranked && !starting && <><p className="gauntlet-note gauntlet-sync" role="alert">{syncNote}</p>
@@ -656,16 +698,19 @@ export default function Gauntlet() {
     </section>;
   } else if (run.finishedAt) {
     const solved = run.results.filter(result => result.status === 'won').length;
+    const results = run.results.map(withAnswer);
     body = <section className="gauntlet-card gauntlet-done">
-      <p className="gauntlet-eyebrow">{solved === lineup.length ? 'Gauntlet conquered' : 'Gauntlet complete'}</p>
+      <p className="gauntlet-eyebrow">{special ? title : 'Gauntlet'} {solved === lineup.length ? 'conquered' : 'complete'}</p>
       <h1>{formatClock(runTotal(run))}</h1>
       {showPar && <p className={`gauntlet-par-verdict${runTotal(run) < par.total ? ' won' : ''}`}>{parVerdict(runTotal(run), par.total)} <span>({PAR_NAME}: {formatClock(par.total)})</span></p>}
       {isOwner && <p className="gauntlet-par">{publishStatus || (par && par.total === runTotal(run) ? `This is ${advance ? `${advanceLabel}'s` : 'today\'s'} ${PAR_NAME} time.` : '')}
         {(!par || par.total !== runTotal(run)) && !/Publishing/.test(publishStatus) && <> <button type="button" className="gauntlet-btn" onClick={() => publish(run)}>Publish my time</button></>}</p>}
       {pips}
+      {/* The last game has no break screen, so its answer shows here. */}
+      <AnswerNote result={results.at(-1)} named />
       <table className="gauntlet-table">
         <thead><tr><th>Game</th><th>Result</th><th>Time</th></tr></thead>
-        <tbody>{run.results.map((result, index) => <tr key={result.game} className={result.status === 'won' ? 'won' : 'lost'}>
+        <tbody>{results.map((result, index) => <tr key={result.game} className={result.status === 'won' ? 'won' : 'lost'}>
           <td><span className="gauntlet-lineup-number">{index + 1}</span>{gameTitle(result.game)}</td>
           <td>{statusLabel[result.status]}{result.answer && <small className="gauntlet-table-answer">{answerLabel(result)} <strong>{result.answer.toUpperCase()}</strong></small>}</td>
           <td>{formatClock(result.total)}{result.penalty > 0 && <small> ({formatClock(result.seconds)} + {formatClock(result.penalty)} penalty)</small>}
@@ -698,7 +743,7 @@ export default function Gauntlet() {
         {last.status === 'won' ? `${gameTitle(last.game)} solved in ${formatClock(last.seconds)}${last.hintPenalty > 0 ? ` + ${last.hintPenalty}s for hints` : ''}${last.bonus > 0 ? ` − ${last.bonus}s guess bonus` : ''}${last.bonus > 0 || last.hintPenalty > 0 ? ` = ${formatClock(last.total)}` : ''}`
           : `${gameTitle(last.game)}: ${statusLabel[last.status].toLowerCase()} — ${formatClock(last.seconds)}${last.penalty > 0 ? ` + ${formatClock(last.penalty)} penalty` : ', no penalty'}${last.hintPenalty > 0 ? ` + ${last.hintPenalty}s for hints` : ''}`}
       </p>
-      <AnswerNote result={last} />
+      <AnswerNote result={withAnswer(last)} />
       <p className="gauntlet-total">Total so far <strong>{formatClock(runTotal(run))}</strong></p>
       {showPar && <p className="gauntlet-pace">{ahead(paceVersusPar(run, par))} after {run.results.length} {run.results.length === 1 ? 'game' : 'games'}</p>}
       <p className="gauntlet-up-next">Up next: <strong>{upcoming.title}</strong> <ChiliRating level={upcoming.level} /></p>
@@ -764,8 +809,10 @@ export default function Gauntlet() {
         exactly where they will on the day. */}
     {advance && open && !framing && !(run && !run.finishedAt && !run.waiting) && <div className="gauntlet-test-bar gauntlet-advance-bar" role="note">
       <strong>Advance gauntlet · {advanceLabel}</strong>
-      <span>Only you can open this before it goes live. When you finish, your time is published as that day's {PAR_NAME} time to beat and posted to that day's leaderboard, as if you'd played it when it opened.</span>
-      <Link to="/admin/gauntlets">All upcoming gauntlets</Link>
+      {creatorRun
+        ? <span>Creator preview: you can open this before it goes live. Your run stays on this device: it isn't published or ranked.</span>
+        : <span>Only you can open this before it goes live. When you finish, your time is published as that day's {PAR_NAME} time to beat and posted to that day's leaderboard, as if you'd played it when it opened.</span>}
+      <Link to={creatorRun ? '/creator' : '/admin/gauntlets'}>All upcoming gauntlets</Link>
       {run && <button type="button" className="gauntlet-btn" onClick={restartTest}>Restart this gauntlet</button>}
     </div>}
     {syncNote && run && !run.finishedAt && <p className="gauntlet-sync-bar" role="alert">{syncNote}</p>}

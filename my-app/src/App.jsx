@@ -9,6 +9,8 @@ import AdminArchive from './pages/AdminArchive';
 import AdminGauntlets from './pages/AdminGauntlets';
 import AdminStats from './pages/AdminStats';
 import AdminHome from './pages/AdminHome';
+import AdminCreators from './pages/AdminCreators';
+import CreatorHome from './pages/CreatorHome';
 import Gauntlet from './pages/Gauntlet';
 import SkeedleBeadle from './games/skeedle-beadle/SkeedleBeadle';
 import PepperPlacer from './games/pepper-placer/PepperPlacer';
@@ -78,6 +80,9 @@ export default function App() {
         <Route path="/admin/archive" element={<AdminArchive />} />
         <Route path="/admin/gauntlets" element={<AdminGauntlets />} />
         <Route path="/admin/stats" element={<AdminStats />} />
+        <Route path="/admin/creators" element={<AdminCreators />} />
+        {/* Invite-only creator accounts: unlinked and noindex, like the admin pages. */}
+        <Route path="/creator" element={<CreatorHome />} />
         <Route path="*" element={<div>404 - Game Not Found</div>} />
       </Routes>
       <PageAds />

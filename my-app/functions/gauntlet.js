@@ -23,9 +23,16 @@ export const isTestDay = day => isDay(day) && day.startsWith('2099-');
 // Lineups come from the same module the site uses (copied into
 // functions/shared by scripts/sync-functions-shared.mjs before deploys).
 export { WORD_GAMES };
-export function lineupIds(day) {
+// `custom` is the day's customGauntlets record, if the owner made one (the
+// site applies the same rule: src/gauntlet/gauntlet.js cleanCustomGauntlet).
+export function lineupIds(day, custom = null) {
   if (FIXED_LINEUPS[day]) return [...FIXED_LINEUPS[day]];
-  return lineupFor(day);
+  return customLineup(custom, day) ?? lineupFor(day);
+}
+export function customLineup(data, day) {
+  if (!data || !isDay(day) || isTestDay(day) || !Array.isArray(data.games) || data.games.length !== GAUNTLET_SIZE) return null;
+  if (!data.games.every(id => GAUNTLET_GAMES.includes(id)) || new Set(data.games).size !== GAUNTLET_SIZE) return null;
+  return [...data.games];
 }
 
 // The gauntlet day for an instant: 4am Denver time starts a new day.
@@ -82,7 +89,7 @@ export class GauntletError extends Error {
 
 // Applies one event to a player's run (null = no run yet) using the server
 // clock. Returns the new run and, when the run finishes, its leaderboard entry.
-export function applyEvent(run, event, now) {
+export function applyEvent(run, event, now, custom = null) {
   const { action, day } = event ?? {};
   if (!dayAllowed(day, now)) throw new GauntletError('invalid-argument', 'That gauntlet is not open.');
   if (action === 'reset') {
@@ -92,10 +99,11 @@ export function applyEvent(run, event, now) {
   if (action === 'start') {
     // A run started under an older lineup rule (before a rules update) can't
     // be played with today's games, so it is replaced. Finished runs stand.
-    const stale = run && !run.finishedAt && run.lineup?.join() !== lineupIds(day).join();
+    const lineup = lineupIds(day, custom);
+    const stale = run && !run.finishedAt && run.lineup?.join() !== lineup.join();
     if (run && !stale) return { run, alreadyStarted: true };
     if (!isTestDay(day) && day !== gauntletDay(now)) throw new GauntletError('failed-precondition', 'That gauntlet has closed.');
-    return { run: { day, lineup: lineupIds(day), index: 0, gameStartedAt: now, waiting: false, results: [], startedAt: now, finishedAt: null } };
+    return { run: { day, lineup, index: 0, gameStartedAt: now, waiting: false, results: [], startedAt: now, finishedAt: null } };
   }
   if (!run) throw new GauntletError('failed-precondition', 'Start the gauntlet first.');
   if (run.finishedAt) throw new GauntletError('failed-precondition', 'This gauntlet is already finished.');
@@ -149,12 +157,12 @@ export function gauntletOpensAt(day) {
 const addDay = (day, days) => new Date(Date.parse(`${day}T00:00:00Z`) + days * 86400000).toISOString().slice(0, 10);
 export const ADVANCE_DAYS = 60;
 const wholeSeconds = (value, max) => Number.isFinite(value) && value >= 0 ? Math.min(max, Math.round(value)) : null;
-export function recordAdvanceRun(day, submitted, now) {
+export function recordAdvanceRun(day, submitted, now, custom = null) {
   const today = gauntletDay(now);
   if (!isDay(day) || isTestDay(day) || day < addDay(today, -1) || day > addDay(today, ADVANCE_DAYS)) {
     throw new GauntletError('invalid-argument', 'That gauntlet can\'t be recorded.');
   }
-  const lineup = lineupIds(day);
+  const lineup = lineupIds(day, custom);
   const raw = submitted?.results;
   if (!Array.isArray(raw) || raw.length !== lineup.length) throw new GauntletError('invalid-argument', 'Only a finished gauntlet can be recorded.');
   const results = raw.map((result, i) => {

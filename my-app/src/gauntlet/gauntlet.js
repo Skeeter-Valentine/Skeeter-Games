@@ -99,9 +99,38 @@ const FIXED_LINEUPS = {
 // Word games: every gauntlet has exactly two of these.
 export { WORD_GAMES };
 
+// ----- Custom gauntlets -----
+// The owner can replace a day's lineup with six games of their choice and give
+// that day its own name (e.g. a creator's), from /admin/gauntlets. They're
+// stored at customGauntlets/{day} and loaded before a gauntlet page shows
+// (services/customGauntlets.js); the leaderboard server reads the same record,
+// with the same rules (functions/gauntlet.js customLineup).
+export const DEFAULT_TITLE = 'Skeeter Gauntlet';
+export const TITLE_MAX = 40;
+// The games a custom gauntlet can use: everything the gauntlet page can play.
+export const CUSTOM_GAME_IDS = GAUNTLET_GAMES.map(game => game.id);
+// { day, title, games } if `data` is a usable custom gauntlet, else null.
+export function cleanCustomGauntlet(data, day = data?.day) {
+  if (!data || !isDate(day) || isTestDay(day) || !Array.isArray(data.games) || data.games.length !== GAUNTLET_SIZE) return null;
+  if (!data.games.every(id => CUSTOM_GAME_IDS.includes(id)) || new Set(data.games).size !== GAUNTLET_SIZE) return null;
+  const title = typeof data.title === 'string' ? data.title.trim().slice(0, TITLE_MAX) : '';
+  return { day, title: title || DEFAULT_TITLE, games: [...data.games] };
+}
+const customDays = new Map();
+// Replaces the known custom gauntlets (a list of Firestore records).
+export function setCustomGauntlets(list) {
+  customDays.clear();
+  for (const entry of list ?? []) {
+    const clean = cleanCustomGauntlet(entry);
+    if (clean) customDays.set(clean.day, clean);
+  }
+}
+export const customGauntlet = day => customDays.get(day) ?? null;
+export const gauntletTitle = day => customDays.get(day)?.title ?? DEFAULT_TITLE;
+
 // Today's six games, the same for everyone, each with its spice level.
 export function gauntletLineup(date) {
-  let games = FIXED_LINEUPS[date];
+  let games = FIXED_LINEUPS[date] ?? customDays.get(date)?.games;
   // Two word games and four other puzzles, planned a week at a time so every
   // game gets a fair share (see weeklyLineup.js, shared with the server).
   if (!games) games = lineupFor(date);
@@ -224,7 +253,7 @@ export function shareText(run, origin = 'https://skeetergames.org', par = null) 
   const marks = run.results.map(result => result.status === 'won' ? '🟩' : '🟥').join('');
   const solved = run.results.filter(result => result.status === 'won').length;
   const versus = par ? `\n${parVerdict(runTotal(run), par.total)}` : '';
-  return `Skeeter Gauntlet · ${day}\n⏱ ${formatClock(runTotal(run))} · ${solved}/${run.lineup.length} solved${versus}\n${marks}\n${origin}/gauntlet`;
+  return `${gauntletTitle(run.date)} · ${day}\n⏱ ${formatClock(runTotal(run))} · ${solved}/${run.lineup.length} solved${versus}\n${marks}\n${origin}/gauntlet`;
 }
 
 // ----- The owner's time to beat -----

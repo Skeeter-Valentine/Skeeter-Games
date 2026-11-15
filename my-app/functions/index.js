@@ -7,6 +7,7 @@ import { dailyBoardId, dailyBoardSeconds, recentBoardIds } from './dailyBoard.js
 import { applyEvent, cleanNickname, gauntletDay, gauntletOpensAt, GauntletError, isDay, recordAdvanceRun } from './gauntlet.js';
 import { dailyPeppers, gauntletPeppers, gauntletRunPeppers, pepperWeek } from './peppers.js';
 import { buildStats, parseAttemptId } from './adminStats.js';
+import { CreatorError, isInviteCode, redeemInvite } from './creators.js';
 
 initializeApp();
 
@@ -76,8 +77,11 @@ export const gauntletEvent = onCall({ region: 'us-central1', maxInstances: 20 },
   const runRef = db.doc(`gauntletRuns/${event.day}_${uid}`);
   const entryRef = db.doc(`gauntletBoard/${event.day}/entries/${uid}`);
   const playerRef = db.doc(`players/${uid}`);
+  // A custom gauntlet (made at /admin/gauntlets) replaces that day's lineup.
+  const customRef = db.doc(`customGauntlets/${event.day}`);
   return db.runTransaction(async transaction => {
-    const [runSnap, playerSnap] = await Promise.all([transaction.get(runRef), transaction.get(playerRef)]);
+    const [runSnap, playerSnap, customSnap] = await Promise.all([transaction.get(runRef), transaction.get(playerRef), transaction.get(customRef)]);
+    const custom = customSnap.exists ? customSnap.data() : null;
     const nickname = playerSnap.exists ? playerSnap.get('nickname') : null;
     if (event.action === 'start' && !runSnap.exists && !nickname) throw new HttpsError('failed-precondition', 'Choose a nickname first.');
     // The owner's advance run (played early, timed in their browser) goes on
@@ -87,7 +91,7 @@ export const gauntletEvent = onCall({ region: 'us-central1', maxInstances: 20 },
       if (!nickname) throw new HttpsError('failed-precondition', 'Choose a nickname first.');
       if (runSnap.exists && runSnap.get('finishedAt')) return { run: runSnap.data(), entry: null, alreadyRecorded: true, now: Date.now() };
       let recorded;
-      try { recorded = recordAdvanceRun(event.day, event.run, Date.now()); }
+      try { recorded = recordAdvanceRun(event.day, event.run, Date.now(), custom); }
       catch (error) { throw asHttpsError(error); }
       transaction.set(runRef, { ...recorded.run, uid });
       transaction.set(entryRef, { ...recorded.entry, nickname });
@@ -101,7 +105,7 @@ export const gauntletEvent = onCall({ region: 'us-central1', maxInstances: 20 },
       return { run: recorded.run, entry: recorded.entry, now: Date.now() };
     }
     let outcome;
-    try { outcome = applyEvent(runSnap.exists ? runSnap.data() : null, event, Date.now()); }
+    try { outcome = applyEvent(runSnap.exists ? runSnap.data() : null, event, Date.now(), custom); }
     catch (error) { throw asHttpsError(error); }
     if (outcome.reset) {
       transaction.delete(runRef);
@@ -145,6 +149,34 @@ export const setNickname = onCall({ region: 'us-central1', maxInstances: 10 }, a
   boardSnaps.forEach(snap => { if (snap.exists) batch.update(snap.ref, { nickname: cleaned.nickname }); });
   await batch.commit();
   return { nickname: cleaned.nickname };
+});
+
+// ----- Creator accounts (/creator, /admin/creators) -----
+// Turns an invite from the owner into a creator account for the signed-in
+// player. The owner makes, edits and removes invites and creators directly
+// (the Firestore rules allow only the owner); this is the one step a creator
+// does, so it runs here, where an invite can be checked and used up at once.
+export const redeemCreatorInvite = onCall({ region: 'us-central1', maxInstances: 5 }, async request => {
+  if (!request.auth || request.auth.token?.firebase?.sign_in_provider === 'anonymous') throw new HttpsError('unauthenticated', 'Sign in to accept your invite.');
+  const uid = request.auth.uid;
+  const code = request.data?.code;
+  if (!isInviteCode(code)) throw new HttpsError('invalid-argument', 'This invite link isn\'t valid. Ask for a new one.');
+  const db = getFirestore();
+  const inviteRef = db.doc(`creatorInvites/${code}`), creatorRef = db.doc(`creators/${uid}`);
+  return db.runTransaction(async transaction => {
+    const [inviteSnap, creatorSnap] = await Promise.all([transaction.get(inviteRef), transaction.get(creatorRef)]);
+    let outcome;
+    try {
+      outcome = redeemInvite({ invite: inviteSnap.exists ? inviteSnap.data() : null, creator: creatorSnap.exists ? creatorSnap.data() : null,
+        uid, email: request.auth.token?.email || null, name: request.auth.token?.name || null, now: Date.now() });
+    } catch (error) {
+      throw error instanceof CreatorError ? new HttpsError(error.code, error.message) : error;
+    }
+    if (!outcome) return { creator: creatorSnap.data() };
+    transaction.set(creatorRef, outcome.creator);
+    transaction.update(inviteRef, outcome.inviteUpdate);
+    return { creator: outcome.creator };
+  });
 });
 
 // ----- Owner statistics (/admin/stats) -----

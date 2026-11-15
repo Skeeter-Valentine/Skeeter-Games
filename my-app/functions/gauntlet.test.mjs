@@ -170,3 +170,22 @@ test('the owner\'s advance run is recorded as if played when the day opened', as
   const capped = recordAdvanceRun(day, { results: greedy, startedAt: now - 1, finishedAt: now }, now).run.results[word];
   assert.ok(capped.bonus <= 45 && capped.total >= 0);
 });
+
+test('a custom gauntlet replaces the day\'s lineup on the server', async () => {
+  const { customLineup, recordAdvanceRun } = await import('./gauntlet.js');
+  const games = ['map', 'akari', 'parshle', 'hashi', 'kakurasu', 'pipes'];
+  assert.deepEqual(customLineup({ games }, DAY), games);
+  assert.equal(customLineup({ games: [...games.slice(0, 5), 'map'] }, DAY), null, 'no repeats');
+  assert.equal(customLineup({ games: [...games.slice(0, 5), 'sudoku'] }, DAY), null, 'gauntlet games only');
+  assert.equal(customLineup({ games }, '2099-01-01'), null, 'test days stay fixed');
+  assert.deepEqual(lineupIds(DAY, { games }), games);
+  const { run } = applyEvent(null, { action: 'start', day: DAY }, NOON, { games });
+  assert.deepEqual(run.lineup, games);
+  // A run started before the day was customised is replaced on start.
+  const old = applyEvent(null, { action: 'start', day: DAY }, NOON).run;
+  assert.deepEqual(applyEvent(old, { action: 'start', day: DAY }, NOON + 1000, { games }).run.lineup, games);
+  // The owner's advance run is checked against the custom games.
+  const results = games.map(game => ({ game, status: 'won', seconds: 60 }));
+  const recorded = recordAdvanceRun(DAY, { results }, NOON, { games });
+  assert.deepEqual(recorded.run.lineup, games);
+});
