@@ -2,16 +2,18 @@ import { useCallback, useEffect, useId, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { GoogleAuthProvider, onAuthStateChanged, signInWithPopup, signOut } from 'firebase/auth';
 import { firebaseConfigured, firebaseServices } from '../services/firebase.js';
-import { createInvite, deleteInvite, inviteLink, listCreators, listInvites, removeCreator, updateCreator } from '../services/creator.js';
+import { findPlayers, listCreators, makeCreator, removeCreator, updateCreator } from '../services/creator.js';
+import { friendlyError } from '../services/gauntletBoard.js';
 import { accessSummary } from '../utils/creatorAccess.js';
 import { addDays, gauntletDay, gauntletLaunched, gauntletLineup } from '../gauntlet/gauntlet.js';
 import Navbar from '../components/Navbar';
 import './AdminArchive.css';
 import './AdminCreators.css';
 
-// Hidden admin page: invite creators (people you film content with) and
-// choose which gauntlets each one can open before it goes live. Creators also
-// get the "Show playing area for filming" preview on the gauntlet page.
+// Hidden admin page: make a player's existing account a creator account
+// (people you film content with) and choose which gauntlets each one is
+// invited to play before they go live (also from /admin/gauntlets).
+// Creators also get the "Show playing area for filming" preview.
 const ADMIN_UIDS = (import.meta.env.VITE_ADMIN_UIDS || '').split(',').map(id => id.trim()).filter(Boolean);
 const DAYS_AHEAD = 60;
 const dayLabel = day => new Date(`${day}T12:00:00Z`).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', timeZone: 'UTC' });
@@ -35,13 +37,6 @@ function AccessEditor({ value, onChange, days }) {
   </div>;
 }
 
-function CopyButton({ text }) {
-  const [copied, setCopied] = useState(false);
-  return <button type="button" onClick={async () => {
-    try { await navigator.clipboard.writeText(text); setCopied(true); setTimeout(() => setCopied(false), 1500); } catch { window.prompt('Copy this link:', text); }
-  }}>{copied ? 'Copied!' : 'Copy link'}</button>;
-}
-
 export default function AdminCreators() {
   const [user, setUser] = useState(undefined);
   const allowed = !!user && !user.isAnonymous && ADMIN_UIDS.includes(user.uid);
@@ -49,11 +44,12 @@ export default function AdminCreators() {
   // Today's gauntlet is open to everyone, so the choice starts tomorrow.
   const days = Array.from({ length: DAYS_AHEAD }, (_, i) => addDays(today, i + 1)).filter(day => gauntletLaunched(day));
   const [creators, setCreators] = useState(null);
-  const [invites, setInvites] = useState(null);
   const [error, setError] = useState('');
-  const [draft, setDraft] = useState({ name: '', allDays: false, days: [] });
-  const [busy, setBusy] = useState(false);
-  const [made, setMade] = useState(null);
+  // Finding an account to make a creator.
+  const [query, setQuery] = useState('');
+  const [found, setFound] = useState(null); // null | 'searching' | [players]
+  const [searchError, setSearchError] = useState('');
+  const [adding, setAdding] = useState(null); // { uid, email, name, allDays, days }
   const [editing, setEditing] = useState(null); // { uid, name, allDays, days }
   const [removing, setRemoving] = useState(null);
 
@@ -62,18 +58,24 @@ export default function AdminCreators() {
     return onAuthStateChanged(firebaseServices().auth, setUser);
   }, []);
   const load = useCallback(() => {
-    Promise.all([listCreators(), listInvites()])
-      .then(([people, codes]) => { setCreators(people); setInvites(codes); setError(''); })
+    listCreators()
+      .then(people => { setCreators(people); setError(''); })
       .catch(failure => setError(failed('load creators', failure)));
   }, []);
   useEffect(() => { if (allowed) load(); }, [allowed, load]);
 
-  async function makeInvite(event) {
+  async function search(event) {
     event.preventDefault();
-    setBusy(true); setMade(null);
-    try { setMade(await createInvite(draft)); setDraft({ name: '', allDays: false, days: [] }); load(); }
-    catch (failure) { setError(failed('make the invite', failure)); }
-    finally { setBusy(false); }
+    setFound('searching'); setSearchError(''); setAdding(null);
+    try { setFound(await findPlayers(query)); }
+    catch (failure) { setFound(null); setSearchError(friendlyError(failure)); }
+  }
+  async function add() {
+    try {
+      await makeCreator(adding);
+      setFound(current => Array.isArray(current) ? current.map(person => (person.uid === adding.uid ? { ...person, creator: true } : person)) : current);
+      setAdding(null); load();
+    } catch (failure) { setError(failed('make the creator', failure)); }
   }
   async function saveEdit() {
     try { await updateCreator(editing.uid, editing); setEditing(null); load(); }
@@ -83,13 +85,7 @@ export default function AdminCreators() {
     try { await removeCreator(uid); setRemoving(null); load(); }
     catch (failure) { setError(failed('remove the creator', failure)); }
   }
-  async function cancelInvite(code) {
-    try { await deleteInvite(code); load(); }
-    catch (failure) { setError(failed('delete the invite', failure)); }
-  }
-
-  const draftReady = draft.name.trim() && (draft.allDays || draft.days.length);
-  const creatorName = uid => creators?.find(creator => creator.uid === uid)?.name;
+  const addReady = adding && adding.name.trim();
 
   let body;
   if (!firebaseConfigured) body = <p>Firebase is not configured for this build.</p>;
@@ -104,21 +100,36 @@ export default function AdminCreators() {
   </>;
   else body = <>
     <p className="admin-archive-note">Creators can play the gauntlets you choose before they go live, and use the playing-area preview to line up their
-      recording. Their early runs stay on their own device: they don't publish a time to beat or go on any leaderboard. Make an invite, send the link,
-      and once they open it and sign in, they appear under Creators. Each link works once.</p>
+      recording. Their early runs stay on their own device: they don't publish a time to beat or go on any leaderboard. To add someone, have them
+      sign in on the site (and pick a nickname), then find their account below. You can also invite creators to a day from Upcoming gauntlets.
+      Creators see their invitations in their account menu.</p>
     {error && <p role="alert" className="creator-error">{error}</p>}
 
     <section className="creator-panel" aria-labelledby="creator-new">
-      <h2 id="creator-new">New invite</h2>
-      <form onSubmit={makeInvite}>
-        <label className="creator-name">Who it's for <input value={draft.name} maxLength={60} placeholder="e.g. Sam (YouTube)"
-          onChange={event => setDraft({ ...draft, name: event.target.value })} /></label>
-        <AccessEditor value={draft} onChange={next => setDraft({ ...draft, ...next })} days={days} />
-        <button type="submit" className="creator-primary" disabled={!draftReady || busy}>{busy ? 'Making…' : 'Make invite link'}</button>
+      <h2 id="creator-new">Add a creator</h2>
+      <form className="creator-search" onSubmit={search}>
+        <label className="creator-name">Find their account <input value={query} onChange={event => setQuery(event.target.value)}
+          placeholder="Nickname or sign-in email" autoComplete="off" /></label>
+        <button type="submit" disabled={query.trim().length < 2 || found === 'searching'}>{found === 'searching' ? 'Searching…' : 'Search'}</button>
       </form>
-      {made && <div className="creator-made" role="status">
-        <p>Invite for <strong>{made.name}</strong> ({accessSummary(made, today)}). Send them this link:</p>
-        <p><code>{inviteLink(made.code)}</code> <CopyButton text={inviteLink(made.code)} /></p>
+      {searchError && <p role="alert" className="creator-error">{searchError}</p>}
+      {Array.isArray(found) && (!found.length
+        ? <p className="admin-archive-note">No account found. Check the spelling, or ask them to sign in on the site and choose a nickname first.</p>
+        : <ul className="creator-found">{found.map(person => <li key={person.uid}>
+          <span><strong>{person.nickname || person.name || 'No nickname yet'}</strong> <small>{person.email || person.uid}</small></span>
+          {person.creator ? <span className="creator-tag">Creator</span>
+            : adding?.uid === person.uid ? null
+              : <button type="button" onClick={() => setAdding({ uid: person.uid, email: person.email, name: person.nickname || person.name || '', allDays: false, days: [] })}>Make creator</button>}
+        </li>)}</ul>)}
+      {adding && <div className="creator-made">
+        <label className="creator-name">Name to show <input value={adding.name} maxLength={60} placeholder="e.g. Sam (YouTube)"
+          onChange={event => setAdding({ ...adding, name: event.target.value })} /></label>
+        <p className="admin-archive-note">Invite them to gauntlets now, or later (here or from Upcoming gauntlets).</p>
+        <AccessEditor value={adding} onChange={next => setAdding({ ...adding, ...next })} days={days} />
+        <div className="creator-actions">
+          <button type="button" className="creator-primary" onClick={add} disabled={!addReady}>Make creator</button>
+          <button type="button" onClick={() => setAdding(null)}>Cancel</button>
+        </div>
       </div>}
     </section>
 
@@ -126,7 +137,7 @@ export default function AdminCreators() {
       <h2 id="creator-list">Creators</h2>
       {creators === null ? <p>Loading…</p> : !creators.length ? <p className="admin-archive-note">No creators yet.</p>
         : <div className="admin-archive-scroll"><table>
-          <thead><tr><th>Name</th><th>Account</th><th>Can open early</th><th>Joined</th><th /></tr></thead>
+          <thead><tr><th>Name</th><th>Account</th><th>Invited to</th><th>Joined</th><th /></tr></thead>
           <tbody>{creators.map(creator => editing?.uid === creator.uid
             ? <tr key={creator.uid} className="creator-editing"><td colSpan={5}>
               <label className="creator-name">Name <input value={editing.name} maxLength={60} onChange={event => setEditing({ ...editing, name: event.target.value })} /></label>
@@ -149,24 +160,6 @@ export default function AdminCreators() {
         </table></div>}
     </section>
 
-    <section className="creator-panel" aria-labelledby="creator-invites">
-      <h2 id="creator-invites">Invites</h2>
-      {invites === null ? <p>Loading…</p> : !invites.length ? <p className="admin-archive-note">No invites yet.</p>
-        : <div className="admin-archive-scroll"><table>
-          <thead><tr><th>For</th><th>Gives</th><th>Status</th><th /></tr></thead>
-          <tbody>{invites.map(invite => <tr key={invite.code}>
-            <td><strong>{invite.name}</strong><br /><small>{invite.createdAt ? `Made ${new Date(invite.createdAt).toLocaleDateString()}` : ''}</small></td>
-            <td className="creator-wrap">{accessSummary(invite, today)}</td>
-            <td>{invite.usedBy ? <>Used by {creatorName(invite.usedBy) || invite.usedEmail || 'a removed creator'}</> : <span className="creator-waiting">Not used yet</span>}</td>
-            <td className="creator-actions">
-              {!invite.usedBy && <CopyButton text={inviteLink(invite.code)} />}
-              <button type="button" onClick={() => cancelInvite(invite.code)}>{invite.usedBy ? 'Clear' : 'Cancel invite'}</button>
-            </td>
-          </tr>)}</tbody>
-        </table></div>}
-      <p className="admin-archive-note">Cancelling an unused invite stops its link working. Clearing a used one only tidies this list: to take access
-        away, use Remove under Creators.</p>
-    </section>
     <p className="admin-archive-note"><Link to="/admin">Admin home</Link> · <Link to="/admin/gauntlets">Upcoming gauntlets</Link> · <Link to="/creator">The creator page</Link></p>
   </>;
 

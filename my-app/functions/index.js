@@ -1,5 +1,6 @@
 import { initializeApp } from 'firebase-admin/app';
-import { getFirestore, FieldValue } from 'firebase-admin/firestore';
+import { getFirestore, FieldPath, FieldValue } from 'firebase-admin/firestore';
+import { getAuth } from 'firebase-admin/auth';
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { onSchedule } from 'firebase-functions/v2/scheduler';
 import { games as DAILY_GAMES, validateAttempt, transition } from './attempts.js';
@@ -7,7 +8,7 @@ import { dailyBoardId, dailyBoardSeconds, recentBoardIds } from './dailyBoard.js
 import { applyEvent, cleanNickname, gauntletDay, gauntletOpensAt, GauntletError, isDay, recordAdvanceRun } from './gauntlet.js';
 import { dailyPeppers, gauntletPeppers, gauntletRunPeppers, pepperWeek } from './peppers.js';
 import { buildStats, parseAttemptId } from './adminStats.js';
-import { CreatorError, isInviteCode, redeemInvite } from './creators.js';
+import { playerSearch, playerSummary } from './creators.js';
 
 initializeApp();
 
@@ -151,32 +152,29 @@ export const setNickname = onCall({ region: 'us-central1', maxInstances: 10 }, a
   return { nickname: cleaned.nickname };
 });
 
-// ----- Creator accounts (/creator, /admin/creators) -----
-// Turns an invite from the owner into a creator account for the signed-in
-// player. The owner makes, edits and removes invites and creators directly
-// (the Firestore rules allow only the owner); this is the one step a creator
-// does, so it runs here, where an invite can be checked and used up at once.
-export const redeemCreatorInvite = onCall({ region: 'us-central1', maxInstances: 5 }, async request => {
-  if (!request.auth || request.auth.token?.firebase?.sign_in_provider === 'anonymous') throw new HttpsError('unauthenticated', 'Sign in to accept your invite.');
-  const uid = request.auth.uid;
-  const code = request.data?.code;
-  if (!isInviteCode(code)) throw new HttpsError('invalid-argument', 'This invite link isn\'t valid. Ask for a new one.');
-  const db = getFirestore();
-  const inviteRef = db.doc(`creatorInvites/${code}`), creatorRef = db.doc(`creators/${uid}`);
-  return db.runTransaction(async transaction => {
-    const [inviteSnap, creatorSnap] = await Promise.all([transaction.get(inviteRef), transaction.get(creatorRef)]);
-    let outcome;
-    try {
-      outcome = redeemInvite({ invite: inviteSnap.exists ? inviteSnap.data() : null, creator: creatorSnap.exists ? creatorSnap.data() : null,
-        uid, email: request.auth.token?.email || null, name: request.auth.token?.name || null, now: Date.now() });
-    } catch (error) {
-      throw error instanceof CreatorError ? new HttpsError(error.code, error.message) : error;
-    }
-    if (!outcome) return { creator: creatorSnap.data() };
-    transaction.set(creatorRef, outcome.creator);
-    transaction.update(inviteRef, outcome.inviteUpdate);
-    return { creator: outcome.creator };
-  });
+// ----- Creator accounts (/admin/creators) -----
+// The owner finds an existing player account by nickname or sign-in email, to
+// make it a creator account (creators/{uid}, written by the owner directly).
+export const findPlayers = onCall({ region: 'us-central1', maxInstances: 5 }, async request => {
+  const uid = googleUser(request);
+  if (!OWNER_UIDS.includes(uid)) throw new HttpsError('permission-denied', 'Only the site owner can look up accounts.');
+  const search = playerSearch(request.data?.query);
+  if (!search) throw new HttpsError('invalid-argument', 'Type at least 2 letters of a nickname, or a full sign-in email.');
+  const db = getFirestore(), auth = getAuth();
+  let uids = [];
+  if (search.email) {
+    try { uids = [(await auth.getUserByEmail(search.email)).uid]; }
+    catch (error) { if (error?.code !== 'auth/user-not-found') throw error; }
+  } else {
+    const claims = await db.collection('nicknames').where(FieldPath.documentId(), '>=', search.prefix)
+      .where(FieldPath.documentId(), '<', `${search.prefix}\uf8ff`).limit(10).get();
+    uids = [...new Set(claims.docs.map(claim => claim.get('uid')).filter(Boolean))];
+  }
+  const players = await Promise.all(uids.map(async id => {
+    const [player, creator, user] = await Promise.all([db.doc(`players/${id}`).get(), db.doc(`creators/${id}`).get(), auth.getUser(id).catch(() => null)]);
+    return playerSummary(id, { nickname: player.exists ? player.get('nickname') : null, email: user?.email, name: user?.displayName, creator: creator.exists });
+  }));
+  return { players };
 });
 
 // ----- Owner statistics (/admin/stats) -----

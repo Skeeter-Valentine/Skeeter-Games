@@ -1,7 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { accessSummary, canPreviewDay, newInviteCode, previewDays } from './creatorAccess.js';
-import { isInviteCode } from '../../functions/creators.js';
+import { accessSummary, canPreviewDay, previewDays, withDay } from './creatorAccess.js';
 
 test('creators open only the gauntlets they were given', () => {
   const creator = { allDays: false, days: ['2026-12-01', '2026-12-03'] };
@@ -18,9 +17,9 @@ test('access reads in plain words, leaving out past days', () => {
   assert.equal(accessSummary({ days: [] }), 'No upcoming gauntlets');
 });
 
-test('invite codes are long, random and accepted by the server', () => {
-  const a = newInviteCode(), b = newInviteCode();
-  assert.equal(a.length, 24);
-  assert.notEqual(a, b);
-  assert.ok(isInviteCode(a));
+test('inviting to a day adds it once; un-inviting removes it', () => {
+  const creator = { days: ['2026-12-03'] };
+  assert.deepEqual(withDay(creator, '2026-12-01', true), ['2026-12-01', '2026-12-03']);
+  assert.deepEqual(withDay({ days: ['2026-12-01'] }, '2026-12-01', true), ['2026-12-01']);
+  assert.deepEqual(withDay(creator, '2026-12-03', false), []);
 });

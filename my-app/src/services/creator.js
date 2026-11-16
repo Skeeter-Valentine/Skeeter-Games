@@ -2,14 +2,16 @@ import { onIdTokenChanged } from 'firebase/auth';
 import { collection, deleteDoc, doc, getDocs, onSnapshot, setDoc, updateDoc } from 'firebase/firestore';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { firebaseConfigured, firebaseServices } from './firebase.js';
-import { newInviteCode } from '../utils/creatorAccess.js';
+import { withDay } from '../utils/creatorAccess.js';
 
-// Creator accounts (invite only): see functions/creators.js. A creator's
-// record is creators/{uid}: { name, email, allDays, days, joinedAt }.
+// Creator accounts: existing player accounts the owner has made creators (at
+// /admin/creators), which can play the gauntlets they're invited to before
+// they go live. A creator's record is creators/{uid}:
+// { name, email, allDays, days, joinedAt, updatedAt }.
 
 // Calls back with undefined while checking, null when this visitor isn't a
-// creator, or their record (kept up to date, so access the owner adds or
-// removes shows up straight away).
+// creator, or their record (kept up to date, so invitations the owner adds or
+// removes show up straight away).
 export function watchCreator(callback) {
   if (!firebaseConfigured) { callback(null); return () => {}; }
   const { auth, db } = firebaseServices();
@@ -25,34 +27,29 @@ export function watchCreator(callback) {
   return () => { stopRecord(); stopAuth(); };
 }
 
-export async function redeemCreatorInvite(code) {
-  const result = await httpsCallable(getFunctions(undefined, 'us-central1'), 'redeemCreatorInvite')({ code });
-  return result.data.creator;
+// ----- Owner only (the function and the Firestore rules refuse everyone else) -----
+// Accounts matching a nickname (its start) or a sign-in email:
+// [{ uid, nickname, email, name, creator }].
+export async function findPlayers(query) {
+  const result = await httpsCallable(getFunctions(undefined, 'us-central1'), 'findPlayers')({ query });
+  return result.data.players;
 }
 
-// ----- Owner only (the Firestore rules refuse everyone else) -----
 export async function listCreators() {
   const snapshot = await getDocs(collection(firebaseServices().db, 'creators'));
   return snapshot.docs.map(entry => ({ uid: entry.id, ...entry.data() })).sort((a, b) => (b.joinedAt ?? 0) - (a.joinedAt ?? 0));
 }
 
-export async function listInvites() {
-  const snapshot = await getDocs(collection(firebaseServices().db, 'creatorInvites'));
-  return snapshot.docs.map(entry => ({ code: entry.id, ...entry.data() })).sort((a, b) => (b.createdAt ?? 0) - (a.createdAt ?? 0));
-}
+const accessFields = ({ name, allDays, days }) => ({ name: name.trim().slice(0, 60), allDays: !!allDays, days: allDays ? [] : [...days].sort() });
 
-export async function createInvite({ name, allDays, days }) {
-  const code = newInviteCode();
-  const invite = { name: name.trim().slice(0, 60), allDays: !!allDays, days: allDays ? [] : [...days].sort(), createdAt: Date.now(), usedBy: null };
-  await setDoc(doc(firebaseServices().db, 'creatorInvites', code), invite);
-  return { code, ...invite };
-}
+export const makeCreator = ({ uid, email = null, ...access }) => setDoc(doc(firebaseServices().db, 'creators', uid),
+  { ...accessFields(access), email: email || null, joinedAt: Date.now(), updatedAt: Date.now() });
 
-export const deleteInvite = code => deleteDoc(doc(firebaseServices().db, 'creatorInvites', code));
+export const updateCreator = (uid, access) => updateDoc(doc(firebaseServices().db, 'creators', uid),
+  { ...accessFields(access), updatedAt: Date.now() });
 
-export const updateCreator = (uid, { name, allDays, days }) => updateDoc(doc(firebaseServices().db, 'creators', uid),
-  { name: name.trim().slice(0, 60), allDays: !!allDays, days: allDays ? [] : [...days].sort(), updatedAt: Date.now() });
+// Invites a creator to one day's gauntlet (or takes the invitation back).
+export const inviteToDay = (creator, day, invited = true) => updateDoc(doc(firebaseServices().db, 'creators', creator.uid),
+  { days: withDay(creator, day, invited), updatedAt: Date.now() });
 
 export const removeCreator = uid => deleteDoc(doc(firebaseServices().db, 'creators', uid));
-
-export const inviteLink = code => `${window.location.origin}/creator?invite=${code}`;

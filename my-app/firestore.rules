@@ -61,30 +61,17 @@ service cloud.firestore {
         && request.resource.data.games is list && request.resource.data.games.size() == 6;
       allow delete: if isOwner();
     }
-    // Creator accounts (invite only). The owner makes invites and edits or
-    // removes creators from /admin/creators; a creator can read their own
-    // record. Invites are turned into creators by the redeemCreatorInvite
-    // Cloud Function, so nobody else can read or use them directly.
-    match /creatorInvites/{code} {
-      allow read, delete: if isOwner();
-      allow create: if isOwner()
-        && code.matches('^[A-Za-z0-9]{16,40}$')
-        && request.resource.data.keys().hasOnly(['name', 'allDays', 'days', 'createdAt', 'usedBy'])
-        && request.resource.data.name is string && request.resource.data.name.size() <= 60
-        && request.resource.data.allDays is bool
-        && request.resource.data.days is list && request.resource.data.days.size() <= 120
-        && request.resource.data.usedBy == null;
-      allow update: if false;
-    }
+    // Creator accounts: the owner makes an existing account a creator, and
+    // chooses which gauntlets it can play early, at /admin/creators. A
+    // creator can read their own record.
     match /creators/{userId} {
       allow read: if request.auth != null && (request.auth.uid == userId || isOwner());
-      allow update: if isOwner()
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'allDays', 'days', 'updatedAt'])
+      allow create, update: if isOwner()
+        && request.resource.data.keys().hasOnly(['name', 'email', 'allDays', 'days', 'joinedAt', 'updatedAt'])
         && request.resource.data.name is string && request.resource.data.name.size() <= 60
         && request.resource.data.allDays is bool
         && request.resource.data.days is list && request.resource.data.days.size() <= 120;
       allow delete: if isOwner();
-      allow create: if false;
     }
     match /players/{userId} {
       allow read: if request.auth != null && request.auth.uid == userId;

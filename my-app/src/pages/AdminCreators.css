@@ -39,3 +39,14 @@
 .custom-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .creator-name select { padding: 8px 10px; }
 .custom-editor { position: sticky; left: 10px; max-width: calc(100vw - 64px); }
+/* Finding an account to make a creator. */
+.creator-search { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 8px; }
+.creator-search .creator-name { margin-bottom: 0; }
+.creator-found { display: grid; gap: 6px; margin: 12px 0 0; padding: 0; list-style: none; }
+.creator-found li { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 12px; border: 1px solid #3b2f4b; border-radius: 8px; }
+.creator-found small { color: #a39bbe; margin-left: 6px; }
+/* Creators invited to a day (AdminGauntlets.jsx). */
+.day-invites { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 8px; }
+.day-invite { display: inline-flex; align-items: center; gap: 4px; padding: 2px 4px 2px 10px; border-radius: 999px; background: rgba(0, 240, 255, 0.12); color: #9ff6ff; font-size: 14px; }
+.admin-archive .day-invite button { min-height: 0; padding: 0 6px; border: 0; background: transparent; color: inherit; font-size: 16px; line-height: 1.4; }
+.admin-archive .day-invites select { padding: 3px 6px; font-size: 14px; }

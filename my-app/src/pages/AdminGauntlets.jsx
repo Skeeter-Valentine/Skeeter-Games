@@ -4,7 +4,7 @@ import { GoogleAuthProvider, onAuthStateChanged, signInWithPopup, signOut } from
 import { firebaseConfigured, firebaseServices } from '../services/firebase.js';
 import { readPar } from '../services/gauntletPar.js';
 import { deleteCustomGauntlet, saveCustomGauntlet, useCustomGauntlets } from '../services/customGauntlets.js';
-import { listCreators, updateCreator } from '../services/creator.js';
+import { inviteToDay, listCreators } from '../services/creator.js';
 import { CUSTOM_GAME_IDS, DEFAULT_TITLE, GAUNTLET_SIZE, PAR_NAME, TITLE_MAX, WORD_GAMES, addDays, customGauntlet, formatClock, gameTitle, gauntletDay,
   gauntletLaunched, gauntletLineup, gauntletOpensAt, gauntletPuzzleDate, validPar } from '../gauntlet/gauntlet.js';
 import { dailyDifficulty } from '../utils/dailyDifficulty.js';
@@ -26,6 +26,32 @@ const dayLabel = day => new Date(`${day}T12:00:00Z`).toLocaleDateString(undefine
 // Games offered in the editor, A to Z (any game the gauntlet can play).
 const GAME_CHOICES = [...CUSTOM_GAME_IDS].sort((a, b) => gameTitle(a).localeCompare(gameTitle(b)));
 
+// Creators invited to play a day early, with a menu to invite another.
+function DayInvites({ day, creators, onChange }) {
+  const [status, setStatus] = useState('');
+  const invited = creators.filter(person => person.allDays || (person.days || []).includes(day));
+  const others = creators.filter(person => !invited.includes(person));
+  if (!creators.length) return null;
+  async function change(person, on) {
+    setStatus('');
+    try { await inviteToDay(person, day, on); onChange(); }
+    catch (failure) { setStatus(`Couldn't update the invitation${failure?.code ? ` (${failure.code})` : ''}.`); }
+  }
+  return <div className="day-invites">
+    {invited.map(person => <span key={person.uid} className="day-invite">{person.name}{person.allDays
+      ? <small> (all days)</small>
+      : <button type="button" aria-label={`Take back ${person.name}'s invitation`} title="Take back the invitation" onClick={() => change(person, false)}>×</button>}</span>)}
+    {others.length > 0 && <select aria-label="Invite a creator to play this early" value="" onChange={event => {
+      const person = others.find(entry => entry.uid === event.target.value);
+      if (person) change(person, true);
+    }}>
+      <option value="">Invite a creator…</option>
+      {others.map(person => <option key={person.uid} value={person.uid}>{person.name}</option>)}
+    </select>}
+    {status && <small className="creator-error" role="alert">{status}</small>}
+  </div>;
+}
+
 function CustomEditor({ day, creators, hasPar, onDone, onSaved }) {
   const existing = customGauntlet(day);
   const [title, setTitle] = useState(existing?.title ?? '');
@@ -43,7 +69,7 @@ function CustomEditor({ day, creators, hasPar, onDone, onSaved }) {
     try {
       await saveCustomGauntlet(day, { title: title.trim() || DEFAULT_TITLE, games });
       const person = creators.find(entry => entry.uid === creator);
-      if (person) await updateCreator(person.uid, { name: person.name || '', allDays: false, days: [...(person.days || []), day] });
+      if (person) await inviteToDay(person, day);
       onSaved();
     } catch (failure) {
       setStatus(`Couldn't save${failure?.code ? ` (${failure.code})` : ''}. Check that the Firestore rules are deployed.`);
@@ -132,7 +158,7 @@ export default function AdminGauntlets() {
   else body = <>
     <p className="admin-archive-note">Play a gauntlet before it opens to record {PAR_NAME}'s time to beat. When you finish, your time is published for that day
       and your run is posted to that day's leaderboard, as if you'd played it when it opened. Each new gauntlet opens at {new Date(gauntletOpensAt(today)).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })} your time.
-      Customize gives a future day six games of your choice and its own name, for example a creator's.</p>
+      Customize gives a future day six games of your choice and its own name, for example a creator's. Invite a creator to let them play a day early.</p>
     {error && <p role="alert">{error}</p>}
     {custom.state === 'error' && <p role="alert" className="creator-error">Couldn't load custom gauntlets. <button type="button" onClick={custom.reload}>Try again</button></p>}
     <p>{recorded} of {days.length} recorded{nextMissing ? <> · next without a time: <strong>{dayLabel(nextMissing)}</strong></> : ''}</p>
@@ -150,7 +176,8 @@ export default function AdminGauntlets() {
           return <tr key={day} className={day === today ? 'admin-gauntlet-today' : ''}>
             <td><strong>{dayLabel(day)}</strong>{day === today && <span className="admin-gauntlet-tag">Today</span>}<br /><small>{day}</small></td>
             <td>{special && <p className="custom-title">{special.title}<span className="creator-tag">Custom</span></p>}
-              <ol className="admin-gauntlet-lineup">{gauntletLineup(day).map(game => <li key={game.id}>{game.title} <ChiliRating level={game.level} /></li>)}</ol></td>
+              <ol className="admin-gauntlet-lineup">{gauntletLineup(day).map(game => <li key={game.id}>{game.title} <ChiliRating level={game.level} /></li>)}</ol>
+              {day > today && <DayInvites day={day} creators={creators} onChange={() => listCreators().then(setCreators).catch(() => {})} />}</td>
             <td>{!(day in pars) ? '…' : par ? <><strong className="admin-gauntlet-time">{formatClock(par.total)}</strong><br /><small>{par.solved} of {par.results.length} solved</small></> : <span className="admin-gauntlet-missing">Not recorded</span>}</td>
             <td className="custom-actions">
               <Link className="admin-gauntlet-play" to={day === today ? '/gauntlet' : `/gauntlet?day=${day}`}>{par ? 'Replay' : 'Play'}</Link>

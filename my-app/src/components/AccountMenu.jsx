@@ -1,8 +1,17 @@
 import { useEffect, useRef, useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { accountsEnabled, authProviders, boardEnabled, friendlyError, saveNickname, signOutPlayer, watchPlayer } from '../services/gauntletBoard.js';
+import { watchCreator } from '../services/creator.js';
+import { dailyDate } from '../utils/dailyClock.js';
+import { readLocal, writeLocal } from '../utils/dailyStats.js';
 import SignInDialog from './SignInDialog';
 import './AccountMenu.css';
+
+// A creator's invitations: the upcoming gauntlets they can play early. (The
+// date is roughly today's gauntlet day: close enough for a count, and it
+// keeps the gauntlet code out of every page.)
+const SEEN_KEY = 'skeeter:creator-invites-seen';
+const upcomingInvites = creator => (creator && !creator.allDays ? (creator.days ?? []).filter(day => day > dailyDate()).sort() : []);
 
 function GoogleMark() {
   return <svg className="account-google" viewBox="0 0 48 48" aria-hidden="true" width="18" height="18">
@@ -32,6 +41,18 @@ export default function AccountMenu({ inline = false }) {
   const [signingIn, setSigningIn] = useState(false);
   const box = useRef(null);
   useEffect(() => { setMounted(true); return watchPlayer(setPlayer); }, []);
+  // Creator accounts (made by the owner) get a link to their invitations,
+  // with a dot on the button when there's one they haven't seen.
+  const [creator, setCreator] = useState(null);
+  useEffect(() => (player ? watchCreator(setCreator) : (setCreator(null), undefined)), [player?.uid]);
+  const invites = upcomingInvites(creator);
+  const [seen, setSeen] = useState(() => readLocal(SEEN_KEY, []));
+  const newInvite = invites.some(day => !seen.includes(day));
+  useEffect(() => {
+    if (!open || !newInvite) return;
+    setSeen(invites);
+    writeLocal(SEEN_KEY, invites);
+  }, [open, newInvite]);
   // Right after someone signs in without a nickname, open the menu with the
   // nickname box so they don't have to find it.
   const previous = useRef(undefined);
@@ -70,7 +91,8 @@ export default function AccountMenu({ inline = false }) {
           {player.photo ? <img className="account-avatar" src={player.photo} alt="" width="26" height="26" referrerPolicy="no-referrer" />
             : <span className="account-avatar account-initial">{label.charAt(0).toUpperCase()}</span>}
           <span className="account-name">{label}</span>
-          {needsNickname && <span className="account-dot" aria-label="Choose a nickname" />}
+          {needsNickname ? <span className="account-dot" aria-label="Choose a nickname" />
+            : newInvite && <span className="account-dot" aria-label="New creator invitation" />}
         </button>}
     {open && <div className="account-menu" role="dialog" aria-label="Account">
       {!player ? <p className="account-error" role="alert">{error}</p> : <>
@@ -83,6 +105,8 @@ export default function AccountMenu({ inline = false }) {
             </form>
           : <button type="button" className="account-action" onClick={() => { setName(player.nickname); setEditing(true); }}>Change nickname</button>)}
         {error && <p className="account-error" role="alert">{error}</p>}
+        {creator && <Link className="account-action account-creator" to="/creator" onClick={() => setOpen(false)}>
+          Creator corner{creator.allDays ? '' : invites.length ? ` · ${invites.length} ${invites.length === 1 ? 'gauntlet' : 'gauntlets'} to play early` : ''}</Link>}
         <button type="button" className="account-action" onClick={() => { setOpen(false); setEditing(false); signOutPlayer().catch(() => {}); }}>Sign out</button>
       </>}
     </div>}

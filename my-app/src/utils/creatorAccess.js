@@ -17,9 +17,8 @@ export function accessSummary(access, today) {
   return `${days.length} ${days.length === 1 ? 'gauntlet' : 'gauntlets'}: ${days.map(label).join(', ')}`;
 }
 
-// A hard-to-guess invite code (letters and digits, 24 long).
-export function newInviteCode(random = crypto.getRandomValues.bind(crypto)) {
-  const letters = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789';
-  const bytes = random(new Uint8Array(24));
-  return Array.from(bytes, byte => letters[byte % letters.length]).join('');
+// The upcoming days a creator is invited to, adding or removing one.
+export function withDay(creator, day, invited) {
+  const days = (creator?.days ?? []).filter(d => d !== day);
+  return invited ? [...days, day].sort() : days;
 }

@@ -37,3 +37,6 @@
   .account-inline .account-signin .account-name { display: none; }
   .account-inline .account-signin { padding: 7px; }
 }
+/* Creator accounts: link to their invitations (/creator). */
+.account-action.account-creator { display: flex; align-items: center; justify-content: center; box-sizing: border-box; padding: 6px 10px;
+  text-align: center; text-decoration: none; color: #9ff6ff; border-color: #00b8c4; }
