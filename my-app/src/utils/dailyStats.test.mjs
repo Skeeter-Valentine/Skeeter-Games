@@ -78,3 +78,15 @@ test('storage failures preserve results for the current session', () => {
     assert.equal(readDailyStats('blocked-storage').results['2026-09-24'].seconds, 45);
   } finally { globalThis.localStorage = working; }
 });
+
+test('results saved on the account count toward the streak', async () => {
+  const { mergeDailyResults, summarizeDailyStats } = await import('./dailyStats.js');
+  const here = { version: 1, results: { '2026-11-16': { won: true, seconds: 60 } } };
+  const account = { '2026-11-14': { won: true, seconds: 70 }, '2026-11-15': { won: true, seconds: 80 }, '2026-11-16': { won: false, seconds: null }, bad: { won: 'x' } };
+  const merged = mergeDailyResults(here, account);
+  assert.deepEqual(Object.keys(merged.results).sort(), ['2026-11-14', '2026-11-15', '2026-11-16']);
+  assert.equal(merged.results['2026-11-16'].won, true, 'this device\'s own result wins');
+  assert.equal(summarizeDailyStats(merged, '2026-11-16').currentStreak, 3);
+  assert.equal(summarizeDailyStats(here, '2026-11-16').currentStreak, 1);
+  assert.equal(mergeDailyResults(here, undefined), here);
+});

@@ -55,11 +55,17 @@ service cloud.firestore {
       allow read: if true;
       allow create, update: if isOwner()
         && day.matches('^20[0-9]{2}-[0-9]{2}-[0-9]{2}$') && !day.matches('^2099-.*')
-        && request.resource.data.keys().hasOnly(['day', 'title', 'games', 'updatedAt'])
+        && request.resource.data.keys().hasOnly(['day', 'title', 'games', 'creator', 'updatedAt'])
         && request.resource.data.day == day
         && request.resource.data.title is string && request.resource.data.title.size() <= 40
         && request.resource.data.games is list && request.resource.data.games.size() == 6;
       allow delete: if isOwner();
+    }
+    // A custom gauntlet's featured creator's time, shown under the owner's
+    // time to beat. Written only by the gauntletEvent function.
+    match /gauntletGuest/{day} {
+      allow read: if true;
+      allow write: if false;
     }
     // Creator accounts: the owner makes an existing account a creator, and
     // chooses which gauntlets it can play early, at /admin/creators. A

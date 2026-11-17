@@ -3,6 +3,14 @@ import { doc, getDoc, serverTimestamp, setDoc } from 'firebase/firestore';
 import { firebaseConfigured, firebaseServices } from './firebase.js';
 import { parRecord } from '../gauntlet/gauntlet.js';
 
+// A custom gauntlet's featured creator's time (gauntletGuest/{day}), posted
+// by the leaderboard server when they finish it. Anyone can read it.
+export async function readGuest(day) {
+  if (!firebaseConfigured) return null;
+  const snapshot = await getDoc(doc(firebaseServices().db, 'gauntletGuest', day));
+  return snapshot.exists() ? snapshot.data() : null;
+}
+
 // The site owner's daily Skeeter Gauntlet time, published so everyone can try
 // to beat it. Stored at gauntletPar/{day}: anyone can read it, and the
 // Firestore rules only let the owner's Google account write it.

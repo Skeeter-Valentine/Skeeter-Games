@@ -32,8 +32,9 @@ import { isLaunched } from '../utils/launch.js';
 import gauntletBannerImg from '../assets/gauntlet-banner.webp';
 import gauntletBannerNarrowImg from '../assets/gauntlet-banner-narrow.webp';
 
-import { PAR_NAME, gauntletLaunched, STORAGE_PREFIX, formatClock, gauntletDay, restoreRun, runTotal, validPar } from '../gauntlet/gauntlet.js';
-import { readPar, watchOwner } from '../services/gauntletPar.js';
+import { PAR_NAME, customGauntlet, gauntletLaunched, STORAGE_PREFIX, formatClock, gauntletDay, restoreRun, runTotal, validGuest, validPar } from '../gauntlet/gauntlet.js';
+import { useCustomGauntlets } from '../services/customGauntlets.js';
+import { readGuest, readPar, watchOwner } from '../services/gauntletPar.js';
 import GauntletCountdown from '../components/GauntletCountdown';
 import { readLocal } from '../utils/dailyStats.js';
 
@@ -41,7 +42,7 @@ const GAMES = [
   { id: 'chess', title: 'Skeetmate', path: '/chess', image: chessImg, isNew: true },
   { id: 'slitherlink', title: 'Skeeterlink', path: '/slitherlink', image: slitherlinkImg, isNew: true },
   { id: 'kakurasu', title: 'Add ’em Up', path: '/kakurasu', image: kakurasuImg, isNew: true },
-  { id: 'pepper-placer', title: 'Pepper Placer', path: '/pepper-placer', image: pepperPlacerImg, isNew: true },
+  { id: 'pepper-placer', title: 'Pepper Placer', path: '/pepper-placer', image: pepperPlacerImg },
   { id: 'akari', title: 'Skeeluminate', path: '/akari', image: skeeluminateImg },
   { id: 'skeedle-beadle', title: 'Skeedle Beadle', path: '/skeedle-beadle', image: skeedleBeadleImg },
   { id: 'map', title: 'Cartograskeet', path: '/map', image: cartograskeetImg },
@@ -69,6 +70,11 @@ export default function LandingPage() {
   // Gauntlet days start at 4am Mountain Time, not at the puzzles' UTC midnight.
   const gauntletDate = gauntletDay();
   const gauntletOpen = gauntletLaunched(gauntletDate);
+  // A custom gauntlet (its own games, name and featured creator) has to load
+  // before today's run can be recognised.
+  const custom = useCustomGauntlets();
+  const special = custom.state === 'ready' ? customGauntlet(gauntletDate) : null;
+  const featured = special?.creator ?? null;
   const gauntletRun = gauntletOpen ? restoreRun(readLocal(`${STORAGE_PREFIX}run:${gauntletDate}`, null), gauntletDate) : null;
   const [par, setPar] = useState(null);
   // The owner's account (and only it) gets a link to the admin pages.
@@ -79,14 +85,24 @@ export default function LandingPage() {
     let active = true;
     readPar(gauntletDate).then(value => { if (active) setPar(validPar(value, gauntletDate)); }).catch(() => {});
     return () => { active = false; };
-  }, [gauntletOpen, gauntletDate]);
+  }, [gauntletOpen, gauntletDate, custom.version]);
+  // The featured creator's time, shown under the owner's.
+  const [guest, setGuest] = useState(null);
+  useEffect(() => {
+    if (!gauntletOpen || !featured) return;
+    let active = true;
+    readGuest(gauntletDate).then(value => { if (active) setGuest(validGuest(value, gauntletDate)); }).catch(() => {});
+    return () => { active = false; };
+  }, [gauntletOpen, gauntletDate, featured?.uid]);
   // Under the banner: "Beat Skeet!", the owner's time for today's gauntlet,
   // your own progress and, once you've finished, the countdown to the next one.
   const parText = par ? `${PAR_NAME}'s time today: ${formatClock(par.total)}` : `${PAR_NAME}'s time today: not posted yet`;
+  const beatText = featured ? `Beat Skeet & ${featured.name}!` : 'Beat Skeet!';
+  const guestText = !featured ? '' : guest ? `${guest.name}'s time today: ${formatClock(guest.total)}` : `${featured.name}'s time today: not posted yet`;
   const progressText = !gauntletRun ? '' : gauntletRun.finishedAt ? `Your time: ${formatClock(runTotal(gauntletRun))}`
     : `In progress · game ${gauntletRun.index + 1} of ${gauntletRun.lineup.length}`;
   const gauntletAction = !gauntletOpen ? 'Try a test gauntlet' : !gauntletRun ? 'Play today’s gauntlet' : gauntletRun.finishedAt ? 'See results' : 'Continue';
-  const gauntletStatus = !gauntletOpen ? 'Coming soon' : ['Beat Skeet!', parText, progressText].filter(Boolean).join(' · ');
+  const gauntletStatus = !gauntletOpen ? 'Coming soon' : [special?.title, beatText, parText, guestText, progressText].filter(Boolean).join(' · ');
 
   return (
     <div className="landing-container">
@@ -120,8 +136,10 @@ export default function LandingPage() {
             <img src={gauntletBannerImg} alt="" width="2022" height="640" loading="eager" decoding="async" className="gauntlet-feature-image" />
           </picture>
           {gauntletOpen ? <span className="gauntlet-feature-status" aria-hidden="true">
-            <span className="gauntlet-beat">Beat Skeet!</span>
+            {special && <span className="gauntlet-special">{special.title}</span>}
+            <span className="gauntlet-beat">{beatText}</span>
             <span className="gauntlet-par-line">{par ? <>{PAR_NAME}'s time today: <b>{formatClock(par.total)}</b></> : parText}</span>
+            {featured && <span className="gauntlet-par-line">{guest ? <>{guest.name}'s time today: <b>{formatClock(guest.total)}</b></> : guestText}</span>}
             {progressText && <span className="gauntlet-progress-line">{progressText}</span>}
             {gauntletRun?.finishedAt && <GauntletCountdown label="Next gauntlet in" />}
             <strong>{gauntletAction} →</strong>

@@ -8,7 +8,8 @@ import { dailyBoardId, dailyBoardSeconds, recentBoardIds } from './dailyBoard.js
 import { applyEvent, cleanNickname, gauntletDay, gauntletOpensAt, GauntletError, isDay, recordAdvanceRun } from './gauntlet.js';
 import { dailyPeppers, gauntletPeppers, gauntletRunPeppers, pepperWeek } from './peppers.js';
 import { buildStats, parseAttemptId } from './adminStats.js';
-import { playerSearch, playerSummary } from './creators.js';
+import { creatorInvited, featuredCreator, guestRecord, playerSearch, playerSummary } from './creators.js';
+import { dailyHistoryUpdate, gauntletHistoryUpdate, signedIn } from './history.js';
 
 initializeApp();
 
@@ -46,6 +47,10 @@ export const recordPuzzleAttempt = onCall({ region: 'us-central1', maxInstances:
       seconds: boardSeconds, nickname: nickname || null, finishedAt: FieldValue.serverTimestamp(),
     });
     transaction.set(attemptRef, { ...change.attempt, updatedAt: FieldValue.serverTimestamp() });
+    // Signed-in players keep their daily results on their account, so streaks
+    // follow them to other devices.
+    const history = signedIn(request.auth) ? dailyHistoryUpdate(change.attempt) : null;
+    if (history) transaction.set(playerRef, history, { merge: true });
     transaction.set(aggregateRef, {
       version: data.version, game: data.game, date: data.date, mode: data.mode,
       starts: FieldValue.increment(change.starts), wins: FieldValue.increment(change.wins), losses: FieldValue.increment(change.losses),
@@ -85,10 +90,18 @@ export const gauntletEvent = onCall({ region: 'us-central1', maxInstances: 20 },
     const custom = customSnap.exists ? customSnap.data() : null;
     const nickname = playerSnap.exists ? playerSnap.get('nickname') : null;
     if (event.action === 'start' && !runSnap.exists && !nickname) throw new HttpsError('failed-precondition', 'Choose a nickname first.');
-    // The owner's advance run (played early, timed in their browser) goes on
-    // that day's leaderboard as if played when the day opened.
+    // A custom gauntlet's featured creator: their finished run is published
+    // as the day's guest time (gauntletGuest/{day}), under the owner's.
+    const featured = featuredCreator(custom, uid);
+    const guestRef = db.doc(`gauntletGuest/${event.day}`);
+    // An advance run (played early, timed in the browser) by the owner or a
+    // creator invited to that day goes on that day's leaderboard as if
+    // played when the day opened.
     if (event.action === 'record') {
-      if (!OWNER_UIDS.includes(uid)) throw new HttpsError('permission-denied', 'Only the site owner can record a gauntlet in advance.');
+      const creatorSnap = OWNER_UIDS.includes(uid) ? null : await transaction.get(db.doc(`creators/${uid}`));
+      if (creatorSnap && !creatorInvited(creatorSnap.exists ? creatorSnap.data() : null, event.day)) {
+        throw new HttpsError('permission-denied', 'Only the site owner and invited creators can record a gauntlet in advance.');
+      }
       if (!nickname) throw new HttpsError('failed-precondition', 'Choose a nickname first.');
       if (runSnap.exists && runSnap.get('finishedAt')) return { run: runSnap.data(), entry: null, alreadyRecorded: true, now: Date.now() };
       let recorded;
@@ -96,6 +109,9 @@ export const gauntletEvent = onCall({ region: 'us-central1', maxInstances: 20 },
       catch (error) { throw asHttpsError(error); }
       transaction.set(runRef, { ...recorded.run, uid });
       transaction.set(entryRef, { ...recorded.entry, nickname });
+      if (featured) transaction.set(guestRef, { ...guestRecord(event.day, recorded.run, featured), publishedAt: FieldValue.serverTimestamp() });
+      const history = gauntletHistoryUpdate(event.day, recorded.run);
+      if (history) transaction.set(playerRef, history, { merge: true });
       // Peppers for a gauntlet that hasn't opened yet wait in pendingPeppers
       // until it does (releasePeppers), so the weekly board doesn't give the
       // early run away.
@@ -115,6 +131,11 @@ export const gauntletEvent = onCall({ region: 'us-central1', maxInstances: 20 },
     }
     if (!outcome.alreadyStarted) transaction.set(runRef, { ...outcome.run, uid });
     if (outcome.entry) transaction.set(entryRef, { ...outcome.entry, nickname: nickname || 'Player' });
+    if (outcome.entry && featured) transaction.set(guestRef, { ...guestRecord(event.day, outcome.run, featured), publishedAt: FieldValue.serverTimestamp() });
+    // The finished run joins the player's account history (streaks and stats
+    // on every device).
+    const history = outcome.entry ? gauntletHistoryUpdate(event.day, outcome.run) : null;
+    if (history) transaction.set(playerRef, history, { merge: true });
     // Solved gauntlet games earn their chili rating, plus a bonus for finishing.
     if (event.action === 'finish') addPeppers(transaction, db, uid, gauntletPeppers(event.day, outcome.run, !!outcome.entry), nickname);
     return { run: outcome.run, entry: outcome.entry ?? null, alreadyStarted: !!outcome.alreadyStarted, now: Date.now() };

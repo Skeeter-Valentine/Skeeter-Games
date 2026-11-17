@@ -50,3 +50,4 @@
 .day-invite { display: inline-flex; align-items: center; gap: 4px; padding: 2px 4px 2px 10px; border-radius: 999px; background: rgba(0, 240, 255, 0.12); color: #9ff6ff; font-size: 14px; }
 .admin-archive .day-invite button { min-height: 0; padding: 0 6px; border: 0; background: transparent; color: inherit; font-size: 16px; line-height: 1.4; }
 .admin-archive .day-invites select { padding: 3px 6px; font-size: 14px; }
+.admin-archive .custom-featured { color: #c5b6d5; font-weight: normal; margin-left: 4px; }

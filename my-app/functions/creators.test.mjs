@@ -14,3 +14,22 @@ test('results carry only what the owner needs', () => {
   assert.deepEqual(playerSummary('u1', { nickname: 'Sam', email: 'sam@example.com', creator: 1, extra: 'x' }),
     { uid: 'u1', nickname: 'Sam', email: 'sam@example.com', name: null, creator: true });
 });
+
+test('creators record only the days they are invited to', async () => {
+  const { creatorInvited } = await import('./creators.js');
+  assert.ok(creatorInvited({ days: ['2026-12-03'] }, '2026-12-03'));
+  assert.ok(!creatorInvited({ days: ['2026-12-03'] }, '2026-12-04'));
+  assert.ok(creatorInvited({ allDays: true }, '2026-12-04'));
+  assert.ok(!creatorInvited(null, '2026-12-04'));
+});
+
+test('the featured creator\'s run becomes the day\'s guest time', async () => {
+  const { featuredCreator, guestRecord } = await import('./creators.js');
+  const custom = { games: [], creator: { uid: 'SAM', name: 'Sam' } };
+  assert.deepEqual(featuredCreator(custom, 'SAM'), { uid: 'SAM', name: 'Sam' });
+  assert.equal(featuredCreator(custom, 'EVE'), null);
+  assert.equal(featuredCreator(null, 'SAM'), null);
+  const run = { lineup: ['map', 'akari'], results: [{ game: 'map', status: 'won', total: 61, seconds: 61 }, { game: 'akari', status: 'lost', total: 300 }] };
+  assert.deepEqual(guestRecord('2026-12-03', run, custom.creator),
+    { day: '2026-12-03', uid: 'SAM', name: 'Sam', total: 361, solved: 1, games: ['map', 'akari'], results: [{ game: 'map', status: 'won', total: 61 }, { game: 'akari', status: 'lost', total: 300 }] });
+});

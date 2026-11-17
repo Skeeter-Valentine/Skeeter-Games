@@ -225,3 +225,34 @@ test('custom gauntlets: the owner\'s six games and name for a day', async () => 
   setCustomGauntlets([]);
   assert.deepEqual(gauntletLineup(day).map(game => game.id), normal, 'removing it brings the usual games back');
 });
+
+test('a featured creator and their time', async () => {
+  const { setCustomGauntlets, customGauntlet, validGuest, parVerdict } = await import('./gauntlet.js');
+  const day = '2026-11-19';
+  const games = ['map', 'akari', 'parshle', 'hashi', 'kakurasu', 'pipes'];
+  setCustomGauntlets([{ day, title: "Sam's Gauntlet", games, creator: { uid: 'SAM', name: 'Sam' } }]);
+  assert.deepEqual(customGauntlet(day).creator, { uid: 'SAM', name: 'Sam' });
+  const results = games.map(game => ({ game, status: 'won', total: 30 }));
+  const guest = { day, uid: 'SAM', name: 'Sam', total: 180, solved: 6, games, results };
+  assert.equal(validGuest(guest, day), guest);
+  assert.equal(validGuest({ ...guest, games: [...games].reverse() }, day), null, 'must match the lineup');
+  assert.equal(validGuest({ ...guest, name: '' }, day), null);
+  assert.equal(validGuest({ ...guest, uid: 'EVE' }, day), null, 'only the current featured creator');
+  assert.equal(parVerdict(170, 180, 'Sam'), 'Beat Sam by 0:10 🏆');
+  setCustomGauntlets([{ day, games }]);
+  assert.equal(customGauntlet(day).creator, null);
+  setCustomGauntlets([]);
+});
+
+test('gauntlets saved on the account count toward the streak', async () => {
+  const { mergeHistory } = await import('./gauntlet.js');
+  const here = { '2026-11-16': { total: 500, solved: 6 } };
+  const account = { '2026-11-14': { total: 600, solved: 5 }, '2026-11-15': { total: 450, solved: 6 }, '2026-11-16': { total: 999, solved: 1 }, '2099-01-01': { total: 1, solved: 6 } };
+  const merged = mergeHistory(here, account);
+  assert.deepEqual(Object.keys(merged).sort(), ['2026-11-14', '2026-11-15', '2026-11-16'], 'test days are left out');
+  assert.equal(merged['2026-11-16'].total, 500, 'this device\'s own entry wins');
+  const summary = historySummary(merged, '2026-11-16');
+  assert.equal(summary.streak, 3);
+  assert.equal(summary.bestTime, 450);
+  assert.equal(historySummary(here, '2026-11-16').streak, 1);
+});

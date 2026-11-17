@@ -2,7 +2,8 @@ import { useEffect, useRef, useState } from 'react';
 import GameModal from './GameModal';
 import GameToolbar from './GameToolbar';
 import PuzzleRate from './PuzzleRate';
-import { clockKey, formatDuration, readDailyStats, readLocal, recordDailyResult, summarizeDailyStats, validSeconds, writeLocal } from '../utils/dailyStats.js';
+import { clockKey, formatDuration, mergeDailyResults, readDailyStats, readLocal, recordDailyResult, summarizeDailyStats, validSeconds, writeLocal } from '../utils/dailyStats.js';
+import { useAccountHistory } from '../services/accountHistory.js';
 import './DailyResults.css';
 import { useDailyDate, useDailyMode, useArchive, useGauntlet } from './DailyBoundary';
 import { archiveStatsId } from '../utils/archive.js';
@@ -118,7 +119,9 @@ function DailySession({ gameId, title, date, daily, finished, won = true, second
 
   const visible = open || (daily && manualOpen);
   const close = () => { setOpen(false); onClose?.(); };
-  const summary = summarizeDailyStats(stats, date);
+  // Signed in: results saved on the account (from other devices) count too.
+  const account = useAccountHistory();
+  const summary = summarizeDailyStats(archive ? stats : mergeDailyResults(stats, account?.daily?.[gameId]), date);
   const result = stats.results[date];
   // Today's fastest times: live daily puzzles only (not archive or practice).
   const showBoard = dailyBoardEnabled && daily && !archive;

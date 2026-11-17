@@ -72,8 +72,8 @@ export default function CreatorHome() {
       <ul className="creator-tools">
         <li><strong>Line up your recording</strong>Before you start a gauntlet, press "Show playing area for filming": it shows the bar and the box every game appears
           in, so you can frame your capture. Press Start there when you're ready.</li>
-        <li><strong>Your runs stay private</strong>Early runs are timed on your device and aren't published or ranked. On the day, the gauntlet you played
-          counts as your attempt on that device.</li>
+        <li><strong>Your runs count</strong>When you finish an early gauntlet, your run goes on that day's leaderboard as if you'd played it when it
+          opened. On a gauntlet named after you, your time also shows under Skeeter's as one to beat.</li>
         <li><strong>Practice freely</strong><Link to="/gauntlet?test=1">Test gauntlets</Link> can be replayed as often as you like: good for a warm-up or
           checking your setup.</li>
         <li><strong>Don't spoil it</strong>Please don't share an early gauntlet's puzzles or lineup before it goes live.</li>

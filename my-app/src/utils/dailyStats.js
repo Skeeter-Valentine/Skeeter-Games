@@ -88,3 +88,17 @@ export function formatDuration(seconds) {
   const minutes = Math.floor(total % 3600 / 60);
   return `${hours ? `${hours}:${String(minutes).padStart(2, '0')}` : minutes}:${String(total % 60).padStart(2, '0')}`;
 }
+
+// Adds results saved on the player's account (players/{uid}.dailyHistory[game],
+// written by the server) to this device's, so streaks follow a signed-in
+// player between devices. This device's own result wins for any day both have.
+export function mergeDailyResults(stats, remote) {
+  if (!remote || typeof remote !== 'object') return stats;
+  const results = {};
+  for (const [date, result] of Object.entries(remote)) {
+    if (validDate(date) && result && typeof result.won === 'boolean') {
+      results[date] = { won: result.won, seconds: validSeconds(result.seconds) ? Math.floor(result.seconds) : null };
+    }
+  }
+  return { ...stats, results: { ...results, ...stats.results } };
+}

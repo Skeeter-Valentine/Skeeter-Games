@@ -114,7 +114,10 @@ export function cleanCustomGauntlet(data, day = data?.day) {
   if (!data || !isDate(day) || isTestDay(day) || !Array.isArray(data.games) || data.games.length !== GAUNTLET_SIZE) return null;
   if (!data.games.every(id => CUSTOM_GAME_IDS.includes(id)) || new Set(data.games).size !== GAUNTLET_SIZE) return null;
   const title = typeof data.title === 'string' ? data.title.trim().slice(0, TITLE_MAX) : '';
-  return { day, title: title || DEFAULT_TITLE, games: [...data.games] };
+  // The featured creator, if any: their time shows under the owner's.
+  const creator = typeof data.creator?.uid === 'string' && typeof data.creator?.name === 'string' && data.creator.name.trim()
+    ? { uid: data.creator.uid, name: data.creator.name.trim().slice(0, 60) } : null;
+  return { day, title: title || DEFAULT_TITLE, games: [...data.games], creator };
 }
 const customDays = new Map();
 // Replaces the known custom gauntlets (a list of Firestore records).
@@ -271,9 +274,16 @@ export function validPar(par, day) {
   if (!Array.isArray(par.results) || par.results.length !== lineup.length) return null;
   return par;
 }
-export function parVerdict(total, parTotal) {
+export function parVerdict(total, parTotal, name = PAR_NAME) {
   const gap = formatClock(Math.abs(total - parTotal));
-  return total < parTotal ? `Beat ${PAR_NAME} by ${gap} 🏆` : total > parTotal ? `${PAR_NAME} wins by ${gap}` : `Tied with ${PAR_NAME}!`;
+  return total < parTotal ? `Beat ${name} by ${gap} 🏆` : total > parTotal ? `${name} wins by ${gap}` : `Tied with ${name}!`;
+}
+// A custom gauntlet's featured creator's time (gauntletGuest/{day}, written
+// by the leaderboard server when they finish), trusted only if it's the
+// day's current featured creator and matches the day's lineup.
+export function validGuest(guest, day) {
+  if (!validPar(guest, day) || typeof guest.name !== 'string' || !guest.name.trim()) return null;
+  return customDays.get(day)?.creator?.uid === guest.uid ? guest : null;
 }
 // After some games: how far ahead (negative) or behind (positive) the owner's pace.
 export function paceVersusPar(run, par) {
@@ -288,6 +298,17 @@ export function paceVersusPar(run, par) {
 export function addToHistory(history, run) {
   if (!run?.finishedAt) return history;
   return { ...history, [run.date]: { total: runTotal(run), solved: run.results.filter(r => r.status === 'won').length } };
+}
+// Adds gauntlets saved on the player's account (players/{uid}.gauntletHistory,
+// written by the leaderboard server) to this device's history, so streaks
+// follow a signed-in player between devices. This device's own entry wins.
+export function mergeHistory(local, remote) {
+  if (!remote || typeof remote !== 'object') return local ?? {};
+  const merged = {};
+  for (const [date, entry] of Object.entries(remote)) {
+    if (isDate(date) && !isTestDay(date) && entry && Number.isFinite(entry.total)) merged[date] = { total: entry.total, solved: Number(entry.solved) || 0 };
+  }
+  return { ...merged, ...(local ?? {}) };
 }
 export function historySummary(history, today) {
   const dates = Object.keys(history ?? {}).filter(isDate).sort();

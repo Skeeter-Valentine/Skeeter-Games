@@ -56,20 +56,31 @@ function CustomEditor({ day, creators, hasPar, onDone, onSaved }) {
   const existing = customGauntlet(day);
   const [title, setTitle] = useState(existing?.title ?? '');
   const [games, setGames] = useState(() => gauntletLineup(day).map(game => game.id));
-  const [creator, setCreator] = useState('');
+  // The featured creator: the day is usually named after them, and their time
+  // shows under yours on the home page and the gauntlet page.
+  const [featured, setFeatured] = useState(existing?.creator?.uid ?? '');
   const [status, setStatus] = useState('');
   const puzzleDate = gauntletPuzzleDate(day);
   const repeats = games.filter((id, i) => games.indexOf(id) !== i);
   const words = games.filter(id => WORD_GAMES.includes(id)).length;
   const changedGames = games.join() !== gauntletLineup(day).map(game => game.id).join();
-  const pickable = creators.filter(person => !person.allDays && !(person.days || []).includes(day));
+  const featuredPerson = creators.find(person => person.uid === featured) ?? (existing?.creator?.uid === featured ? existing.creator : null);
+  function feature(uid) {
+    const person = creators.find(entry => entry.uid === uid);
+    const before = creators.find(entry => entry.uid === featured);
+    // Name the day after them, unless you've typed your own name.
+    if (person && (!title.trim() || (before && title === `${before.name}'s Gauntlet`))) setTitle(`${person.name}'s Gauntlet`);
+    setFeatured(uid);
+  }
 
   async function save() {
     setStatus('Saving…');
     try {
-      await saveCustomGauntlet(day, { title: title.trim() || DEFAULT_TITLE, games });
-      const person = creators.find(entry => entry.uid === creator);
-      if (person) await inviteToDay(person, day);
+      await saveCustomGauntlet(day, { title: title.trim() || DEFAULT_TITLE, games,
+        creator: featuredPerson ? { uid: featuredPerson.uid, name: featuredPerson.name } : null });
+      // They need an invitation to play it early.
+      const person = creators.find(entry => entry.uid === featured);
+      if (person && !person.allDays && !(person.days || []).includes(day)) await inviteToDay(person, day);
       onSaved();
     } catch (failure) {
       setStatus(`Couldn't save${failure?.code ? ` (${failure.code})` : ''}. Check that the Firestore rules are deployed.`);
@@ -98,11 +109,14 @@ function CustomEditor({ day, creators, hasPar, onDone, onSaved }) {
       {words !== 2 && ` This lineup has ${words} word ${words === 1 ? 'game' : 'games'} (normally 2).`}</p>
     {repeats.length > 0 && <p className="creator-error">Each game can only be in the lineup once ({[...new Set(repeats)].map(gameTitle).join(', ')} is repeated).</p>}
     {hasPar && changedGames && <p className="creator-error">You've recorded a time for this day. With different games it won't count any more: play the day again to record a new one.</p>}
-    {pickable.length > 0 && <label className="creator-name">Let a creator play it early
-      <select value={creator} onChange={event => setCreator(event.target.value)}>
-        <option value="">No one else</option>
-        {pickable.map(person => <option key={person.uid} value={person.uid}>{person.name}</option>)}
-      </select></label>}
+    {(creators.length > 0 || featuredPerson) && <><label className="creator-name">Featured creator
+      <select value={featured} onChange={event => feature(event.target.value)}>
+        <option value="">None</option>
+        {featuredPerson && !creators.some(person => person.uid === featuredPerson.uid) && <option value={featuredPerson.uid}>{featuredPerson.name}</option>}
+        {creators.map(person => <option key={person.uid} value={person.uid}>{person.name}</option>)}
+      </select></label>
+      {featuredPerson && <p className="admin-archive-note">{featuredPerson.name} is invited to play it early. When they finish, their time shows under
+        yours on the home page ("Beat Skeet & {featuredPerson.name}!") and on the gauntlet page.</p>}</>}
     <div className="creator-actions">
       <button type="button" className="creator-primary" onClick={save} disabled={repeats.length > 0 || games.length !== GAUNTLET_SIZE || /…/.test(status)}>
         {existing ? 'Save changes' : 'Make this a custom gauntlet'}</button>
@@ -175,7 +189,8 @@ export default function AdminGauntlets() {
           </td></tr>;
           return <tr key={day} className={day === today ? 'admin-gauntlet-today' : ''}>
             <td><strong>{dayLabel(day)}</strong>{day === today && <span className="admin-gauntlet-tag">Today</span>}<br /><small>{day}</small></td>
-            <td>{special && <p className="custom-title">{special.title}<span className="creator-tag">Custom</span></p>}
+            <td>{special && <p className="custom-title">{special.title}<span className="creator-tag">Custom</span>
+              {special.creator && <small className="custom-featured"> featuring {special.creator.name}</small>}</p>}
               <ol className="admin-gauntlet-lineup">{gauntletLineup(day).map(game => <li key={game.id}>{game.title} <ChiliRating level={game.level} /></li>)}</ol>
               {day > today && <DayInvites day={day} creators={creators} onChange={() => listCreators().then(setCreators).catch(() => {})} />}</td>
             <td>{!(day in pars) ? '…' : par ? <><strong className="admin-gauntlet-time">{formatClock(par.total)}</strong><br /><small>{par.solved} of {par.results.length} solved</small></> : <span className="admin-gauntlet-missing">Not recorded</span>}</td>

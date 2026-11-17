@@ -237,3 +237,5 @@ html, body {
   .landing-admin-link { padding: 4px 8px; }
   .landing-admin-text { display: none; }
 }
+/* A custom gauntlet's name, above "Beat Skeet!". */
+.gauntlet-feature-status .gauntlet-special { flex-basis: 100%; color: #00f0ff; font-size: 0.95rem; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; }
