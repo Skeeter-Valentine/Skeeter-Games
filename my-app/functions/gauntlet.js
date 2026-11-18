@@ -80,8 +80,6 @@ export function hintPenalty(gameId, hints) {
 }
 
 export const clampPenalty = seconds => Math.min(3600, Math.max(60, Math.round((Number(seconds) || 0) / 60) * 60));
-// Faster than this is not a real solve.
-export const MIN_WIN_SECONDS = 5;
 
 export class GauntletError extends Error {
   constructor(code, message) { super(message); this.code = code; }
@@ -123,7 +121,6 @@ export function applyEvent(run, event, now, custom = null) {
     run = resumeRun(run, now);
     if (!['won', 'lost', 'gave-up'].includes(status)) throw new GauntletError('invalid-argument', 'Unknown result.');
     const spent = Math.max(0, Math.round((now - run.gameStartedAt) / 1000));
-    if (status === 'won' && spent < MIN_WIN_SECONDS) throw new GauntletError('failed-precondition', 'That solve was too fast to count.');
     const penalty = status === 'won' ? 0 : Math.max(0, clampPenalty(event.penalty) - spent);
     const bonus = status === 'won' ? guessBonus(game, event.guesses) : 0;
     const hinted = hintPenalty(game, event.hints);

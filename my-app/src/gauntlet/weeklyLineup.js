@@ -11,9 +11,16 @@
 // - Other puzzles: four a day, a different set every day, with plays shared
 //   as evenly as possible: 28 slots over 10 puzzles is 3 plays each for eight
 //   and 2 for the other two, which change from week to week.
+// - From ONE_MILD_FROM, at most one single-pepper (Mild) game a day: a day
+//   drawn with more has its extra Mild puzzles swapped for other puzzles that
+//   aren't Mild that day (the ones with the fewest plays that week first).
 // Games may play on consecutive days, so weeks don't fall into a pattern.
 // Earlier days keep the original per-day draw (and its original 13 games),
 // so past gauntlets, and any times recorded for them, never change.
+//
+// Its only import is the puzzle-difficulty code, which the sync script copies
+// alongside it, so it still runs in both places as-is.
+import { dailyDifficulty } from '../utils/dailyDifficulty.js';
 
 // The games before Pepper Placer joined: the original per-day draw uses these.
 const ORIGINAL_GAME_IDS = ['akari', 'skeedle-beadle', 'map', 'parshle', 'stitches', 'nonograms', 'skeedlemath',
@@ -34,6 +41,12 @@ export const GAUNTLET_SIZE = 6;
 export const WORDS_PER_DAY = 2;
 // A Monday. Change only to a later Monday, and only for days nobody has seen.
 export const LINEUP_RULES_FROM = '2026-10-26';
+// The first gauntlet day with at most MAX_MILD single-pepper games. Change
+// only to a later day, and only for days nobody has seen.
+export const ONE_MILD_FROM = '2026-11-19';
+export const MAX_MILD = 1;
+// Gauntlet puzzles come from the date this many days later (see gauntlet.js).
+export const PUZZLE_DAY_OFFSET = 20000;
 
 const DAY_MS = 86400000;
 export const addDays = (day, days) => new Date(Date.parse(`${day}T00:00:00Z`) + days * DAY_MS).toISOString().slice(0, 10);
@@ -59,6 +72,8 @@ const shuffler = rng => list => {
   return items;
 };
 const sameSet = (a, b) => a.length === b.length && a.every(id => b.includes(id));
+// A game's pepper level on a gauntlet day (1 = Mild, one pepper).
+export const gauntletLevel = (id, day) => dailyDifficulty(id, addDays(day, PUZZLE_DAY_OFFSET));
 
 // The original rule (one independent draw per day), kept for earlier days.
 function dailyDraw(day) {
@@ -104,14 +119,42 @@ function planOthers(rng, games) {
   }
 }
 
+// Keeps a day to MAX_MILD Mild games (from ONE_MILD_FROM). The word games
+// stay; extra Mild puzzles are swapped, in place, for puzzles that aren't Mild
+// that day and aren't already playing, fewest plays that week first, never
+// making the day's set the same as another day's.
+function limitMild(plan, d, monday, games, rng) {
+  const day = addDays(monday, d);
+  if (day < ONE_MILD_FROM) return;
+  const mild = id => gauntletLevel(id, day) === 1;
+  const { words } = plan[d];
+  const others = [...plan[d].others];
+  const plays = id => plan.filter(entry => entry.others.includes(id)).length;
+  const swaps = shuffler(rng)(games).filter(id => !mild(id)).sort((a, b) => plays(a) - plays(b));
+  let allowed = MAX_MILD - words.filter(mild).length;
+  for (let i = 0; i < others.length; i++) {
+    if (!mild(others[i])) continue;
+    if (allowed > 0) { allowed -= 1; continue; }
+    const swap = swaps.find(id => !others.includes(id)
+      && !plan.some((entry, j) => j !== d && sameSet(entry.others, others.map((old, k) => (k === i ? id : old)))));
+    if (swap) others[i] = swap;
+  }
+  plan[d] = { words, others };
+}
+
 // A week's plan: seven days of { words, others }, worked out once per week.
 const plans = new Map();
 export function weekPlan(monday) {
   if (!plans.has(monday)) {
     const rng = seeded(`skeeter-gauntlet-week-v4:${monday}`);
     const words = planWords(rng);
-    const others = planOthers(rng, otherGamesFor(monday));
-    plans.set(monday, words.map((pair, d) => ({ words: pair, others: others[d] })));
+    const games = otherGamesFor(monday);
+    const others = planOthers(rng, games);
+    const plan = words.map((pair, d) => ({ words: pair, others: others[d] }));
+    // Its own random draw, so weeks before the rule never change.
+    const swapRng = seeded(`skeeter-gauntlet-mild-v1:${monday}`);
+    for (let d = 0; d < 7; d++) limitMild(plan, d, monday, games, swapRng);
+    plans.set(monday, plan);
   }
   return plans.get(monday);
 }

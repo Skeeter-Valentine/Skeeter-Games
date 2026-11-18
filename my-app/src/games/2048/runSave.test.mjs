@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { MAX_SAVED_HISTORY, encodeBoard, encodeRun, validateRun } from './runSave.js';
+import { MAX_SAVED_HISTORY, encodeBoard, encodeRun, highestTileId, validateRun } from './runSave.js';
 const run = {
   version: 1, gameMode: 'classic', date: '2026-09-27', unlimitedSeed: 42,
   tiles: [{ id: 9, r: 0, c: 2, value: 2048 }], score: 3000, undoCount: 2,
@@ -48,4 +48,12 @@ test('boards are 16 characters, and long runs keep their most recent undo steps'
 test('runs saved in the old format still load', () => {
   const old = JSON.stringify({ ...run, history: run.history.map(step => ({ ...step, tiles: step.tiles.map(t => ({ ...t, isMerged: false, distance: 0 })) })) });
   assert.equal(validateRun(JSON.parse(old)).tiles[0].value, 2048);
+});
+
+test('a very long saved run loads without overflowing the stack', () => {
+  const board = '1234567890ab1234';
+  const long = { ...run, version: 2, board, history: Array.from({ length: MAX_SAVED_HISTORY }, () => `${board},100`) };
+  delete long.tiles;
+  const decoded = validateRun(long);
+  assert.equal(highestTileId(decoded), (MAX_SAVED_HISTORY + 1) * 15, '15 tiles per board, numbered in order');
 });

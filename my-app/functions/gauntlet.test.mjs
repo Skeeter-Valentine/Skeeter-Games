@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { applyEvent, boardEntry, boardScore, cleanNickname, dayAllowed, gauntletDay, GauntletError, lineupIds, MIN_WIN_SECONDS } from './gauntlet.js';
+import { applyEvent, boardEntry, boardScore, cleanNickname, dayAllowed, gauntletDay, GauntletError, lineupIds } from './gauntlet.js';
 
 const DAY = '2026-10-09';
 const NOON = Date.parse('2026-10-09T18:00:00Z');
@@ -24,7 +24,9 @@ test('the server times every game and adds the shrinking penalty', () => {
   assert.ok(again.alreadyStarted);
   assert.equal(again.run, run);
   rejects(() => applyEvent(run, { action: 'finish', day: DAY, game: run.lineup[1], status: 'won' }, NOON + 60_000), 'failed-precondition');
-  rejects(() => applyEvent(run, { action: 'finish', day: DAY, game: run.lineup[0], status: 'won' }, NOON + (MIN_WIN_SECONDS - 1) * 1000), 'failed-precondition');
+  // A very quick solve counts like any other (small boards can take seconds).
+  const quick = applyEvent(run, { action: 'finish', day: DAY, game: run.lineup[0], status: 'won' }, NOON + 2000);
+  assert.equal(quick.run.results[0].total, 2);
   ({ run } = applyEvent(run, { action: 'finish', day: DAY, game: run.lineup[0], status: 'won' }, NOON + 90_000));
   assert.deepEqual(run.results[0], { game: run.lineup[0], status: 'won', seconds: 90, penalty: 0, hintPenalty: 0, bonus: 0, total: 90 });
   assert.equal(run.waiting, true);

@@ -2,7 +2,7 @@ import { useDailyDate, useArchive } from '../../components/DailyBoundary';
 import { puzzleSnapshot } from '../../utils/archive.js';
 import DailyResults from '../../components/DailyResults';
 import CloudRuns, { SaveHint } from './CloudRuns';
-import { encodeRun, validateRun } from './runSave';
+import { encodeRun, highestTileId, validateRun } from './runSave';
 import useUndoShortcut from '../../components/useUndoShortcut';
 // src/pages/Game2048.jsx
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
@@ -169,8 +169,7 @@ export default function Game2048({ onWin }) {
     setCompletionTimeKnown(run.completionTimeKnown);
     setElapsedTime(run.elapsedTime);
     setWinTimeFormatted('');
-    const ids = [...run.tiles, ...run.history.flatMap((step) => step.tiles)].map((tile) => tile.id);
-    nextId.current = Math.max(0, ...ids) + 1;
+    nextId.current = highestTileId(run) + 1;
   }, [stopTimer]);
 
   // Initialize board for Daily Challenge, Unlimited Puzzles, or Classic Mode
@@ -185,8 +184,9 @@ export default function Game2048({ onWin }) {
     if (pendingRunRef.current) {
       const run = pendingRunRef.current;
       pendingRunRef.current = null;
-      applyRun(run);
-      return;
+      // A run that can't be shown falls through to a fresh board rather than
+      // taking the page down.
+      try { applyRun(run); return; } catch { /* start fresh below */ }
     }
 
     // 1. Purge old live daily keys. Never purge while showing an archive date,

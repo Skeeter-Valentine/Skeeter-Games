@@ -70,6 +70,16 @@ function decodeCompact(run) {
   };
 }
 
+// The largest tile id on the board or in the undo history. A loop, not
+// Math.max(...ids): long runs have hundreds of thousands of ids, more than a
+// browser allows as arguments (Safari stops at 65,536), which crashed loading.
+export function highestTileId(run) {
+  let highest = 0;
+  for (const tile of run.tiles) if (tile.id > highest) highest = tile.id;
+  for (const step of run.history) for (const tile of step.tiles) if (tile.id > highest) highest = tile.id;
+  return highest;
+}
+
 // Returns { payload, kept, dropped }: the JSON to store, and how many undo
 // steps were kept and left out.
 export function encodeRun(run) {

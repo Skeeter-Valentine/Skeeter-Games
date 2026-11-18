@@ -1,7 +1,7 @@
 // Skeeter Gauntlet rules. Pure functions (no React, no storage) so they can be
 // unit tested; the page in src/pages/Gauntlet.jsx wires them to the UI.
 import { dailyDifficulty } from '../utils/dailyDifficulty.js';
-import { WORD_GAMES, lineupFor } from './weeklyLineup.js';
+import { PUZZLE_DAY_OFFSET, WORD_GAMES, lineupFor } from './weeklyLineup.js';
 
 // The first public gauntlet day, or null while the gauntlet is unlaunched
 // (the page then shows "Coming soon"; test gauntlets still work).
@@ -74,7 +74,7 @@ export function pepperWeek(now = Date.now()) {
   return new Date(Date.parse(`${day}T00:00:00Z`) - ((weekday + 6) % 7) * 86400000).toISOString().slice(0, 10);
 }
 
-export const PUZZLE_DAY_OFFSET = 20000;
+export { PUZZLE_DAY_OFFSET };
 const DAY = 86400000;
 const isDate = date => typeof date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(date)
   && new Date(`${date}T00:00:00Z`).toISOString().slice(0, 10) === date;

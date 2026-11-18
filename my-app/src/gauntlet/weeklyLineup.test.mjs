@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { LINEUP_RULES_FROM, OTHER_GAMES, WORD_GAMES, addDays, lineupFor, otherGamesFor, seeded, weekStart } from './weeklyLineup.js';
+import { LINEUP_RULES_FROM, MAX_MILD, ONE_MILD_FROM, OTHER_GAMES, WORD_GAMES, addDays, gauntletLevel, lineupFor, otherGamesFor, seeded, weekStart } from './weeklyLineup.js';
 import { gauntletLineup } from './gauntlet.js';
 import { lineupIds } from '../../functions/gauntlet.js';
 
@@ -49,9 +49,11 @@ test('each week the other puzzles are a new set every day, spread evenly', () =>
     const games = otherGamesFor(addDays(LINEUP_RULES_FROM, w * 7));
     const sets = week.map(day => day.filter(id => !WORD_GAMES.includes(id)).sort().join('+'));
     assert.equal(new Set(sets).size, 7, 'a different set of puzzles every day');
-    // 28 slots over 10 puzzles: eight play 3 times, two play twice.
+    // 28 slots over 10 puzzles: eight play 3 times, two play twice. From
+    // ONE_MILD_FROM, swapping out extra Mild puzzles can shift a play or two.
     const plays = games.map(game => week.filter(day => day.includes(game)).length);
-    assert.deepEqual([...plays].sort(), [2, 2, 3, 3, 3, 3, 3, 3, 3, 3]);
+    if (addDays(LINEUP_RULES_FROM, w * 7 + 6) < ONE_MILD_FROM) assert.deepEqual([...plays].sort(), [2, 2, 3, 3, 3, 3, 3, 3, 3, 3]);
+    else assert.ok(plays.every(count => count >= 1 && count <= 4), `week ${w}: ${plays}`);
     if (w >= 2) games.forEach((game, i) => { if (plays[i] === 2) lighter.add(game); });
   }
   // The two lighter puzzles change from week to week.
@@ -85,4 +87,14 @@ test("Add 'em Up replaces Mineskeeter from the week of 2026-11-09", () => {
       assert.ok(days.includes('kakurasu') && !days.includes('minesweeper'), `week ${w}`);
     }
   }
+});
+
+test('from ONE_MILD_FROM, at most one single-pepper game a day', () => {
+  let mildDays = 0;
+  for (let day = ONE_MILD_FROM; day < '2028-12-31'; day = addDays(day, 1)) {
+    const mild = lineupFor(day).filter(id => gauntletLevel(id, day) === 1).length;
+    assert.ok(mild <= MAX_MILD, `${day} has ${mild} Mild games`);
+    if (mild === 1) mildDays += 1;
+  }
+  assert.ok(mildDays > 300, 'most days still have one easy game');
 });

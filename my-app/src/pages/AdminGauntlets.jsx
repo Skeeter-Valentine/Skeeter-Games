@@ -63,6 +63,7 @@ function CustomEditor({ day, creators, hasPar, onDone, onSaved }) {
   const puzzleDate = gauntletPuzzleDate(day);
   const repeats = games.filter((id, i) => games.indexOf(id) !== i);
   const words = games.filter(id => WORD_GAMES.includes(id)).length;
+  const mild = games.filter(id => dailyDifficulty(id, puzzleDate) === 1).length;
   const changedGames = games.join() !== gauntletLineup(day).map(game => game.id).join();
   const featuredPerson = creators.find(person => person.uid === featured) ?? (existing?.creator?.uid === featured ? existing.creator : null);
   function feature(uid) {
@@ -106,7 +107,8 @@ function CustomEditor({ day, creators, hasPar, onDone, onSaved }) {
       </li>)}
     </ol>
     <p className="admin-archive-note">Games play in this order. Each one's spice level is set by the day, as usual.
-      {words !== 2 && ` This lineup has ${words} word ${words === 1 ? 'game' : 'games'} (normally 2).`}</p>
+      {words !== 2 && ` This lineup has ${words} word ${words === 1 ? 'game' : 'games'} (normally 2).`}
+      {mild > 1 && ` It has ${mild} one-pepper games (most days have at most 1).`}</p>
     {repeats.length > 0 && <p className="creator-error">Each game can only be in the lineup once ({[...new Set(repeats)].map(gameTitle).join(', ')} is repeated).</p>}
     {hasPar && changedGames && <p className="creator-error">You've recorded a time for this day. With different games it won't count any more: play the day again to record a new one.</p>}
     {(creators.length > 0 || featuredPerson) && <><label className="creator-name">Featured creator
