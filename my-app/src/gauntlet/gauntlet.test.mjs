@@ -256,3 +256,28 @@ test('gauntlets saved on the account count toward the streak', async () => {
   assert.equal(summary.bestTime, 450);
   assert.equal(historySummary(here, '2026-11-16').streak, 1);
 });
+
+test('a custom gauntlet can set each game\'s spice level', async () => {
+  const { setCustomGauntlets, gauntletLineup, gauntletPuzzleDate, levelChoices, validPar } = await import('./gauntlet.js');
+  const day = '2026-12-03';
+  const games = ['map', 'akari', 'pipes', 'quordle', 'word500', 'hashi'];
+  setCustomGauntlets([{ day, title: 'Spicy', games }]);
+  const usual = gauntletLineup(day);
+  assert.ok(usual.every(game => game.puzzleDate === gauntletPuzzleDate(day)));
+  const want = Object.fromEntries(usual.filter(game => !['quordle', 'word500'].includes(game.id)).map(game => [game.id, game.level === 3 ? 1 : 3]));
+  setCustomGauntlets([{ day, title: 'Spicy', games, levels: { ...want, quordle: 1, nonograms: 2 } }]);
+  const lineup = gauntletLineup(day);
+  for (const game of lineup) {
+    if (want[game.id]) {
+      assert.equal(game.level, want[game.id], game.id);
+      assert.notEqual(game.puzzleDate, gauntletPuzzleDate(day));
+    } else assert.equal(game.level, 2, `${game.id} stays at its one level`);
+  }
+  assert.deepEqual(levelChoices(day, 'quordle'), [2]);
+  assert.deepEqual(levelChoices(day, 'map'), [1, 2, 3]);
+  // A time recorded at the usual levels no longer counts.
+  const par = { day, total: 300, solved: 6, games, results: games.map(game => ({ game, status: 'won', total: 50 })) };
+  assert.equal(validPar(par, day), null);
+  assert.ok(validPar({ ...par, levels: lineup.map(game => game.level) }, day));
+  setCustomGauntlets([]);
+});

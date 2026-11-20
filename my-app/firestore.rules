@@ -13,7 +13,7 @@ service cloud.firestore {
       allow create, update: if request.auth != null
         && request.auth.uid in ['QtQwYuCN4vWR1XNyz9K6fe9G7jl1']
         && day.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
-        && request.resource.data.keys().hasOnly(['day', 'total', 'solved', 'games', 'results', 'publishedAt'])
+        && request.resource.data.keys().hasOnly(['day', 'total', 'solved', 'games', 'levels', 'results', 'publishedAt'])
         && request.resource.data.day == day
         && request.resource.data.total is int
         && request.resource.data.total >= 0 && request.resource.data.total < 360000
@@ -55,7 +55,8 @@ service cloud.firestore {
       allow read: if true;
       allow create, update: if isOwner()
         && day.matches('^20[0-9]{2}-[0-9]{2}-[0-9]{2}$') && !day.matches('^2099-.*')
-        && request.resource.data.keys().hasOnly(['day', 'title', 'games', 'creator', 'updatedAt'])
+        && request.resource.data.keys().hasOnly(['day', 'title', 'games', 'creator', 'levels', 'updatedAt'])
+        && (!('levels' in request.resource.data) || request.resource.data.levels is map)
         && request.resource.data.day == day
         && request.resource.data.title is string && request.resource.data.title.size() <= 40
         && request.resource.data.games is list && request.resource.data.games.size() == 6;

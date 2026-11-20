@@ -18,7 +18,7 @@ import { canPreviewDay } from '../utils/creatorAccess.js';
 import { useCustomGauntlets } from '../services/customGauntlets.js';
 import { gauntletAnswer } from '../gauntlet/answers.js';
 import { fromServerRun, pauseRun, resumeRun, GAUNTLET_START, PAR_NAME, STORAGE_PREFIX, TEST_GAUNTLETS, addDays, addToHistory, remainingPenalty, gauntletLaunched, isTestDay, testDay, gauntletDay, gauntletOpensAt, paceVersusPar, parVerdict, validGuest, validPar, averageSolveSeconds, currentGameSeconds, formatClock, gameTitle, hintPenalty, mergeHistory,
-  customGauntlet, gauntletLineup, gauntletPuzzleDate, gauntletTitle, historySummary, keepAnswers, newRun, recordResult, restoreRun, runTotal, shareText, startNextGame } from '../gauntlet/gauntlet.js';
+  customGauntlet, gamePuzzleDateFor, gauntletLineup, gauntletPuzzleDate, gauntletTitle, historySummary, keepAnswers, newRun, recordResult, restoreRun, runTotal, shareText, startNextGame } from '../gauntlet/gauntlet.js';
 import Akari from '../games/akari/Akari';
 import SkeedleBeadle from '../games/skeedle-beadle/SkeedleBeadle';
 import MapGame from '../games/map/Map';
@@ -458,7 +458,7 @@ function GauntletPage() {
   // (so it shows even if the run was saved without it).
   const withAnswer = result => {
     if (!result || result.answer || result.status === 'won') return result;
-    const answer = answersRef.current[result.game] || gauntletAnswer(result.game, gauntletPuzzleDate(date));
+    const answer = answersRef.current[result.game] || gauntletAnswer(result.game, gamePuzzleDateFor(date, result.game));
     return answer ? { ...result, answer } : result;
   };
   // Hints used so far in the current game, so the clock shows their cost live.
@@ -808,7 +808,7 @@ function GauntletPage() {
               </span>}
         </div>
       </div>
-      <GauntletBoundary date={gauntletPuzzleDate(date)} onResult={onResult} onHints={onHints} onAnswer={onAnswer}>
+      <GauntletBoundary date={current.puzzleDate} onResult={onResult} onHints={onHints} onAnswer={onAnswer}>
         <div className={`gauntlet-pausable${run.pausedAt ? ' paused' : ''}`}>
           <FittedStage key={`${current.id}:${run.index}`} game={current.id}><Game /></FittedStage>
           {run.pausedAt && <p className="gauntlet-paused-note">Paused · close How to play to continue</p>}
@@ -825,13 +825,13 @@ function GauntletPage() {
   // Test gauntlets can be restarted: clear the run and every game's saved
   // progress for its puzzle date, so the same six puzzles start fresh.
   async function restartTest() {
-    const puzzleDate = gauntletPuzzleDate(date);
+    const puzzleDates = [gauntletPuzzleDate(date), ...lineup.map(game => game.puzzleDate)];
     if (runRef.current?.ranked) {
       await queue.current;
       try { await sendEvent({ action: 'reset', day: date }); } catch (error) { setSyncNote(`Couldn't reset the leaderboard run: ${friendlyError(error)}`); return; }
     }
     setSyncNote(''); setBoard(null);
-    forgetLocal(key => key.includes(puzzleDate) || key === runKey(date));
+    forgetLocal(key => puzzleDates.some(puzzleDate => key.includes(puzzleDate)) || key === runKey(date));
     runRef.current = null; setRun(null); setConfirming(false); setCopied('');
   }
 

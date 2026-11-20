@@ -1,7 +1,7 @@
 // Skeeter Gauntlet rules. Pure functions (no React, no storage) so they can be
 // unit tested; the page in src/pages/Gauntlet.jsx wires them to the UI.
 import { dailyDifficulty } from '../utils/dailyDifficulty.js';
-import { PUZZLE_DAY_OFFSET, WORD_GAMES, lineupFor } from './weeklyLineup.js';
+import { LEVELS, PUZZLE_DAY_OFFSET, WORD_GAMES, gamePuzzles, levelChoices, lineupFor } from './weeklyLineup.js';
 
 // The first public gauntlet day, or null while the gauntlet is unlaunched
 // (the page then shows "Coming soon"; test gauntlets still work).
@@ -97,7 +97,7 @@ const FIXED_LINEUPS = {
 };
 
 // Word games: every gauntlet has exactly two of these.
-export { WORD_GAMES };
+export { WORD_GAMES, LEVELS, levelChoices };
 
 // ----- Custom gauntlets -----
 // The owner can replace a day's lineup with six games of their choice and give
@@ -109,7 +109,9 @@ export const DEFAULT_TITLE = 'Skeeter Gauntlet';
 export const TITLE_MAX = 40;
 // The games a custom gauntlet can use: everything the gauntlet page can play.
 export const CUSTOM_GAME_IDS = GAUNTLET_GAMES.map(game => game.id);
-// { day, title, games } if `data` is a usable custom gauntlet, else null.
+// { day, title, games, creator, levels } if `data` is a usable custom
+// gauntlet, else null. levels: { gameId: 1 | 2 | 3 } for games whose spice
+// level was set by hand (see gamePuzzleDate in weeklyLineup.js).
 export function cleanCustomGauntlet(data, day = data?.day) {
   if (!data || !isDate(day) || isTestDay(day) || !Array.isArray(data.games) || data.games.length !== GAUNTLET_SIZE) return null;
   if (!data.games.every(id => CUSTOM_GAME_IDS.includes(id)) || new Set(data.games).size !== GAUNTLET_SIZE) return null;
@@ -117,7 +119,9 @@ export function cleanCustomGauntlet(data, day = data?.day) {
   // The featured creator, if any: their time shows under the owner's.
   const creator = typeof data.creator?.uid === 'string' && typeof data.creator?.name === 'string' && data.creator.name.trim()
     ? { uid: data.creator.uid, name: data.creator.name.trim().slice(0, 60) } : null;
-  return { day, title: title || DEFAULT_TITLE, games: [...data.games], creator };
+  const levels = Object.fromEntries(Object.entries(data.levels && typeof data.levels === 'object' ? data.levels : {})
+    .filter(([id, level]) => data.games.includes(id) && LEVELS.includes(level)));
+  return { day, title: title || DEFAULT_TITLE, games: [...data.games], creator, levels };
 }
 const customDays = new Map();
 // Replaces the known custom gauntlets (a list of Firestore records).
@@ -131,15 +135,20 @@ export function setCustomGauntlets(list) {
 export const customGauntlet = day => customDays.get(day) ?? null;
 export const gauntletTitle = day => customDays.get(day)?.title ?? DEFAULT_TITLE;
 
-// Today's six games, the same for everyone, each with its spice level.
+// Today's six games, the same for everyone, each with its spice level and
+// the date its puzzle comes from (normally gauntletPuzzleDate; a custom
+// gauntlet's hand-set levels use other dates).
 export function gauntletLineup(date) {
+  if (!isDate(date)) throw new RangeError('Expected a valid YYYY-MM-DD date');
   let games = FIXED_LINEUPS[date] ?? customDays.get(date)?.games;
   // Two word games and four other puzzles, planned a week at a time so every
   // game gets a fair share (see weeklyLineup.js, shared with the server).
   if (!games) games = lineupFor(date);
-  const puzzleDate = gauntletPuzzleDate(date);
-  return games.map(id => ({ id, title: gameTitle(id), level: dailyDifficulty(id, puzzleDate) }));
+  const levels = FIXED_LINEUPS[date] ? null : customDays.get(date)?.levels;
+  return gamePuzzles(date, games, levels).map(game => ({ ...game, title: gameTitle(game.id) }));
 }
+// The puzzle date of one of a day's games.
+export const gamePuzzleDateFor = (day, gameId) => gauntletLineup(day).find(game => game.id === gameId)?.puzzleDate ?? gauntletPuzzleDate(day);
 
 // Built-in average solve times (seconds) by spice level, used for the
 // give-up/loss penalty until enough community results exist.
@@ -264,7 +273,8 @@ export function shareText(run, origin = 'https://skeetergames.org', par = null) 
 // The owner's published result, as stored in Firestore (gauntletPar/{day}).
 export function parRecord(run) {
   return { day: run.date, total: runTotal(run), solved: run.results.filter(result => result.status === 'won').length,
-    games: [...run.lineup], results: run.results.map(({ game, status, total }) => ({ game, status, total })) };
+    games: [...run.lineup], levels: gauntletLineup(run.date).map(game => game.level),
+    results: run.results.map(({ game, status, total }) => ({ game, status, total })) };
 }
 // A published par is trusted only if it matches today's lineup.
 export function validPar(par, day) {
@@ -272,6 +282,11 @@ export function validPar(par, day) {
   const lineup = gauntletLineup(day).map(game => game.id);
   if (!Array.isArray(par.games) || par.games.join() !== lineup.join()) return null;
   if (!Array.isArray(par.results) || par.results.length !== lineup.length) return null;
+  // Played at the same spice levels (an older record without levels was
+  // played at the day's usual ones).
+  const levels = gauntletLineup(day).map(game => game.level).join();
+  const played = Array.isArray(par.levels) ? par.levels.join() : lineup.map(id => dailyDifficulty(id, gauntletPuzzleDate(day))).join();
+  if (played !== levels) return null;
   return par;
 }
 export function parVerdict(total, parTotal, name = PAR_NAME) {

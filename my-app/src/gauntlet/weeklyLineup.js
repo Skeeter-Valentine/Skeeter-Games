@@ -75,6 +75,35 @@ const sameSet = (a, b) => a.length === b.length && a.every(id => b.includes(id))
 // A game's pepper level on a gauntlet day (1 = Mild, one pepper).
 export const gauntletLevel = (id, day) => dailyDifficulty(id, addDays(day, PUZZLE_DAY_OFFSET));
 
+// ----- Custom spice levels -----
+// A custom gauntlet can set a game's spice level (customGauntlets/{day}.levels,
+// { gameId: 1 | 2 | 3 }). The game then uses a puzzle from a date that has
+// that level: one of LEVEL_SLOTS dates set aside for each gauntlet day, far
+// past every daily and normal gauntlet puzzle (and never shared between days),
+// so it's a puzzle nobody has seen. Shared with the server, which needs the
+// same levels for peppers.
+const LEVEL_SLOTS = 32;
+const LEVELS_FROM = '2200-01-01';
+export const LEVELS = [1, 2, 3];
+export function gamePuzzleDate(day, id, level = null) {
+  const usual = addDays(day, PUZZLE_DAY_OFFSET);
+  if (!LEVELS.includes(level) || dailyDifficulty(id, usual) === level) return usual;
+  const first = addDays(LEVELS_FROM, Math.round(Date.parse(`${day}T00:00:00Z`) / DAY_MS) * LEVEL_SLOTS);
+  for (let slot = 0; slot < LEVEL_SLOTS; slot++) {
+    const date = addDays(first, slot);
+    if (dailyDifficulty(id, date) === level) return date;
+  }
+  return usual; // No puzzle at that level: the day's own.
+}
+// The levels a game can be set to on `day` (word games other than Parshle
+// only come at one).
+export const levelChoices = (day, id) => LEVELS.filter(level => dailyDifficulty(id, gamePuzzleDate(day, id, level)) === level);
+// Each game's { id, puzzleDate, level } for a day, given its custom levels.
+export const gamePuzzles = (day, ids, levels = null) => ids.map(id => {
+  const puzzleDate = gamePuzzleDate(day, id, levels?.[id]);
+  return { id, puzzleDate, level: dailyDifficulty(id, puzzleDate) };
+});
+
 // The original rule (one independent draw per day), kept for earlier days.
 function dailyDraw(day) {
   const shuffle = shuffler(seeded(`skeeter-gauntlet-v2:${day}`));

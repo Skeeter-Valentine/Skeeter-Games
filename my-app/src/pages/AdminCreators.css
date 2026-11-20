@@ -30,10 +30,11 @@
 .creator-home .admin-gauntlet-lineup { gap: 2px 18px; }
 /* Custom gauntlets (the editor on AdminGauntlets.jsx). */
 .custom-editor { margin-top: 10px; white-space: normal; }
-.custom-games { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 8px 16px; margin: 6px 0 4px; padding: 0; list-style: none; }
+.custom-games { display: grid; grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); gap: 8px 16px; margin: 6px 0 4px; padding: 0; list-style: none; }
 .custom-num { width: 1.4em; color: #c5b6d5; font-weight: bold; text-align: right; }
 .custom-games li { display: flex; align-items: center; gap: 8px; }
 .custom-games select { min-width: 160px; }
+.custom-games select.custom-level { min-width: 0; }
 .admin-archive select.repeat { border-color: #ff6b9d; }
 .admin-archive .custom-title { margin: 0 0 6px; color: #00f0ff; font-weight: bold; }
 .custom-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }

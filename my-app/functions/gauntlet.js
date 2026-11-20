@@ -34,6 +34,11 @@ export function customLineup(data, day) {
   if (!data.games.every(id => GAUNTLET_GAMES.includes(id)) || new Set(data.games).size !== GAUNTLET_SIZE) return null;
   return [...data.games];
 }
+// The spice level a custom gauntlet set by hand for one of its games, if any.
+export function customLevel(data, day, game) {
+  const level = customLineup(data, day)?.includes(game) ? data.levels?.[game] : null;
+  return [1, 2, 3].includes(level) ? level : null;
+}
 
 // The gauntlet day for an instant: 4am Denver time starts a new day.
 const denverParts = new Intl.DateTimeFormat('en-US', { timeZone: 'America/Denver', hourCycle: 'h23', year: 'numeric', month: 'numeric', day: 'numeric', hour: 'numeric' });

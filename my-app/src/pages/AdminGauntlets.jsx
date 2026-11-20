@@ -4,9 +4,9 @@ import { GoogleAuthProvider, onAuthStateChanged, signInWithPopup, signOut } from
 import { firebaseConfigured, firebaseServices } from '../services/firebase.js';
 import { readPar } from '../services/gauntletPar.js';
 import { deleteCustomGauntlet, saveCustomGauntlet, useCustomGauntlets } from '../services/customGauntlets.js';
-import { inviteToDay, listCreators } from '../services/creator.js';
+import { inviteToDay, listCreators, publishGuest } from '../services/creator.js';
 import { CUSTOM_GAME_IDS, DEFAULT_TITLE, GAUNTLET_SIZE, PAR_NAME, TITLE_MAX, WORD_GAMES, addDays, customGauntlet, formatClock, gameTitle, gauntletDay,
-  gauntletLaunched, gauntletLineup, gauntletOpensAt, gauntletPuzzleDate, validPar } from '../gauntlet/gauntlet.js';
+  gauntletLaunched, gauntletLineup, gauntletOpensAt, gauntletPuzzleDate, levelChoices, validPar } from '../gauntlet/gauntlet.js';
 import { dailyDifficulty } from '../utils/dailyDifficulty.js';
 import ChiliRating from '../components/ChiliRating';
 import Navbar from '../components/Navbar';
@@ -52,10 +52,14 @@ function DayInvites({ day, creators, onChange }) {
   </div>;
 }
 
+const LEVEL_NAMES = ['Mild', 'Medium', 'Picante'];
+
 function CustomEditor({ day, creators, hasPar, onDone, onSaved }) {
   const existing = customGauntlet(day);
   const [title, setTitle] = useState(existing?.title ?? '');
   const [games, setGames] = useState(() => gauntletLineup(day).map(game => game.id));
+  // Spice levels set by hand ({ gameId: level }); other games keep the day's.
+  const [levels, setLevels] = useState(() => ({ ...(existing?.levels ?? {}) }));
   // The featured creator: the day is usually named after them, and their time
   // shows under yours on the home page and the gauntlet page.
   const [featured, setFeatured] = useState(existing?.creator?.uid ?? '');
@@ -63,8 +67,20 @@ function CustomEditor({ day, creators, hasPar, onDone, onSaved }) {
   const puzzleDate = gauntletPuzzleDate(day);
   const repeats = games.filter((id, i) => games.indexOf(id) !== i);
   const words = games.filter(id => WORD_GAMES.includes(id)).length;
-  const mild = games.filter(id => dailyDifficulty(id, puzzleDate) === 1).length;
+  const usualLevel = id => dailyDifficulty(id, puzzleDate);
+  const levelOf = id => levels[id] ?? usualLevel(id);
+  const mild = games.filter(id => levelOf(id) === 1).length;
   const changedGames = games.join() !== gauntletLineup(day).map(game => game.id).join();
+  const changedLevels = games.map(levelOf).join() !== gauntletLineup(day).map(game => game.level).join();
+  function setLevel(id, level) {
+    const { [id]: _old, ...rest } = levels;
+    setLevels(level === usualLevel(id) ? rest : { ...rest, [id]: level });
+  }
+  function setGame(i, id) {
+    const { [games[i]]: _old, ...rest } = levels;
+    setLevels(rest);
+    setGames(games.map((old, j) => (j === i ? id : old)));
+  }
   const featuredPerson = creators.find(person => person.uid === featured) ?? (existing?.creator?.uid === featured ? existing.creator : null);
   function feature(uid) {
     const person = creators.find(entry => entry.uid === uid);
@@ -77,11 +93,13 @@ function CustomEditor({ day, creators, hasPar, onDone, onSaved }) {
   async function save() {
     setStatus('Saving…');
     try {
-      await saveCustomGauntlet(day, { title: title.trim() || DEFAULT_TITLE, games,
+      await saveCustomGauntlet(day, { title: title.trim() || DEFAULT_TITLE, games, levels,
         creator: featuredPerson ? { uid: featuredPerson.uid, name: featuredPerson.name } : null });
       // They need an invitation to play it early.
       const person = creators.find(entry => entry.uid === featured);
       if (person && !person.allDays && !(person.days || []).includes(day)) await inviteToDay(person, day);
+      // If they've already played it, their time goes up now.
+      if (featuredPerson) await publishGuest(day).catch(() => {});
       onSaved();
     } catch (failure) {
       setStatus(`Couldn't save${failure?.code ? ` (${failure.code})` : ''}. Check that the Firestore rules are deployed.`);
@@ -100,17 +118,24 @@ function CustomEditor({ day, creators, hasPar, onDone, onSaved }) {
       {games.map((id, i) => <li key={i}>
         <span className="custom-num">{i + 1}</span>
         <select aria-label={`Game ${i + 1}`} value={id} className={repeats.includes(id) ? 'repeat' : ''}
-          onChange={event => setGames(games.map((old, j) => (j === i ? event.target.value : old)))}>
+          onChange={event => setGame(i, event.target.value)}>
           {GAME_CHOICES.map(choice => <option key={choice} value={choice}>{gameTitle(choice)}</option>)}
         </select>
-        <ChiliRating level={dailyDifficulty(id, puzzleDate)} />
+        <select aria-label={`Spice level for game ${i + 1}`} className="custom-level" value={levelOf(id)}
+          onChange={event => setLevel(id, Number(event.target.value))} disabled={levelChoices(day, id).length < 2}>
+          {levelChoices(day, id).map(level => <option key={level} value={level}>
+            {LEVEL_NAMES[level - 1]}{level === usualLevel(id) ? " (day's level)" : ''}</option>)}
+        </select>
+        <ChiliRating level={levelOf(id)} />
       </li>)}
     </ol>
-    <p className="admin-archive-note">Games play in this order. Each one's spice level is set by the day, as usual.
+    <p className="admin-archive-note">Games play in this order. Each game uses the day's spice level unless you pick another; a different level
+      gives it a different puzzle. Word games other than Parshle only come at one level.
       {words !== 2 && ` This lineup has ${words} word ${words === 1 ? 'game' : 'games'} (normally 2).`}
       {mild > 1 && ` It has ${mild} one-pepper games (most days have at most 1).`}</p>
     {repeats.length > 0 && <p className="creator-error">Each game can only be in the lineup once ({[...new Set(repeats)].map(gameTitle).join(', ')} is repeated).</p>}
-    {hasPar && changedGames && <p className="creator-error">You've recorded a time for this day. With different games it won't count any more: play the day again to record a new one.</p>}
+    {hasPar && (changedGames || changedLevels) && <p className="creator-error">You've recorded a time for this day. With different games or spice levels it
+      won't count any more: play the day again to record a new one.</p>}
     {(creators.length > 0 || featuredPerson) && <><label className="creator-name">Featured creator
       <select value={featured} onChange={event => feature(event.target.value)}>
         <option value="">None</option>
@@ -127,6 +152,30 @@ function CustomEditor({ day, creators, hasPar, onDone, onSaved }) {
     </div>
     {status && <p role="status">{status}</p>}
   </div>;
+}
+
+// Posts a featured creator's time under yours, for a run they finished
+// before being featured (later runs post it themselves).
+const GUEST_REASONS = {
+  'not-finished': "hasn't finished this gauntlet yet",
+  'different-games': 'played a different set of games',
+  'no-creator': 'is no longer featured on this day',
+};
+function GuestButton({ day, name }) {
+  const [status, setStatus] = useState('');
+  async function post() {
+    setStatus('Posting…');
+    try {
+      const result = await publishGuest(day);
+      setStatus(result.published ? `Posted (${formatClock(result.total)})` : `${name} ${GUEST_REASONS[result.reason] || "couldn't be posted"}.`);
+    } catch (failure) {
+      setStatus(`Couldn't post it${failure?.code ? ` (${failure.code})` : ''}. Check that the functions are deployed.`);
+    }
+  }
+  return <>
+    <button type="button" onClick={post} disabled={status === 'Posting…'}>Post {name}'s time</button>
+    {status && <small role="status">{status}</small>}
+  </>;
 }
 
 export default function AdminGauntlets() {
@@ -199,6 +248,7 @@ export default function AdminGauntlets() {
             <td className="custom-actions">
               <Link className="admin-gauntlet-play" to={day === today ? '/gauntlet' : `/gauntlet?day=${day}`}>{par ? 'Replay' : 'Play'}</Link>
               {day > today && custom.state === 'ready' && <button type="button" onClick={() => setEditing(day)}>{special ? 'Edit custom' : 'Customize'}</button>}
+              {special?.creator && <GuestButton day={day} name={special.creator.name} />}
             </td>
           </tr>;
         })}</tbody>

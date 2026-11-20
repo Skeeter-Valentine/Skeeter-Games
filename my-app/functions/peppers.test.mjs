@@ -53,3 +53,15 @@ test('gauntlet games earn the same chili ratings the page shows, plus 5 for fini
   assert.equal(total, expected);
   assert.equal(gauntletPeppers('2099-01-01', run, true), 0, 'test gauntlets never count');
 });
+
+test('a custom gauntlet\'s hand-set spice level sets its peppers', () => {
+  const day = '2026-12-03';
+  const games = ['map', 'akari', 'pipes', 'quordle', 'word500', 'hashi'];
+  const usual = gauntletGamePeppers(day, 'map');
+  const wanted = usual === 3 ? 1 : 3;
+  const custom = { games, levels: { map: wanted, quordle: 3 } };
+  assert.equal(gauntletGamePeppers(day, 'map', custom), wanted);
+  assert.equal(gauntletGamePeppers(day, 'quordle', custom), 2, 'word games only come at one level');
+  assert.equal(gauntletGamePeppers(day, 'akari', custom), gauntletGamePeppers(day, 'akari'));
+  assert.equal(gauntletGamePeppers(day, 'map', { ...custom, games: games.slice(1) }), usual, 'ignored unless the custom lineup is valid');
+});

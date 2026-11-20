@@ -40,6 +40,8 @@ export function useCustomGauntlets() {
 }
 
 // ----- Owner only (the Firestore rules refuse everyone else) -----
-export const saveCustomGauntlet = (day, { title, games, creator = null }) => setDoc(doc(firebaseServices().db, 'customGauntlets', day),
-  { day, title: title.trim().slice(0, 40), games: [...games], creator: creator ? { uid: creator.uid, name: creator.name.slice(0, 60) } : null, updatedAt: serverTimestamp() });
+// levels: { gameId: 1 | 2 | 3 } for games whose spice level you set by hand.
+export const saveCustomGauntlet = (day, { title, games, creator = null, levels = {} }) => setDoc(doc(firebaseServices().db, 'customGauntlets', day),
+  { day, title: title.trim().slice(0, 40), games: [...games], creator: creator ? { uid: creator.uid, name: creator.name.slice(0, 60) } : null,
+    levels: Object.fromEntries(Object.entries(levels).filter(([id]) => games.includes(id))), updatedAt: serverTimestamp() });
 export const deleteCustomGauntlet = day => deleteDoc(doc(firebaseServices().db, 'customGauntlets', day));

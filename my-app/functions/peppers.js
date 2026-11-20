@@ -6,7 +6,8 @@
 // - Finishing a gauntlet (all six games played) adds a 5-pepper bonus.
 // Weeks start Monday at 4am Colorado time, like the gauntlet's days.
 import { dailyDifficulty } from './shared/utils/dailyDifficulty.js';
-import { gauntletDay, isTestDay } from './gauntlet.js';
+import { gamePuzzleDate } from './shared/gauntlet/weeklyLineup.js';
+import { customLevel, gauntletDay, isTestDay } from './gauntlet.js';
 
 export const GAUNTLET_BONUS = 5;
 const DAY = 86400000;
@@ -28,19 +29,21 @@ export function dailyPeppers({ game, date, mode, status }, firstWin, now) {
   return dailyDifficulty(game, date);
 }
 
-// Gauntlet games use their own puzzles (dated 20000 days ahead, as on the site).
-export const gauntletGamePeppers = (day, game) => dailyDifficulty(game, addDays(day, 20000));
+// Gauntlet games use their own puzzles (dated 20000 days ahead, as on the
+// site), or, when a custom gauntlet set a game's spice level, a puzzle at
+// that level (`custom` is the day's customGauntlets record).
+export const gauntletGamePeppers = (day, game, custom = null) => dailyDifficulty(game, gamePuzzleDate(day, game, customLevel(custom, day, game)));
 
 // Peppers for a whole finished run recorded at once (the owner's advance runs):
 // every solved game's rating plus the finishing bonus.
-export function gauntletRunPeppers(day, run) {
+export function gauntletRunPeppers(day, run, custom = null) {
   if (isTestDay(day) || !run?.results?.length) return 0;
-  return run.results.reduce((sum, result) => sum + (result.status === 'won' ? gauntletGamePeppers(day, result.game) : 0), 0) + GAUNTLET_BONUS;
+  return run.results.reduce((sum, result) => sum + (result.status === 'won' ? gauntletGamePeppers(day, result.game, custom) : 0), 0) + GAUNTLET_BONUS;
 }
 
 // Peppers for one gauntlet "finish" event. Test gauntlets never count.
-export function gauntletPeppers(day, run, finished) {
+export function gauntletPeppers(day, run, finished, custom = null) {
   if (isTestDay(day) || !run?.results?.length) return 0;
   const last = run.results.at(-1);
-  return (last.status === 'won' ? gauntletGamePeppers(day, last.game) : 0) + (finished ? GAUNTLET_BONUS : 0);
+  return (last.status === 'won' ? gauntletGamePeppers(day, last.game, custom) : 0) + (finished ? GAUNTLET_BONUS : 0);
 }

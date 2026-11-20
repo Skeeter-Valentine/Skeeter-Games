@@ -35,6 +35,13 @@ export async function findPlayers(query) {
   return result.data.players;
 }
 
+// Posts the featured creator's time for a custom gauntlet they've already
+// played: { published, total } or { published: false, reason }.
+export async function publishGuest(day) {
+  const result = await httpsCallable(getFunctions(undefined, 'us-central1'), 'publishGuest')({ day });
+  return result.data;
+}
+
 export async function listCreators() {
   const snapshot = await getDocs(collection(firebaseServices().db, 'creators'));
   return snapshot.docs.map(entry => ({ uid: entry.id, ...entry.data() })).sort((a, b) => (b.joinedAt ?? 0) - (a.joinedAt ?? 0));

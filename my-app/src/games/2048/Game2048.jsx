@@ -94,6 +94,9 @@ export default function Game2048({ onWin }) {
   const [isTestMode, setIsTestMode] = useState(false);
   const [gameWon, setGameWon] = useState(false);
   const [winTimeFormatted, setWinTimeFormatted] = useState('');
+  // A run loaded from the player's account that already reached 2048 doesn't
+  // announce it again: the banner is for reaching it in this sitting.
+  const [quietWin, setQuietWin] = useState(false);
   
   // Timer states
   const [elapsedTime, setElapsedTime] = useState(0);
@@ -158,15 +161,20 @@ export default function Game2048({ onWin }) {
 
   // Puts a saved run (see CloudRuns and runSave.js) on the board. The timer
   // stays stopped until the next move.
-  const applyRun = useCallback((run) => {
+  const applyRun = useCallback((run, { fromAccount = false } = {}) => {
     stopTimer();
     setIsTestMode(false);
     setTiles(run.tiles);
     setScore(run.score);
     setHistory(run.history);
     setUndoCount(run.undoCount);
-    setGameWon(run.gameWon);
-    setCompletionTimeKnown(run.completionTimeKnown);
+    // A board already holding a 2048 (or bigger) tile counts as won, so the
+    // next big merge doesn't congratulate again. When the save didn't record
+    // the win, its time isn't known.
+    const reached = run.tiles.some((tile) => tile.value >= 2048);
+    setGameWon(run.gameWon || reached);
+    setCompletionTimeKnown(run.gameWon ? run.completionTimeKnown : !reached);
+    setQuietWin(fromAccount);
     setElapsedTime(run.elapsedTime);
     setWinTimeFormatted('');
     nextId.current = highestTileId(run) + 1;
@@ -180,13 +188,14 @@ export default function Game2048({ onWin }) {
     setIsTestMode(false);
     setGameWon(false);
     setWinTimeFormatted('');
+    setQuietWin(false);
 
     if (pendingRunRef.current) {
       const run = pendingRunRef.current;
       pendingRunRef.current = null;
       // A run that can't be shown falls through to a fresh board rather than
       // taking the page down.
-      try { applyRun(run); return; } catch { /* start fresh below */ }
+      try { applyRun(run, { fromAccount: true }); return; } catch { /* start fresh below */ }
     }
 
     // 1. Purge old live daily keys. Never purge while showing an archive date,
@@ -280,7 +289,7 @@ export default function Game2048({ onWin }) {
       throw new Error(`That run is from the ${run.date} daily, so it can only be resumed on that day's puzzle.`);
     }
     if (run.gameMode === gameMode && (run.gameMode !== 'unlimited' || run.unlimitedSeed === unlimitedSeed)) {
-      applyRun(run);
+      applyRun(run, { fromAccount: true });
       return;
     }
     // Switching modes restarts the board, so initGame applies the run instead.
@@ -449,6 +458,7 @@ export default function Game2048({ onWin }) {
 
     if (hasReached2048 && !gameWon) {
       setGameWon(true);
+      setQuietWin(false);
       stopTimer();
       setWinTimeFormatted(formatTime(elapsedTime));
       onWin?.(); // Safely call onWin if provided
@@ -650,7 +660,7 @@ export default function Game2048({ onWin }) {
           </div>
         )}
 
-        {gameWon && (
+        {gameWon && !quietWin && (
           <div
             className="game2048-banner win-banner"
             style={{
