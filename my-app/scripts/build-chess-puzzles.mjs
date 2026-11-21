@@ -14,13 +14,14 @@
 //
 // It keeps well-liked, well-tested puzzles (popularity, number of plays and a
 // settled rating), checks each one plays through with the site's own chess
-// rules, and spreads the picks across the themes (forks, pins, mates...).
+// rules and ends in mate or clearly won material (clearFinish in puzzles.js),
+// and spreads the picks across the themes (forks, pins, mates...).
 import { createReadStream, readFileSync, writeFileSync } from 'node:fs';
 import { createInterface } from 'node:readline';
 import { Readable } from 'node:stream';
 import { createZstdDecompress, zstdDecompressSync } from 'node:zlib';
 import { fileURLToPath } from 'node:url';
-import { levelOf, puzzleProblems, toPuzzle } from '../src/games/chess/puzzles.js';
+import { clearFinish, levelOf, puzzleProblems, toPuzzle } from '../src/games/chess/puzzles.js';
 
 export const MIN_POPULARITY = 85, MIN_PLAYS = 1000, MAX_DEVIATION = 80;
 
@@ -129,7 +130,11 @@ async function main() {
     list.push(row);
     if (list.length > cap * 2) { list.sort((a, b) => hash(a.id) - hash(b.id)); list.length = cap; }
   }
-  const candidates = [...keep.values()].flat().filter(row => !puzzleProblems(toPuzzle([row.id, row.fen, row.moves, row.rating, row.themes])).length);
+  // Only puzzles that play through and end in mate or clearly won material.
+  const candidates = [...keep.values()].flat().filter(row => {
+    const puzzle = toPuzzle([row.id, row.fen, row.moves, row.rating, row.themes]);
+    return !puzzleProblems(puzzle).length && clearFinish(puzzle);
+  });
   const chosen = choose(candidates, perLevel);
   if (!chosen.length) {
     console.error(`No puzzles found in ${file} (read ${read.toLocaleString()} rows), so the bank was left as it was.`);

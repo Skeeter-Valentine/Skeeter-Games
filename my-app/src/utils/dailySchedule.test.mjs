@@ -45,3 +45,17 @@ test('schedule is independent of lookup order and handles year and leap-day boun
   }
   assert.throws(() => scheduledDifficulty('parshle', '2026-02-30'), RangeError);
 });
+
+test('Skeetmate weeks have 2 Mild, 2 Medium and 3 Picante, in a varying order', async () => {
+  const { CHESS_WEEKS_FROM } = await import('./dailySchedule.js');
+  const orders = new Set();
+  for (let week = 0; week < 104; week++) {
+    const levels = Array.from({ length: 7 }, (_, d) => scheduledDifficulty('chess', new Date(Date.parse(`${CHESS_WEEKS_FROM}T00:00:00Z`) + (week * 7 + d) * 86400000).toISOString().slice(0, 10)));
+    assert.deepEqual([...levels].sort(), [1, 1, 2, 2, 3, 3, 3], `week ${week}`);
+    orders.add(levels.join(''));
+  }
+  assert.ok(orders.size > 10, 'the order changes from week to week');
+  assert.equal(new Date(`${CHESS_WEEKS_FROM}T00:00:00Z`).getUTCDay(), 1, 'weeks start on Monday');
+  // Days before keep the old cycle.
+  assert.equal(scheduledDifficulty('chess', '2026-11-21'), 3);
+});

@@ -1,5 +1,5 @@
 import { scheduledDifficulty } from '../../utils/dailySchedule.js';
-import { findUci, gameEnd, makeMove, parseFen, uci } from './engine.js';
+import { attacked, colorOf, findUci, gameEnd, legalMoves, makeMove, parseFen, uci } from './engine.js';
 import BANK from './puzzleBank.js';
 
 // Chess puzzles: "find the best move". The opponent's move is played first,
@@ -52,13 +52,29 @@ function levelDayIndex(date, level) {
   }
   return count;
 }
+// From CLEAR_FROM, dailies are only puzzles with a clear payoff (see
+// clearFinish), in the same order, skipping any already shown. Earlier days
+// keep the puzzle they had.
+export const CLEAR_FROM = '2026-11-22';
+const clearCache = new Map();
+function clearOrder(level) {
+  if (!clearCache.has(level)) {
+    const shown = new Set(shuffled(level).slice(0, levelDayIndex(CLEAR_FROM, level)).map(puzzle => puzzle.id));
+    const clear = shuffled(level).filter(puzzle => clearFinish(puzzle) && !shown.has(puzzle.id));
+    clearCache.set(level, clear.length ? clear : shuffled(level));
+  }
+  return clearCache.get(level);
+}
 export function dailyPuzzle(date) {
   const level = dailyLevel(date);
   const pool = shuffled(level);
-  return pool[levelDayIndex(date, level) % pool.length];
+  const index = levelDayIndex(date, level);
+  if (date < CLEAR_FROM) return pool[index % pool.length];
+  const clear = clearOrder(level);
+  return clear[(index - levelDayIndex(CLEAR_FROM, level)) % clear.length];
 }
 export function practicePuzzle(level, avoidId = null, random = Math.random) {
-  const pool = puzzlesFor(level).filter(puzzle => puzzle.id !== avoidId);
+  const pool = puzzlesFor(level).filter(puzzle => puzzle.id !== avoidId && clearFinish(puzzle));
   const list = pool.length ? pool : puzzlesFor(level);
   return list[Math.floor(random() * list.length)];
 }
@@ -96,4 +112,38 @@ export function puzzleProblems(puzzle) {
     problems.push(error.message);
   }
   return problems;
+}
+
+// ----- What the solution wins -----
+// A puzzle has a clear finish when it ends in checkmate, or leaves the player
+// at least CLEAR_GAIN points of material up (pawn 1, knight and bishop 3, rook
+// 5, queen 9) on the board, compared with before the opponent's first move,
+// after the opponent's best immediate capture. Puzzles won by a quieter edge
+// (a better endgame, a pawn that will promote) are left out of the daily.
+export const CLEAR_GAIN = 3;
+const VALUES = { p: 1, n: 3, b: 3, r: 5, q: 9, k: 0 };
+const valueOf = piece => VALUES[piece.toLowerCase()];
+const balance = (board, color) => board.reduce((sum, piece) => (piece ? sum + (colorOf(piece) === color ? 1 : -1) * valueOf(piece) : sum), 0);
+// The most material the side to move can win straight away (a capture, less
+// the capturing piece when it can be taken back).
+function bestCapture(pos, defender) {
+  let best = 0;
+  for (const move of legalMoves(pos)) {
+    if (!move.captured && !move.ep) continue;
+    const after = makeMove(pos, move);
+    const taken = move.captured ? valueOf(move.captured) : 1;
+    best = Math.max(best, taken - (attacked(after.board, move.to, defender) ? valueOf(move.piece) : 0));
+  }
+  return best;
+}
+// { mate, gain }: gain is the player's material won (99 for a mate).
+export function puzzleFinish(puzzle) {
+  const positions = puzzlePositions(puzzle), player = playerColor(puzzle), end = positions.at(-1);
+  if (gameEnd(end) === 'checkmate') return { mate: true, gain: 99 };
+  return { mate: false, gain: balance(end.board, player) - balance(positions[0].board, player) - bestCapture(end, player) };
+}
+const finishCache = new Map();
+export function clearFinish(puzzle) {
+  if (!finishCache.has(puzzle.id)) finishCache.set(puzzle.id, puzzleFinish(puzzle).gain >= CLEAR_GAIN);
+  return finishCache.get(puzzle.id);
 }

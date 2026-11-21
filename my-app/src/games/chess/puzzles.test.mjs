@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { findUci, gameEnd, parseFen } from './engine.js';
 import { mateMoves } from './solver.js';
-import { ALL_PUZZLES, dailyLevel, dailyPuzzle, judgeMove, levelOf, playerColor, practicePuzzle, puzzlePositions, puzzleProblems, puzzlesFor } from './puzzles.js';
+import { ALL_PUZZLES, CLEAR_FROM, clearFinish, dailyLevel, dailyPuzzle, judgeMove, levelOf, playerColor, practicePuzzle, puzzleFinish, puzzlePositions, puzzleProblems, puzzlesFor } from './puzzles.js';
 
 test('every puzzle in the bank plays through cleanly', () => {
   assert.ok(ALL_PUZZLES.length > 0);
@@ -29,16 +29,15 @@ test('the daily is fixed per date, matches its peppers, and cycles without repea
   assert.equal(dailyPuzzle('2026-11-10').id, dailyPuzzle('2026-11-10').id);
   const byLevel = new Map([[1, []], [2, []], [3, []]]);
   for (let day = 0; day < 90; day++) {
-    const date = new Date(Date.UTC(2026, 10, 1 + day)).toISOString().slice(0, 10);
+    const date = new Date(Date.UTC(2026, 10, 22 + day)).toISOString().slice(0, 10);
     byLevel.get(dailyLevel(date)).push(dailyPuzzle(date).id);
   }
   for (const [level, ids] of byLevel) {
-    const pool = puzzlesFor(level).length;
+    const pool = puzzlesFor(level).filter(clearFinish).length;
     // Within one pass through a level's puzzles, none repeats.
     const firstPass = ids.slice(0, pool);
     assert.equal(new Set(firstPass).size, firstPass.length, `level ${level}`);
-    // With a short list, every puzzle comes round.
-    if (ids.length >= pool) assert.equal(new Set(ids).size, pool);
+
   }
   assert.ok(practicePuzzle(1).id);
 });
@@ -55,4 +54,34 @@ test('the right move, or any mate on the last move, is accepted', () => {
   assert.equal(judgeMove(twoMates, 1, start, findUci(start, 'b1b8')), true);
   assert.equal(judgeMove(twoMates, 1, start, findUci(start, 'b1b7')), false);
   assert.equal(gameEnd(parseFen('7k/6pp/8/8/8/8/6PP/RR4K1 b - - 0 1')), null);
+});
+
+test('from CLEAR_FROM, every daily ends in mate or wins clear material', () => {
+  const before = new Set();
+  for (let day = 0; day < 400; day++) {
+    const date = new Date(Date.UTC(2026, 0, 1 + day)).toISOString().slice(0, 10);
+    const puzzle = dailyPuzzle(date);
+    if (date < CLEAR_FROM) { before.add(puzzle.id); continue; }
+    assert.ok(clearFinish(puzzle), `${date}: ${puzzle.id}`);
+    assert.ok(!before.has(puzzle.id) || day > 300, `${date} repeats an earlier daily`);
+  }
+  // Days before keep their puzzle (players' results and the archive match).
+  assert.equal(dailyPuzzle('2026-11-21').id, 'QjbYw');
+  for (let i = 0; i < 20; i++) assert.ok(clearFinish(practicePuzzle(3)));
+});
+
+test('the finish check sees mates, won material and quiet edges', () => {
+  // Mate.
+  assert.equal(puzzleFinish({ id: 'm', fen: '6k1/5ppp/8/8/8/8/q4PPP/4R1K1 b - - 0 1', moves: ['a2b2', 'e1e8'], rating: 800, themes: [] }).mate, true);
+  // A quiet move wins nothing.
+  const quiet = { id: 'q', fen: '4k3/8/8/8/8/8/4P3/4K3 b - - 0 1', moves: ['e8d8', 'e2e4'], rating: 800, themes: [] };
+  assert.equal(puzzleFinish(quiet).gain, 0);
+  assert.equal(clearFinish(quiet), false);
+  // Taking a queen the opponent can't win back.
+  const taken = { id: 't', fen: '4k3/8/8/8/1q6/3N4/8/4K3 b - - 0 1', moves: ['e8d8', 'd3b4'], rating: 800, themes: [] };
+  assert.equal(puzzleFinish(taken).gain, 9);
+  // The same capture where the knight is taken back still leaves 6.
+  const traded = { id: 'r', fen: '1r2k3/8/8/8/1q6/3N4/8/4K3 b - - 0 1', moves: ['e8d8', 'd3b4'], rating: 800, themes: [] };
+  assert.equal(puzzleFinish(traded).gain, 6);
+  assert.equal(clearFinish(taken), true);
 });
