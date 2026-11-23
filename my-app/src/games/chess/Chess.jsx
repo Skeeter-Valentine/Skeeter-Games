@@ -269,7 +269,7 @@ function ChessGame({ onWin }) {
     <Navbar />
     <header className="ch-heading"><p className="ch-eyebrow">CHESS PUZZLE</p><h1>{CHESS_TITLE}</h1><p>Find the best move.</p></header>
     <DailyResults gameId="chess" title={CHESS_TITLE} daily={game.mode === 'daily'} date={date} finished={finished} won={solved}
-      seconds={game.seconds} started={game.started} hints={game.hints} mistakes={game.mistakes} />
+      seconds={game.seconds} started={game.started} hints={game.hints} assists={game.mistakes} />
     {!inGauntlet && <div className="ch-controls">
       <button aria-pressed={game.mode === 'daily'} onClick={() => changeMode('daily')}>{archive ? 'Archive puzzle' : 'Daily'}</button>
       <button aria-pressed={game.mode === 'practice'} onClick={() => changeMode('practice')}>Practice</button>

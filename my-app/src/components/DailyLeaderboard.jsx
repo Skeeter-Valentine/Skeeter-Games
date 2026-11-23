@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { formatDuration } from '../utils/dailyStats.js';
-import { MISTAKE_GAMES, readDailyBoard } from '../services/dailyBoard.js';
+import { ASSIST_GAMES, entryAssists, readDailyBoard } from '../services/dailyBoard.js';
 import { boardEnabled, watchPlayer } from '../services/gauntletBoard.js';
 import SignInDialog from './SignInDialog';
 import './DailyLeaderboard.css';
@@ -10,7 +10,7 @@ export default function DailyLeaderboard({ gameId, date, refresh, compact = fals
   const [player, setPlayer] = useState(undefined);
   const [board, setBoard] = useState(null);
   const [signingIn, setSigningIn] = useState(false);
-  const withMistakes = MISTAKE_GAMES.includes(gameId);
+  const assistLabel = ASSIST_GAMES[gameId];
   useEffect(() => watchPlayer(setPlayer), []);
   useEffect(() => {
     let active = true;
@@ -28,13 +28,14 @@ export default function DailyLeaderboard({ gameId, date, refresh, compact = fals
   else if (!board.entries.length) body = <p className="daily-board-note">No one is on today's board yet. Solve it to set the time to beat!</p>;
   else {
     const rows = compact ? board.entries.slice(0, 5) : board.entries;
-    // Chess ranks fewest wrong moves first, so it shows them.
-    const mistakeCell = entry => withMistakes && <span className={`daily-board-mistakes${entry.mistakes ? ' some' : ''}`}
-      title={entry.mistakes === undefined ? 'Not recorded' : `${entry.mistakes} wrong ${entry.mistakes === 1 ? 'move' : 'moves'}`}>
-      {entry.mistakes ?? '—'}</span>;
+    // Games that rank by help used (chess wrong moves, 2048 undos, Beadle
+    // hints) show it.
+    const mistakeCell = entry => assistLabel && <span className={`daily-board-mistakes${entryAssists(entry) ? ' some' : ''}`}
+      title={entryAssists(entry) === undefined ? 'Not recorded' : `${assistLabel}: ${entryAssists(entry)}`}>
+      {entryAssists(entry) ?? '—'}</span>;
     body = <ol className="daily-board-list">
-      {withMistakes && <li className="daily-board-head" aria-hidden="true"><span className="daily-board-rank" /><span className="daily-board-name">Player</span>
-        <span className="daily-board-mistakes">Wrong moves</span><span className="daily-board-time">Time</span></li>}
+      {assistLabel && <li className="daily-board-head" aria-hidden="true"><span className="daily-board-rank" /><span className="daily-board-name">Player</span>
+        <span className="daily-board-mistakes">{assistLabel}</span><span className="daily-board-time">Time</span></li>}
       {rows.map((entry, index) => <li key={entry.uid} className={entry.uid === player?.uid ? 'mine' : ''}>
         <span className={`daily-board-rank${index < 3 ? ` top-${index + 1}` : ''}`}>{index + 1}</span>
         <span className="daily-board-name">{entry.nickname}</span>
@@ -51,7 +52,7 @@ export default function DailyLeaderboard({ gameId, date, refresh, compact = fals
   }
   const signedOut = player === null, noNickname = player && boardEnabled && !player.nickname;
   return <section className={`daily-board${compact ? ' compact' : ''}`} aria-label="Fastest times today">
-    <h3>{withMistakes ? 'Best today' : 'Fastest today'}</h3>
+    <h3>{assistLabel ? 'Best today' : 'Fastest today'}</h3>
     {body}
     {signedOut && <p className="daily-board-note">
       <button type="button" className="daily-board-link" onClick={() => setSigningIn(true)}>Sign in</button> and choose a nickname to put your time on the board.</p>}

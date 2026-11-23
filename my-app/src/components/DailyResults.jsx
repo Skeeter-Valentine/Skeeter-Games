@@ -10,7 +10,7 @@ import { archiveStatsId } from '../utils/archive.js';
 import { sendPuzzleResult, puzzleLoggingEnabled } from '../services/puzzleResults.js';
 import { dailyBoardEnabled } from '../services/dailyBoard.js';
 import DailyLeaderboard from './DailyLeaderboard';
-import { MISTAKE_GAMES } from '../services/dailyBoard.js';
+import { ASSIST_GAMES } from '../services/dailyBoard.js';
 import { RATED_GAMES, dailyShareText, shareResult } from '../utils/share.js';
 import { dailyDifficulty } from '../utils/dailyDifficulty.js';
 
@@ -47,7 +47,7 @@ function GauntletReport({ gauntlet, gameId, daily, finished, won = true, ready =
 }
 
 function DailySession({ gameId, title, date, daily, finished, won = true, seconds, ready = true,
-  manualOpen = false, onClose, legacyStats, started, clockRunning, autoOpen = true, onLearn, guesses, maxGuesses, shareGrid, mistakes }) {
+  manualOpen = false, onClose, legacyStats, started, clockRunning, autoOpen = true, onLearn, guesses, maxGuesses, shareGrid, assists }) {
   const archive = !!useArchive()?.archive;
   const statsId = archiveStatsId(gameId, archive);
   const [stats, setStats] = useState(() => readDailyStats(statsId));
@@ -73,7 +73,7 @@ function DailySession({ gameId, title, date, daily, finished, won = true, second
     let active = true, retry;
     const sync = () => {
       clearTimeout(retry);
-      sendPuzzleResult(gameId, date, archive ? 'archive' : 'daily', finished ? won ? 'won' : 'lost' : 'started', seconds ?? elapsed.current, { mistakes })
+      sendPuzzleResult(gameId, date, archive ? 'archive' : 'daily', finished ? won ? 'won' : 'lost' : 'started', seconds ?? elapsed.current, { assists })
         .then(sent => { if (active) setSyncStatus(sent ? 'Community result synced.' : 'Saved locally. Community reporting is not enabled yet.'); })
         .catch(() => { if (active) { setSyncStatus('Saved locally. Community sync pending.'); retry = setTimeout(sync, 30000); } });
     };
@@ -176,7 +176,7 @@ function DailySession({ gameId, title, date, daily, finished, won = true, second
       <h2 id={`board-title-${gameId}`}>Today's leaderboard</h2>
       <DailyLeaderboard gameId={gameId} date={date} refresh={syncStatus} />
       <p className="daily-results-note">Your first solve of today's puzzle counts. Times come from the game clock.
-        {MISTAKE_GAMES.includes(gameId) && ' Fewest wrong moves ranks first, then the fastest time.'}</p>
+        {ASSIST_GAMES[gameId] && ` Fewest ${ASSIST_GAMES[gameId].toLowerCase()} ranks first, then the fastest time.`}</p>
     </GameModal>}
   </>;
 }

@@ -24,14 +24,15 @@ export async function readGameRates(game) {
   return result.docs.map(item => item.data());
 }
 
-// `extra.mistakes`: wrong moves, for games whose leaderboard counts them (chess).
+// `extra.assists`: help that counts against the player on the leaderboard
+// (chess wrong moves, 2048 undos, Skeedle Beadle hints).
 export async function sendPuzzleResult(game, date, mode, status, seconds, extra = {}) {
   const key = `skeeter:pending-result:${puzzleResultId(game, date, mode)}`;
   const previous = readLocal(key, null);
   const payload = previous && previous.status !== 'started' ? previous : {
     version: 'v1', game, date, mode, status,
     seconds: typeof seconds === 'number' && Number.isFinite(seconds) ? Math.min(31536000, Math.max(0, Math.floor(seconds))) : null,
-    ...(Number.isInteger(extra.mistakes) && extra.mistakes >= 0 ? { mistakes: Math.min(999, extra.mistakes) } : {}),
+    ...(Number.isInteger(extra.assists) && extra.assists >= 0 ? { assists: Math.min(99999, extra.assists) } : {}),
   };
   writeLocal(key, payload);
   if (!puzzleLoggingEnabled) return false;

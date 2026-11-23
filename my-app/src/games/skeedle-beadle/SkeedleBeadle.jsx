@@ -150,7 +150,7 @@ export default function SkeedleBeadle() {
   return <main className="beadle-page">
     <Navbar />
     <header className="beadle-heading"><p className="beadle-eyebrow">BEAD SORT</p><h1>Skeedle Beadle</h1><p>Every shape on its own stick.</p></header>
-    <DailyResults gameId="skeedle-beadle" title="Skeedle Beadle" daily={game.mode === 'daily'} date={date} finished={won} seconds={game.seconds} started={game.started} hints={game.hints} onLearn={() => setLearning(true)} />
+    <DailyResults gameId="skeedle-beadle" title="Skeedle Beadle" daily={game.mode === 'daily'} date={date} finished={won} seconds={game.seconds} started={game.started} hints={game.hints} assists={game.hints} onLearn={() => setLearning(true)} />
     <div className="beadle-controls">
       <button aria-pressed={!learning && game.mode === 'daily'} onClick={() => changeMode('daily')}>{archive ? 'Archive puzzle' : 'Daily'}</button>
       <button aria-pressed={!learning && game.mode === 'practice'} onClick={() => changeMode('practice')}>Practice</button>

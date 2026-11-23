@@ -25,10 +25,12 @@ test('only winning times are added to time totals and buckets', () => {
   assert.equal(timeBucket(30), 'b0'); assert.equal(timeBucket(31), 'b1'); assert.equal(timeBucket(99999), 'b12');
 });
 
-test('chess attempts carry their wrong moves; other games ignore them', () => {
-  const chess = { ...input, game: 'chess', status: 'won', seconds: 40, mistakes: 2 };
-  assert.equal(validateAttempt(chess, '2026-09-29').mistakes, 2);
-  assert.equal('mistakes' in validateAttempt({ ...chess, mistakes: undefined }, '2026-09-29'), false);
-  assert.equal('mistakes' in validateAttempt({ ...chess, game: 'map' }, '2026-09-29'), false);
-  for (const mistakes of [-1, 1.5, 1000, '2']) assert.throws(() => validateAttempt({ ...chess, mistakes }, '2026-09-29'));
+test('chess, 2048 and Beadle attempts carry the help used; other games ignore it', () => {
+  const chess = { ...input, game: 'chess', status: 'won', seconds: 40, assists: 2 };
+  assert.equal(validateAttempt(chess, '2026-09-29').assists, 2);
+  assert.equal(validateAttempt({ ...chess, game: '2048', assists: 31 }, '2026-09-29').assists, 31);
+  assert.equal(validateAttempt({ ...chess, game: 'skeedle-beadle', assists: 1 }, '2026-09-29').assists, 1);
+  assert.equal('assists' in validateAttempt({ ...chess, assists: undefined }, '2026-09-29'), false);
+  assert.equal('assists' in validateAttempt({ ...chess, game: 'map' }, '2026-09-29'), false);
+  for (const assists of [-1, 1.5, 100000, '2']) assert.throws(() => validateAttempt({ ...chess, assists }, '2026-09-29'));
 });

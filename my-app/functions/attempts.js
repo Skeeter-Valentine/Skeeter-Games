@@ -1,8 +1,9 @@
 export const games = ['map', '2048', 'akari', 'hashi', 'minesweeper', 'nonograms', 'parshle', 'pipes', 'quordle', 'shikaku', 'skeedle-marathon', 'skeedlemath', 'stitches', 'sudoku', 'word500', 'skeedle-beadle', 'pepper-placer', 'kakurasu', 'slitherlink', 'chess'];
 
-// Games whose daily leaderboard ranks fewest wrong moves first (keep in sync
-// with src/services/dailyBoard.js).
-export const MISTAKE_GAMES = ['chess'];
+// Games whose daily leaderboard ranks least help used first (keep in sync
+// with ASSIST_GAMES in src/services/dailyBoard.js): chess wrong moves, 2048
+// undos, Skeedle Beadle hints.
+export const ASSIST_GAMES = ['chess', '2048', 'skeedle-beadle'];
 
 export function validateAttempt(data, today) {
   if (!data || data.version !== 'v1' || !games.includes(data.game) || !['daily', 'archive'].includes(data.mode)
@@ -11,12 +12,12 @@ export function validateAttempt(data, today) {
     || new Date(`${data.date}T00:00:00Z`).toISOString().slice(0, 10) !== data.date
     || data.date < '2026-08-20' || data.date > today || (data.mode === 'archive' && data.date >= today)
     || !(data.seconds === null || (Number.isInteger(data.seconds) && data.seconds >= 0 && data.seconds <= 31536000))
-    || !(data.mistakes === undefined || data.mistakes === null || (Number.isInteger(data.mistakes) && data.mistakes >= 0 && data.mistakes <= 999))) {
+    || !(data.assists === undefined || data.assists === null || (Number.isInteger(data.assists) && data.assists >= 0 && data.assists <= 99999))) {
     throw new Error('Invalid puzzle attempt');
   }
   const attempt = { version: data.version, game: data.game, date: data.date, mode: data.mode, status: data.status, seconds: data.seconds };
-  // Wrong moves, for games whose leaderboard counts them.
-  if (MISTAKE_GAMES.includes(data.game) && Number.isInteger(data.mistakes)) attempt.mistakes = data.mistakes;
+  // Help used, for games whose leaderboard counts it.
+  if (ASSIST_GAMES.includes(data.game) && Number.isInteger(data.assists)) attempt.assists = data.assists;
   return attempt;
 }
 

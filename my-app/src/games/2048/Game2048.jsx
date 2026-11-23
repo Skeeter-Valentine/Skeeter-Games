@@ -546,7 +546,7 @@ export default function Game2048({ onWin }) {
   return (
     <div className={`game2048-container theme-${theme}`}>
       <Navbar />
-      <DailyResults gameId="2048" title="2048" daily={gameMode === 'daily' && !isTestMode} date={todayStr} finished={gameWon} won={gameWon} seconds={completionTimeKnown ? elapsedTime : null} ready={tiles.length > 0} />
+      <DailyResults gameId="2048" title="2048" daily={gameMode === 'daily' && !isTestMode} date={todayStr} finished={gameWon} won={gameWon} seconds={completionTimeKnown ? elapsedTime : null} ready={tiles.length > 0} assists={undoCount} />
 
       <main className="game2048-main">
         <div className="game2048-header">
