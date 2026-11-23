@@ -13,10 +13,23 @@ const MOCK_NAMES = ['PepperQueen', 'Skeetmaster', 'HotHashi', 'NonoNinja', 'Grid
 export const mockBoard = () => MOCK_NAMES.map((nickname, index) => ({ uid: `mock-${index}`, nickname, seconds: 48 + index * 17 + (index * index) % 11 }));
 export const showMockBoard = () => typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('leaders') === 'mock';
 
+// Games whose board ranks by wrong moves first (fewest first), then time.
+// Entries carry `mistakes` (missing on entries from before it was recorded).
+export const MISTAKE_GAMES = ['chess'];
+const byMistakes = (a, b) => (a.mistakes ?? 0) - (b.mistakes ?? 0) || a.seconds - b.seconds;
+
 // Top times (players without a nickname are left out) plus, when you're on
 // the board but outside the top, your own entry and place.
 export async function readDailyBoard(game, date, uid) {
-  if (showMockBoard()) return { entries: mockBoard(), mine: null };
+  if (showMockBoard()) return { entries: mockBoard().map((entry, i) => (MISTAKE_GAMES.includes(game) ? { ...entry, mistakes: i % 4 === 3 ? 1 : 0 } : entry)).sort(MISTAKE_GAMES.includes(game) ? byMistakes : () => 0), mine: null };
+  if (MISTAKE_GAMES.includes(game)) {
+    // A day's board is small enough to read whole and rank here.
+    const snapshot = await getDocs(query(entries(game, date), orderBy('seconds'), limit(1000)));
+    const ranked = snapshot.docs.map(item => ({ uid: item.id, ...item.data() })).filter(entry => entry.nickname).sort(byMistakes);
+    const list = ranked.slice(0, DAILY_BOARD_SIZE);
+    const index = uid ? ranked.findIndex(entry => entry.uid === uid) : -1;
+    return { entries: list, mine: index >= DAILY_BOARD_SIZE ? { ...ranked[index], rank: index + 1 } : null };
+  }
   const snapshot = await getDocs(query(entries(game, date), orderBy('seconds'), limit(60)));
   const list = snapshot.docs.map(item => ({ uid: item.id, ...item.data() })).filter(entry => entry.nickname).slice(0, DAILY_BOARD_SIZE);
   let mine = null;

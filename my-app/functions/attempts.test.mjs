@@ -24,3 +24,11 @@ test('only winning times are added to time totals and buckets', () => {
   assert.equal(transition(input, { ...input, status: 'won', seconds: null }).timedWins, 0);
   assert.equal(timeBucket(30), 'b0'); assert.equal(timeBucket(31), 'b1'); assert.equal(timeBucket(99999), 'b12');
 });
+
+test('chess attempts carry their wrong moves; other games ignore them', () => {
+  const chess = { ...input, game: 'chess', status: 'won', seconds: 40, mistakes: 2 };
+  assert.equal(validateAttempt(chess, '2026-09-29').mistakes, 2);
+  assert.equal('mistakes' in validateAttempt({ ...chess, mistakes: undefined }, '2026-09-29'), false);
+  assert.equal('mistakes' in validateAttempt({ ...chess, game: 'map' }, '2026-09-29'), false);
+  for (const mistakes of [-1, 1.5, 1000, '2']) assert.throws(() => validateAttempt({ ...chess, mistakes }, '2026-09-29'));
+});

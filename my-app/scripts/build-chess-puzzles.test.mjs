@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { acceptable, bankSource, choose, parseRow } from './build-chess-puzzles.mjs';
+import BANK from '../src/games/chess/puzzleBank.js';
+import { acceptable, assignDailies, bankSource, choose, parseRow, siteFiles } from './build-chess-puzzles.mjs';
 
 const ROW = '00sHx,q3k1nr/1pp1nQpp/3p4/1P2p3/4P3/B1PP1b2/B5PP/5K2 b k - 0 17,e8d7 a2e6 d7d8 f7f8,1760,80,83,72,mate mateIn2 middlegame short,https://lichess.org/yyznGmXs/black#34,Italian_Game';
 
@@ -25,4 +26,18 @@ test('choosing spreads picks across levels and themes, and writes a module', () 
   assert.equal(mild.length, 4);
   assert.deepEqual(new Set(mild.map(r => r.themes)).size, 2, 'both themes appear');
   assert.match(bankSource(chosen.slice(0, 1)), /^\/\/ The chess puzzle bank[\s\S]*export default \[\n  \["a\d+"/);
+});
+
+test('a bigger bank keeps dailies already given out and fills later dates with new puzzles', () => {
+  const first = assignDailies(BANK.slice(0, 900), { keepBefore: '2026-11-01', through: '2027-03-31' });
+  const kept = Object.fromEntries(Object.entries(first).filter(([date]) => date < '2026-12-01'));
+  const second = assignDailies(BANK, { kept, keepBefore: '2026-12-01', through: '2027-03-31' });
+  for (const [date, id] of Object.entries(kept)) assert.equal(second[date], id, date);
+  const used = new Set(Object.values(kept));
+  for (const [date, id] of Object.entries(second)) if (date >= '2026-12-01') assert.ok(!used.has(id), `${date} reuses ${id}`);
+  assert.ok(Object.values(second).some(id => !BANK.slice(0, 900).some(row => row[0] === id)), 'the new puzzles get used');
+  const { files, info } = siteFiles(BANK, second);
+  assert.equal(Object.keys(JSON.parse(files['daily/2027-02.json'])).length, 28);
+  assert.ok(files['practice/1-0.json'].length < 12000, 'a practice batch is small');
+  assert.match(info, /"dailyThrough": "2027-03-31"/);
 });

@@ -45,6 +45,7 @@ export const recordPuzzleAttempt = onCall({ region: 'us-central1', maxInstances:
     const boardSeconds = dailyBoardSeconds(data, change.wins === 1, Date.now());
     if (boardSeconds !== null) transaction.set(db.doc(`dailyBoard/${dailyBoardId(data.game, data.date)}/entries/${request.auth.uid}`), {
       seconds: boardSeconds, nickname: nickname || null, finishedAt: FieldValue.serverTimestamp(),
+      ...(Number.isInteger(data.mistakes) ? { mistakes: data.mistakes } : {}),
     });
     transaction.set(attemptRef, { ...change.attempt, updatedAt: FieldValue.serverTimestamp() });
     // Signed-in players keep their daily results on their account, so streaks

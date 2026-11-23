@@ -2,7 +2,16 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { findUci, gameEnd, parseFen } from './engine.js';
 import { mateMoves } from './solver.js';
-import { ALL_PUZZLES, CLEAR_FROM, clearFinish, dailyLevel, dailyPuzzle, judgeMove, levelOf, playerColor, practicePuzzle, puzzleFinish, puzzlePositions, puzzleProblems, puzzlesFor } from './puzzles.js';
+import { readFileSync, readdirSync } from 'node:fs';
+import { ALL_PUZZLES, CLEAR_FROM, clearFinish, legacyDailyPuzzle, puzzleFinish, puzzlesFor } from './bankTools.js';
+import BANK_INFO from './bankInfo.js';
+import { dailyLevel, dailyPuzzle, judgeMove, levelOf, playerColor, practicePuzzle, provideChessPuzzles, puzzlePositions, puzzleProblems } from './puzzles.js';
+
+// The site's files (public/chess, written by scripts/build-chess-puzzles.mjs).
+const PUBLIC = new URL('../../../public/chess/', import.meta.url);
+const daily = Object.assign({}, ...readdirSync(new URL('daily/', PUBLIC)).map(name => JSON.parse(readFileSync(new URL(`daily/${name}`, PUBLIC), 'utf8'))));
+const practice = Object.fromEntries([1, 2, 3].map(level => [level, JSON.parse(readFileSync(new URL(`practice/${level}-0.json`, PUBLIC), 'utf8'))]));
+provideChessPuzzles({ daily, practice });
 
 test('every puzzle in the bank plays through cleanly', () => {
   assert.ok(ALL_PUZZLES.length > 0);
@@ -25,21 +34,29 @@ test('ratings map to peppers, and every level has puzzles', () => {
   for (const level of [1, 2, 3]) assert.ok(puzzlesFor(level).length > 0);
 });
 
-test('the daily is fixed per date, matches its peppers, and cycles without repeats', () => {
-  assert.equal(dailyPuzzle('2026-11-10').id, dailyPuzzle('2026-11-10').id);
-  const byLevel = new Map([[1, []], [2, []], [3, []]]);
-  for (let day = 0; day < 90; day++) {
-    const date = new Date(Date.UTC(2026, 10, 22 + day)).toISOString().slice(0, 10);
-    byLevel.get(dailyLevel(date)).push(dailyPuzzle(date).id);
-  }
-  for (const [level, ids] of byLevel) {
-    const pool = puzzlesFor(level).filter(clearFinish).length;
-    // Within one pass through a level's puzzles, none repeats.
-    const firstPass = ids.slice(0, pool);
-    assert.equal(new Set(firstPass).size, firstPass.length, `level ${level}`);
-
+test('the daily files cover every date, at its peppers, without repeats', () => {
+  const dates = Object.keys(daily).sort();
+  assert.equal(dates[0], BANK_INFO.dailyFrom);
+  assert.equal(dates.at(-1), BANK_INFO.dailyThrough);
+  assert.ok(dates.at(-1) >= '2028-01-01', 'at least a year ahead');
+  const seen = new Map([[1, new Set()], [2, new Set()], [3, new Set()]]);
+  for (const date of dates) {
+    const puzzle = dailyPuzzle(date);
+    assert.equal(levelOf(puzzle.rating), dailyLevel(date), date);
+    const ids = seen.get(dailyLevel(date));
+    // Within one pass through a level's clear puzzles, none repeats.
+    if (ids.size < puzzlesFor(dailyLevel(date)).filter(clearFinish).length) assert.ok(!ids.has(puzzle.id), `${date} repeats ${puzzle.id}`);
+    ids.add(puzzle.id);
   }
   assert.ok(practicePuzzle(1).id);
+  assert.notEqual(practicePuzzle(1, practice[1][0][0], () => 0).id, practice[1][0][0], 'skips the puzzle just played');
+});
+
+test('dailies given out before the move to public/chess keep their puzzle', () => {
+  for (let date = '2026-11-17'; date <= '2026-11-22'; date = new Date(Date.parse(`${date}T00:00:00Z`) + 86400000).toISOString().slice(0, 10)) {
+    assert.equal(dailyPuzzle(date).id, legacyDailyPuzzle(date).id, date);
+  }
+  assert.equal(dailyPuzzle('2026-11-21').id, 'QjbYw');
 });
 
 test('the right move, or any mate on the last move, is accepted', () => {
@@ -56,19 +73,11 @@ test('the right move, or any mate on the last move, is accepted', () => {
   assert.equal(gameEnd(parseFen('7k/6pp/8/8/8/8/6PP/RR4K1 b - - 0 1')), null);
 });
 
-test('from CLEAR_FROM, every daily ends in mate or wins clear material', () => {
-  const before = new Set();
-  for (let day = 0; day < 400; day++) {
-    const date = new Date(Date.UTC(2026, 0, 1 + day)).toISOString().slice(0, 10);
-    const puzzle = dailyPuzzle(date);
-    if (date < CLEAR_FROM) { before.add(puzzle.id); continue; }
-    assert.ok(clearFinish(puzzle), `${date}: ${puzzle.id}`);
-    assert.ok(!before.has(puzzle.id) || day > 300, `${date} repeats an earlier daily`);
-  }
-  // Days before keep their puzzle (players' results and the archive match).
-  assert.equal(dailyPuzzle('2026-11-21').id, 'QjbYw');
-  for (let i = 0; i < 20; i++) assert.ok(clearFinish(practicePuzzle(3)));
+test('from CLEAR_FROM, every daily and practice puzzle ends in mate or wins clear material', () => {
+  for (const date of Object.keys(daily).filter(date => date >= CLEAR_FROM)) assert.ok(clearFinish(dailyPuzzle(date)), date);
+  for (const rows of Object.values(practice)) for (const row of rows) assert.ok(clearFinish({ id: row[0], ...dailyPuzzleFromRow(row) }), row[0]);
 });
+const dailyPuzzleFromRow = ([, fen, moves, rating, themes]) => ({ fen, moves: moves.split(' '), rating, themes: themes.split(' ') });
 
 test('the finish check sees mates, won material and quiet edges', () => {
   // Mate.

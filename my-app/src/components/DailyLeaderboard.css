@@ -13,3 +13,8 @@
 .daily-board-time { font-variant-numeric: tabular-nums; font-weight: 900; color: #d8ff00; }
 .daily-board-note { margin: 8px 0 0; color: #cfc4e0; font-size: 15px; text-align: center; }
 .daily-board-link { padding: 0; border: 0; background: none; color: #00f0ff; font: inherit; text-decoration: underline; cursor: pointer; }
+.daily-board-mistakes { flex: 0 0 auto; min-width: 3.2em; text-align: center; font-variant-numeric: tabular-nums; font-weight: bold; color: #7dffb0; }
+.daily-board-mistakes.some { color: #ff9a9a; }
+.daily-board-list li.daily-board-head { padding-top: 0; padding-bottom: 4px; border-bottom-color: #3e3150; color: #a99bbd; font-size: 12px; font-weight: bold; text-transform: uppercase; letter-spacing: .04em; }
+.daily-board-head .daily-board-rank { background: none; height: 0; }
+.daily-board-head .daily-board-mistakes, .daily-board-head .daily-board-time { color: #a99bbd; font-weight: bold; }

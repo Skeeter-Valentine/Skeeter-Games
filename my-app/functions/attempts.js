@@ -1,15 +1,23 @@
 export const games = ['map', '2048', 'akari', 'hashi', 'minesweeper', 'nonograms', 'parshle', 'pipes', 'quordle', 'shikaku', 'skeedle-marathon', 'skeedlemath', 'stitches', 'sudoku', 'word500', 'skeedle-beadle', 'pepper-placer', 'kakurasu', 'slitherlink', 'chess'];
 
+// Games whose daily leaderboard ranks fewest wrong moves first (keep in sync
+// with src/services/dailyBoard.js).
+export const MISTAKE_GAMES = ['chess'];
+
 export function validateAttempt(data, today) {
   if (!data || data.version !== 'v1' || !games.includes(data.game) || !['daily', 'archive'].includes(data.mode)
     || !['started', 'won', 'lost'].includes(data.status) || typeof data.date !== 'string'
     || !/^\d{4}-\d{2}-\d{2}$/.test(data.date) || !Number.isFinite(Date.parse(`${data.date}T00:00:00Z`))
     || new Date(`${data.date}T00:00:00Z`).toISOString().slice(0, 10) !== data.date
     || data.date < '2026-08-20' || data.date > today || (data.mode === 'archive' && data.date >= today)
-    || !(data.seconds === null || (Number.isInteger(data.seconds) && data.seconds >= 0 && data.seconds <= 31536000))) {
+    || !(data.seconds === null || (Number.isInteger(data.seconds) && data.seconds >= 0 && data.seconds <= 31536000))
+    || !(data.mistakes === undefined || data.mistakes === null || (Number.isInteger(data.mistakes) && data.mistakes >= 0 && data.mistakes <= 999))) {
     throw new Error('Invalid puzzle attempt');
   }
-  return { version: data.version, game: data.game, date: data.date, mode: data.mode, status: data.status, seconds: data.seconds };
+  const attempt = { version: data.version, game: data.game, date: data.date, mode: data.mode, status: data.status, seconds: data.seconds };
+  // Wrong moves, for games whose leaderboard counts them.
+  if (MISTAKE_GAMES.includes(data.game) && Number.isInteger(data.mistakes)) attempt.mistakes = data.mistakes;
+  return attempt;
 }
 
 // Upper edges (seconds) of the solve-time buckets kept per puzzle. Buckets let

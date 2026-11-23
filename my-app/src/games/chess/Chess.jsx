@@ -6,7 +6,7 @@ import { useClockRunning } from '../../components/useDailyClock';
 import { readLocal, writeLocal } from '../../utils/dailyStats.js';
 import ChessBoard, { PROMOTION_GLYPHS } from './ChessBoard';
 import { colorOf, findUci, gameEnd, inCheck, kingSquare, legalMoves, makeMove, parseFen, san, toFen, uci } from './engine.js';
-import { dailyLevel, dailyPuzzle, judgeMove, levelOf, playerColor, practicePuzzle } from './puzzles.js';
+import { dailyLevel, dailyPuzzle, judgeMove, levelOf, loadChessPuzzles, playerColor, practicePuzzle } from './puzzles.js';
 import { barShare, formatScore, STOCKFISH_SOURCE, verdict } from './stockfish.js';
 import useStockfish from './useStockfish.js';
 import './Chess.css';
@@ -70,7 +70,31 @@ function newGame(date, mode, level, archive, avoidId) {
   return { puzzle, mode, ...progress };
 }
 
-export default function Chess({ onWin }) {
+// The puzzles are downloaded (see puzzles.js): show the game once the day's
+// puzzle is in, and offer a retry if it couldn't load.
+export default function Chess(props) {
+  const date = useDailyDate();
+  const [loaded, setLoaded] = useState({ date: null, error: false });
+  const [attempt, setAttempt] = useState(0);
+  useEffect(() => {
+    let active = true;
+    loadChessPuzzles(date)
+      .then(() => { if (active) setLoaded({ date, error: false }); })
+      .catch(() => { if (active) setLoaded({ date: null, error: true }); });
+    return () => { active = false; };
+  }, [date, attempt]);
+  if (loaded.date === date) return <ChessGame key={date} {...props} />;
+  return <main className="ch-page">
+    <Navbar />
+    <header className="ch-heading"><p className="ch-eyebrow">CHESS PUZZLE</p><h1>{CHESS_TITLE}</h1><p>Find the best move.</p></header>
+    {loaded.error
+      ? <p className="ch-loading" role="alert">Couldn't load today's puzzle. Check your connection and{' '}
+        <button type="button" onClick={() => { setLoaded({ date: null, error: false }); setAttempt(count => count + 1); }}>try again</button>.</p>
+      : <p className="ch-loading" role="status">Loading the puzzle…</p>}
+  </main>;
+}
+
+function ChessGame({ onWin }) {
   const date = useDailyDate();
   const archive = !!useArchive()?.archive;
   const inGauntlet = !!useGauntlet();
@@ -245,7 +269,7 @@ export default function Chess({ onWin }) {
     <Navbar />
     <header className="ch-heading"><p className="ch-eyebrow">CHESS PUZZLE</p><h1>{CHESS_TITLE}</h1><p>Find the best move.</p></header>
     <DailyResults gameId="chess" title={CHESS_TITLE} daily={game.mode === 'daily'} date={date} finished={finished} won={solved}
-      seconds={game.seconds} started={game.started} hints={game.hints} />
+      seconds={game.seconds} started={game.started} hints={game.hints} mistakes={game.mistakes} />
     {!inGauntlet && <div className="ch-controls">
       <button aria-pressed={game.mode === 'daily'} onClick={() => changeMode('daily')}>{archive ? 'Archive puzzle' : 'Daily'}</button>
       <button aria-pressed={game.mode === 'practice'} onClick={() => changeMode('practice')}>Practice</button>
