@@ -104,5 +104,26 @@ service cloud.firestore {
         && request.resource.data.payload.size() <= 800000
         && request.resource.data.updatedAt == request.time;
     }
+    // EPL pool (/eplpool): written only by the functions (functions/eplPool.js).
+    function eplMember() { return request.auth != null && exists(/databases/$(database)/documents/eplMembers/$(request.auth.uid)); }
+    function eplAdmin() { return isOwner() || (eplMember() && get(/databases/$(database)/documents/eplMembers/$(request.auth.uid)).data.admin == true); }
+    match /eplSeasons/{season} {
+      allow read: if eplMember() || isOwner();
+      allow write: if false;
+    }
+    // A member's `managers` may also see (and, through the functions, pick for) their team.
+    function eplManages(uid) { return request.auth != null && request.auth.uid in get(/databases/$(database)/documents/eplMembers/$(uid)).data.get('managers', []); }
+    match /eplMembers/{uid} {
+      allow read: if (request.auth != null && (request.auth.uid == uid || request.auth.uid in resource.data.get('managers', []))) || eplAdmin();
+      allow write: if false;
+    }
+    match /eplPicks/{uid} {
+      allow read: if (request.auth != null && request.auth.uid == uid) || eplAdmin() || eplManages(uid);
+      allow write: if false;
+    }
+    match /eplInvites/{code} {
+      allow read: if eplAdmin();
+      allow write: if false;
+    }
   }
 }

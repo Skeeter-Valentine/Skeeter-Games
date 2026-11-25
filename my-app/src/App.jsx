@@ -11,6 +11,8 @@ import AdminStats from './pages/AdminStats';
 import AdminHome from './pages/AdminHome';
 import AdminCreators from './pages/AdminCreators';
 import CreatorHome from './pages/CreatorHome';
+import EplPool from './pages/EplPool';
+import EplPoolAdmin from './pages/EplPoolAdmin';
 import Gauntlet from './pages/Gauntlet';
 import SkeedleBeadle from './games/skeedle-beadle/SkeedleBeadle';
 import PepperPlacer from './games/pepper-placer/PepperPlacer';
@@ -83,6 +85,9 @@ export default function App() {
         <Route path="/admin/creators" element={<AdminCreators />} />
         {/* Invite-only creator accounts: unlinked and noindex, like the admin pages. */}
         <Route path="/creator" element={<CreatorHome />} />
+        {/* Invite-only EPL pick pool: unlinked and noindex. */}
+        <Route path="/eplpool" element={<EplPool />} />
+        <Route path="/eplpool/admin" element={<EplPoolAdmin />} />
         <Route path="*" element={<div>404 - Game Not Found</div>} />
       </Routes>
       <PageAds />

@@ -10,6 +10,7 @@ import { dailyPeppers, gauntletPeppers, gauntletRunPeppers, pepperWeek } from '.
 import { buildStats, parseAttemptId } from './adminStats.js';
 import { creatorInvited, featuredCreator, guestFromRun, guestRecord, playerSearch, playerSummary } from './creators.js';
 import { dailyHistoryUpdate, gauntletHistoryUpdate, signedIn } from './history.js';
+import { EplError, FOOTBALL_DATA_URL, SEASON, checkPicks, cleanName, fixtureFromApi, newInviteCode, resolveImport } from './eplPool.js';
 
 initializeApp();
 
@@ -282,3 +283,181 @@ export async function releaseDuePeppers(db, now = Date.now()) {
 }
 export const releasePeppers = onSchedule({ schedule: '1 4 * * *', timeZone: 'America/Denver', region: 'us-central1' },
   async () => { await releaseDuePeppers(getFirestore()); });
+
+// ----- EPL pool (skeetergames.org/eplpool; rules in eplPool.js) -----
+// Signed-in accounts only (not anonymous); members come in by invite.
+const eplUser = request => {
+  if (!request.auth || request.auth.token?.firebase?.sign_in_provider === 'anonymous') throw new HttpsError('unauthenticated', 'Sign in to use the pool.');
+  return request.auth.uid;
+};
+const eplFail = error => {
+  if (error instanceof EplError) throw new HttpsError(error.code, error.message);
+  throw error;
+};
+async function eplMember(db, uid) {
+  const snap = await db.doc(`eplMembers/${uid}`).get();
+  return snap.exists ? snap.data() : null;
+}
+async function eplRequireAdmin(db, uid) {
+  if (OWNER_UIDS.includes(uid)) return;
+  if (!(await eplMember(db, uid))?.admin) throw new HttpsError('permission-denied', 'Only pool admins can do that.');
+}
+async function eplFixtures(db) {
+  const snap = await db.doc(`eplSeasons/${SEASON}`).get();
+  return snap.exists ? snap.data().fixtures ?? [] : [];
+}
+
+// Downloads the season's fixtures (kickoff times, results) from football-data.org.
+async function eplSync(db) {
+  const settings = await db.doc('eplPrivate/settings').get();
+  const key = settings.exists ? settings.get('footballDataKey') : null;
+  if (!key) throw new HttpsError('failed-precondition', 'Add the football-data.org API key on the pool admin page first.');
+  const response = await fetch(FOOTBALL_DATA_URL, { headers: { 'X-Auth-Token': key } });
+  if (!response.ok) throw new HttpsError('unavailable', `football-data.org answered ${response.status}${response.status === 403 ? ' (check the API key)' : ''}.`);
+  const { matches = [] } = await response.json();
+  const fixtures = matches.filter(match => Number.isInteger(match.matchday)).map(fixtureFromApi);
+  if (!fixtures.length) throw new HttpsError('unavailable', 'football-data.org sent no matches.');
+  await db.doc(`eplSeasons/${SEASON}`).set({ season: SEASON, fixtures, syncedAt: FieldValue.serverTimestamp() });
+  return fixtures.length;
+}
+// Every 3 hours, so kickoff changes reach the locks.
+export const eplSyncFixtures = onSchedule({ schedule: 'every 3 hours', region: 'us-central1' }, async () => {
+  const db = getFirestore();
+  const settings = await db.doc('eplPrivate/settings').get();
+  if (settings.exists && settings.get('footballDataKey')) await eplSync(db);
+});
+
+// Joins the pool with an invite code (the site owner can join without one).
+export const eplJoin = onCall({ region: 'us-central1', maxInstances: 5 }, async request => {
+  const uid = eplUser(request);
+  const db = getFirestore();
+  const owner = OWNER_UIDS.includes(uid);
+  const code = String(request.data?.code ?? '').trim().toUpperCase();
+  const memberRef = db.doc(`eplMembers/${uid}`);
+  return db.runTransaction(async transaction => {
+    const member = await transaction.get(memberRef);
+    if (member.exists) return { joined: true };
+    const invite = code ? await transaction.get(db.doc(`eplInvites/${code}`)) : null;
+    if (!owner && (!invite?.exists || invite.get('usedBy'))) throw new HttpsError('permission-denied', 'That invite has already been used or does not exist. Ask for a new one.');
+    const token = request.auth.token;
+    const name = cleanName(invite?.exists ? invite.get('name') : '') || cleanName(token.name) || (token.email || 'Player').split('@')[0];
+    transaction.set(memberRef, { name, email: token.email ?? null, admin: owner || !!invite?.get('admin'), managers: [], joinedAt: FieldValue.serverTimestamp() });
+    if (invite?.exists) {
+      transaction.update(invite.ref, { usedBy: uid, usedAt: FieldValue.serverTimestamp() });
+      // Picks imported from the spreadsheet for this player come with the invite.
+      const weeks = invite.get('weeks');
+      if (weeks && Object.keys(weeks).length) transaction.set(db.doc(`eplPicks/${uid}`), { weeks, updatedAt: FieldValue.serverTimestamp() }, { merge: true });
+    }
+    return { joined: true };
+  });
+});
+
+// Saves one game week's picks (checked against the locks and season limits).
+// `team`: another member's entry this player manages (their own if left out).
+export const eplSavePicks = onCall({ region: 'us-central1', maxInstances: 10 }, async request => {
+  const uid = eplUser(request);
+  const db = getFirestore();
+  if (!(await eplMember(db, uid))) throw new HttpsError('permission-denied', 'Join the pool with an invite first.');
+  const team = request.data?.team ? String(request.data.team) : uid;
+  if (team !== uid && !((await eplMember(db, team))?.managers ?? []).includes(uid)) throw new HttpsError('permission-denied', "You don't manage that team.");
+  const fixtures = await eplFixtures(db);
+  const picksRef = db.doc(`eplPicks/${team}`);
+  return db.runTransaction(async transaction => {
+    const snap = await transaction.get(picksRef);
+    const weeks = snap.exists ? snap.get('weeks') ?? {} : {};
+    let picks;
+    try { picks = checkPicks({ fixtures, weeks, matchday: request.data?.matchday, picks: request.data?.picks, now: Date.now() }); }
+    catch (error) { eplFail(error); }
+    transaction.set(picksRef, { weeks: { ...weeks, [request.data.matchday]: picks }, updatedAt: FieldValue.serverTimestamp() });
+    return { picks };
+  });
+});
+
+// Pool admin actions.
+export const eplAdmin = onCall({ region: 'us-central1', maxInstances: 5 }, async request => {
+  const uid = eplUser(request);
+  const db = getFirestore();
+  await eplRequireAdmin(db, uid);
+  const { action } = request.data ?? {};
+  if (action === 'createInvite') {
+    const code = newInviteCode();
+    await db.doc(`eplInvites/${code}`).set({ name: cleanName(request.data.name), admin: !!request.data.admin, createdBy: uid, createdAt: FieldValue.serverTimestamp(), usedBy: null, usedAt: null });
+    return { code };
+  }
+  if (action === 'setInviteAdmin') {
+    await db.doc(`eplInvites/${String(request.data.code)}`).update({ admin: !!request.data.admin });
+    return {};
+  }
+  if (action === 'addManager' || action === 'removeManager') {
+    // Lets one member make picks for another's team (or stops it).
+    const target = db.doc(`eplMembers/${String(request.data.uid)}`);
+    const manager = String(request.data.manager);
+    if (!(await target.get()).exists || !(await db.doc(`eplMembers/${manager}`).get()).exists) throw new HttpsError('not-found', 'No such member.');
+    await target.update({ managers: action === 'addManager' ? FieldValue.arrayUnion(manager) : FieldValue.arrayRemove(manager) });
+    return {};
+  }
+  if (action === 'deleteInvite') {
+    await db.doc(`eplInvites/${String(request.data.code)}`).delete();
+    return {};
+  }
+  if (action === 'setAdmin' || action === 'rename') {
+    const target = db.doc(`eplMembers/${String(request.data.uid)}`);
+    if (!(await target.get()).exists) throw new HttpsError('not-found', 'No such member.');
+    await target.update(action === 'setAdmin' ? { admin: !!request.data.admin } : { name: cleanName(request.data.name) || 'Player' });
+    return {};
+  }
+  if (action === 'removeMember') {
+    if (String(request.data.uid) === uid) throw new HttpsError('failed-precondition', "You can't remove yourself.");
+    await db.doc(`eplMembers/${String(request.data.uid)}`).delete();
+    return {};
+  }
+  if (action === 'setKey') {
+    await db.doc('eplPrivate/settings').set({ footballDataKey: String(request.data.key ?? '').trim() }, { merge: true });
+    return { count: await eplSync(db) };
+  }
+  if (action === 'sync') return { count: await eplSync(db) };
+  if (action === 'importPlayers') {
+    // Players and picks from the pool's spreadsheet: { players: [{ name,
+    // weeks: { [matchday]: [team names] } }] }. A member with that name gets
+    // the picks; anyone else gets an invite that carries them.
+    const fixtures = await eplFixtures(db);
+    if (!fixtures.length) throw new HttpsError('failed-precondition', 'Load the fixtures first.');
+    const players = Array.isArray(request.data.players) ? request.data.players.slice(0, 200) : [];
+    const [members, invites] = await Promise.all([db.collection('eplMembers').get(), db.collection('eplInvites').get()]);
+    const same = (a, b) => cleanName(a).toLowerCase() === cleanName(b).toLowerCase();
+    const problems = [];
+    let updated = 0, created = 0;
+    for (const player of players) {
+      const name = cleanName(player.name);
+      if (!name) continue;
+      const { weeks, problems: found } = resolveImport(fixtures, player.weeks);
+      problems.push(...found.map(problem => `${name}: ${problem}`));
+      const member = members.docs.find(entry => same(entry.get('name'), name));
+      if (member) {
+        const ref = db.doc(`eplPicks/${member.id}`);
+        const old = (await ref.get()).get('weeks') ?? {};
+        await ref.set({ weeks: { ...old, ...weeks }, updatedAt: FieldValue.serverTimestamp() });
+        updated++;
+        continue;
+      }
+      const invite = invites.docs.find(entry => !entry.get('usedBy') && same(entry.get('name'), name));
+      if (invite) { await invite.ref.update({ weeks }); updated++; continue; }
+      await db.doc(`eplInvites/${newInviteCode()}`).set({ name, weeks, createdBy: uid, createdAt: FieldValue.serverTimestamp(), usedBy: null, usedAt: null });
+      created++;
+    }
+    return { updated, created, problems };
+  }
+  if (action === 'setPicks') {
+    // Fixing a member's picks: no kickoff locks or season limits.
+    const fixtures = await eplFixtures(db);
+    const ref = db.doc(`eplPicks/${String(request.data.uid)}`);
+    const snap = await ref.get();
+    const weeks = snap.exists ? snap.get('weeks') ?? {} : {};
+    let picks;
+    try { picks = checkPicks({ fixtures, weeks, matchday: request.data.matchday, picks: request.data.picks, now: Date.now(), admin: true }); }
+    catch (error) { eplFail(error); }
+    await ref.set({ weeks: { ...weeks, [request.data.matchday]: picks }, updatedAt: FieldValue.serverTimestamp() });
+    return { picks };
+  }
+  throw new HttpsError('invalid-argument', 'Unknown pool action.');
+});

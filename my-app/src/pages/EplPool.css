@@ -1,0 +1,77 @@
+/* EPL pool (/eplpool and /eplpool/admin). */
+.epl-page { max-width: 760px; margin: 0 auto; padding: 0 16px 48px; color: #f3ecfb; }
+.epl-header { text-align: center; margin: 12px 0 18px; }
+.epl-header h1 { margin: 4px 0 6px; font-size: 34px; color: #fff; }
+.epl-eyebrow { margin: 0; color: #00f0ff; font-size: 13px; font-weight: bold; letter-spacing: .12em; text-transform: uppercase; }
+.epl-note { color: #cfc4e0; font-size: 15px; }
+.epl-note a, .epl-link { color: #00f0ff; }
+.epl-error { color: #ff9a9a; font-weight: bold; }
+.epl-link { padding: 0; border: 0; background: none; font: inherit; text-decoration: underline; cursor: pointer; }
+.epl-card { margin: 0 0 18px; padding: 16px; border: 1px solid #3e3150; border-radius: 12px; background: #1d1529; }
+.epl-page button { font: inherit; }
+.epl-page button:not(.epl-team):not(.epl-link), .epl-page select, .epl-page input:not([type="checkbox"]) {
+  padding: 8px 12px; border: 1px solid #4b3d63; border-radius: 8px; background: #2c2240; color: #f3ecfb; }
+.epl-page button:disabled { opacity: .5; cursor: default; }
+.epl-primary { background: #d8ff00 !important; color: #1a1325 !important; border-color: #d8ff00 !important; font-weight: bold; }
+.epl-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.epl-row input { flex: 1 1 220px; min-width: 0; }
+
+.epl-weeks { display: flex; justify-content: center; gap: 8px; margin-bottom: 12px; }
+.epl-weeks button { min-width: 44px; font-size: 20px; }
+.epl-count { text-align: center; margin: 0 0 8px; color: #cfc4e0; }
+.epl-count strong { color: #d8ff00; font-size: 20px; }
+.epl-matches { list-style: none; margin: 0; padding: 0; }
+.epl-day { margin: 16px 0 6px; color: #00f0ff; font-size: 15px; }
+.epl-match { display: grid; grid-template-columns: 1fr 1fr auto; gap: 8px; align-items: stretch; margin-bottom: 8px; }
+.epl-team { display: flex; align-items: center; gap: 8px; min-width: 0; padding: 10px; border: 2px solid #3e3150; border-radius: 10px;
+  background: #241b33; color: #f3ecfb; text-align: left; cursor: pointer; }
+.epl-team:hover:not(:disabled) { border-color: #00f0ff; }
+.epl-team.chosen { border-color: #d8ff00; background: #2e3417; }
+.epl-team:disabled { cursor: default; opacity: .55; }
+.epl-team.chosen:disabled { opacity: .85; }
+.epl-team-name { flex: 1; min-width: 0; overflow-wrap: break-word; font-weight: bold; }
+.epl-crest { width: 26px; height: 26px; flex: 0 0 26px; object-fit: contain; }
+.epl-crest-blank { display: inline-grid; place-items: center; border-radius: 50%; background: #3e3150; font-size: 9px; }
+.epl-badge { flex: 0 0 auto; font-size: 12px; font-variant-numeric: tabular-nums; color: #7dffb0; }
+.epl-badge.low { color: #ffd37a; }
+.epl-badge.max { color: #ff9a9a; }
+.epl-kickoff { align-self: center; min-width: 64px; text-align: center; color: #cfc4e0; font-size: 13px; font-variant-numeric: tabular-nums; }
+.locked .epl-kickoff { color: #a99bbd; }
+.epl-actions { display: flex; gap: 8px; justify-content: center; margin-top: 14px; }
+
+.epl-tracker { margin-top: 28px; }
+.epl-tracker h2 { margin: 0 0 4px; font-size: 20px; color: #fff; }
+.epl-tracker ul { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 6px; list-style: none; margin: 10px 0 0; padding: 0; }
+.epl-tracker li { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 8px; background: #241b33; font-size: 14px; }
+.epl-tracker li span:not(.epl-crest) { flex: 1; min-width: 0; overflow-wrap: break-word; }
+.epl-tracker li strong { font-variant-numeric: tabular-nums; }
+.epl-tracker li.low strong { color: #ffd37a; }
+.epl-tracker li.ok strong { color: #7dffb0; }
+.epl-tracker li.max strong { color: #ff9a9a; }
+.epl-rules { margin-top: 24px; text-align: center; font-size: 13px; }
+
+.epl-admin { max-width: 900px; }
+.epl-admin-section h2 { margin: 0 0 6px; font-size: 20px; color: #fff; }
+.epl-invites { list-style: none; margin: 10px 0 0; padding: 0; }
+.epl-invites li { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 8px 0; border-top: 1px solid #2a2139; }
+.epl-invites code { flex: 1 1 260px; min-width: 0; overflow-wrap: anywhere; color: #cfc4e0; font-size: 12px; }
+.epl-problems { font-size: 13px; color: #ffd37a; }
+.epl-table-scroll { overflow-x: auto; }
+.epl-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.epl-table th, .epl-table td { padding: 8px 6px; border-bottom: 1px solid #2a2139; text-align: left; vertical-align: middle; }
+.epl-table small { color: #a99bbd; }
+.epl-fix { margin-top: 16px; padding-top: 12px; border-top: 2px dashed #3e3150; }
+.epl-fix h3 { margin: 0 0 8px; color: #fff; }
+
+@media (max-width: 520px) {
+  .epl-match { grid-template-columns: 1fr 1fr; }
+  .epl-kickoff { grid-column: 1 / -1; order: -1; margin-top: 4px; text-align: left; min-width: 0; font-size: 12px; }
+  .epl-page .epl-team { padding: 8px 6px; gap: 5px; font-size: 13px; }
+  .epl-badge { font-size: 11px; }
+  .epl-crest { width: 22px; height: 22px; flex-basis: 22px; }
+}
+.epl-team-switch { margin-left: 4px; font-weight: bold; }
+.epl-check { display: inline-flex; gap: 4px; align-items: center; color: #cfc4e0; font-size: 14px; }
+.epl-managers { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
+.epl-chip { display: inline-flex; gap: 4px; align-items: center; padding: 2px 8px; border-radius: 999px; background: #2c2240; font-size: 13px; }
+.epl-managers select { padding: 4px 6px !important; font-size: 13px; }
