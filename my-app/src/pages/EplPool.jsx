@@ -186,6 +186,7 @@ export default function EplPool() {
           {teams.map(entry => <option key={entry.uid} value={entry.uid}>{entry.name}{entry.uid === member.uid ? ' (you)' : ''}</option>)}
         </select>
         : <strong>{member.name}</strong>}
+        {' · '}<Link to="/eplpool/standings">Standings</Link>
         {(member.admin || member.uid === OWNER_UID) && <> · <Link to="/eplpool/admin">Pool admin</Link></>}</p>}
     </header>
     {body}

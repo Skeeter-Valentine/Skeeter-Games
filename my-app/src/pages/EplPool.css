@@ -75,3 +75,19 @@
 .epl-managers { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
 .epl-chip { display: inline-flex; gap: 4px; align-items: center; padding: 2px 8px; border-radius: 999px; background: #2c2240; font-size: 13px; }
 .epl-managers select { padding: 4px 6px !important; font-size: 13px; }
+.epl-tabs { display: flex; justify-content: center; gap: 6px; margin-bottom: 14px; flex-wrap: wrap; }
+.epl-page .epl-tabs button.active { background: #d8ff00; color: #1a1325; border-color: #d8ff00; font-weight: bold; }
+.epl-sheet th { position: sticky; top: 0; background: #1d1529; white-space: nowrap; }
+.epl-sheet td { white-space: nowrap; }
+.epl-sheet tr.mine td { background: #2e3417; }
+.epl-sheet tr.epl-out td { color: #8f82a3; }
+.epl-pick-cell b { margin-left: 4px; font-size: 12px; }
+.epl-pick-cell.r-W b { color: #7dffb0; }
+.epl-pick-cell.r-T b { color: #ffd37a; }
+.epl-pick-cell.r-L b { color: #ff9a9a; }
+.epl-cell-empty, .epl-cell-hidden { color: #8f82a3; }
+.epl-player-select { margin: 0 auto 8px; display: block; font-weight: bold; }
+.epl-player-grid { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: 16px; align-items: start; }
+.epl-must td.low { color: #ffd37a; font-weight: bold; }
+.epl-must td.max { color: #ff9a9a; }
+@media (max-width: 760px) { .epl-player-grid { grid-template-columns: 1fr; } }

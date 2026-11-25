@@ -16,6 +16,7 @@ export const joinPool = code => call('eplJoin', { code });
 // `team`: the member whose entry this is (yours if left out, or one you manage).
 export const savePicks = (matchday, picks, team = null) => call('eplSavePicks', { matchday, picks, ...(team ? { team } : {}) });
 export const poolAdmin = (action, data = {}) => call('eplAdmin', { action, ...data });
+export const loadBoard = () => call('eplBoard', {});
 
 // Calls back with { user, member }: user undefined while checking, null when
 // signed out; member null when not in the pool (kept up to date).

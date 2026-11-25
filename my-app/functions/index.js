@@ -10,7 +10,7 @@ import { dailyPeppers, gauntletPeppers, gauntletRunPeppers, pepperWeek } from '.
 import { buildStats, parseAttemptId } from './adminStats.js';
 import { creatorInvited, featuredCreator, guestFromRun, guestRecord, playerSearch, playerSummary } from './creators.js';
 import { dailyHistoryUpdate, gauntletHistoryUpdate, signedIn } from './history.js';
-import { EplError, FOOTBALL_DATA_URL, SEASON, checkPicks, cleanName, fixtureFromApi, newInviteCode, resolveImport } from './eplPool.js';
+import { EplError, FOOTBALL_DATA_URL, SEASON, buildBoard, checkPicks, cleanName, fixtureFromApi, newInviteCode, resolveImport } from './eplPool.js';
 
 initializeApp();
 
@@ -371,6 +371,26 @@ export const eplSavePicks = onCall({ region: 'us-central1', maxInstances: 10 }, 
     transaction.set(picksRef, { weeks: { ...weeks, [request.data.matchday]: picks }, updatedAt: FieldValue.serverTimestamp() });
     return { picks };
   });
+});
+
+// The standings, Survivor and every player's season, for pool members.
+// Includes imported players who haven't joined yet (their picks sit on their
+// invite). Others' picks show once their match kicks off; admins see all.
+export const eplBoard = onCall({ region: 'us-central1', maxInstances: 10 }, async request => {
+  const uid = eplUser(request);
+  const db = getFirestore();
+  const me = await eplMember(db, uid);
+  const admin = OWNER_UIDS.includes(uid) || !!me?.admin;
+  if (!me && !admin) throw new HttpsError('permission-denied', 'Join the pool with an invite first.');
+  const [fixtures, members, picks, invites] = await Promise.all([eplFixtures(db), db.collection('eplMembers').get(),
+    db.collection('eplPicks').get(), db.collection('eplInvites').get()]);
+  const weeksOf = new Map(picks.docs.map(entry => [entry.id, entry.get('weeks') ?? {}]));
+  const players = [
+    ...members.docs.map(entry => ({ id: entry.id, name: entry.get('name'), weeks: weeksOf.get(entry.id) ?? {} })),
+    ...invites.docs.filter(entry => !entry.get('usedBy') && entry.get('weeks')).map(entry => ({ id: `invite-${entry.id}`, name: entry.get('name'), weeks: entry.get('weeks') })),
+  ];
+  const managed = members.docs.filter(entry => (entry.get('managers') ?? []).includes(uid)).map(entry => entry.id);
+  return { me: uid, ...buildBoard({ fixtures, players, now: Date.now(), seeAll: admin ? players.map(player => player.id) : [uid, ...managed] }) };
 });
 
 // Pool admin actions.

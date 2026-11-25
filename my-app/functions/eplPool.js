@@ -123,6 +123,65 @@ export function checkPicks({ fixtures, weeks = {}, matchday, picks, now, admin =
   return cleaned;
 }
 
+// ----- Standings, Survivor and player pages -----
+export const POINTS = { W: 3, T: 1, L: 0 };
+export const SURVIVE_POINTS = 5; // a week's 3 teams need this many points
+export const FOUR_POINT_WEEKS = 2; // weeks a player may survive with 4
+export const STRIKES_OUT = 3;
+const FINISHED = ['FINISHED', 'AWARDED'];
+// W, T or L for `teamId` in a finished match (null until it's played).
+export function result(fixture, teamId) {
+  if (!fixture || !FINISHED.includes(fixture.status) || fixture.score?.home == null) return null;
+  const mine = fixture.home.id === teamId ? fixture.score.home : fixture.score.away;
+  const theirs = fixture.home.id === teamId ? fixture.score.away : fixture.score.home;
+  return mine > theirs ? 'W' : mine === theirs ? 'T' : 'L';
+}
+
+// Everything the standings page shows, for `players` ([{ id, name, weeks }]).
+// Other players' picks in matches that haven't kicked off come back hidden
+// (`seeAll`: the ids whose picks the viewer may always see).
+export function buildBoard({ fixtures, players, now, seeAll = [] }) {
+  const byId = new Map(fixtures.map(fixture => [fixture.id, fixture]));
+  const days = [...new Set(fixtures.map(fixture => fixture.matchday))].sort((a, b) => a - b);
+  const weekDone = new Map(days.map(day => [day, fixtures.filter(f => f.matchday === day).every(f => FINISHED.includes(f.status) || f.status === 'CANCELLED')]));
+  const weekStarted = new Map(days.map(day => [day, fixtures.some(f => f.matchday === day && isLocked(f, now))]));
+  const teams = new Map();
+  for (const fixture of fixtures) for (const side of [fixture.home, fixture.away]) if (side.id) teams.set(side.id, { id: side.id, name: side.name, crest: side.crest });
+
+  const rows = players.map(player => {
+    const open = seeAll.includes(player.id);
+    let total = 0, wins = 0, ties = 0, losses = 0, strikes = 0, fourLeft = FOUR_POINT_WEEKS, outAfter = null;
+    const weeks = {};
+    for (const day of days) {
+      const picks = (player.weeks?.[day] ?? []).map(pick => {
+        const fixture = byId.get(pick.match);
+        if (!open && fixture && !isLocked(fixture, now)) return { hidden: true };
+        const outcome = result(fixture, pick.team);
+        if (outcome) { total += POINTS[outcome]; if (outcome === 'W') wins++; else if (outcome === 'T') ties++; else losses++; }
+        return { team: pick.team, match: pick.match, result: outcome };
+      });
+      const points = picks.reduce((sum, pick) => sum + (pick.result ? POINTS[pick.result] : 0), 0);
+      // Decided once every pick is played and the week has no picks still to come.
+      const decided = picks.every(pick => pick.result) && (picks.length === PICKS_PER_WEEK || weekDone.get(day));
+      let usedFour = false, strike = false;
+      if (decided && outAfter === null) {
+        if (points === 4 && fourLeft > 0) { fourLeft--; usedFour = true; }
+        else if (points < SURVIVE_POINTS) { strike = true; strikes++; if (strikes >= STRIKES_OUT) outAfter = day; }
+      }
+      if (picks.length || weekStarted.get(day)) weeks[day] = { picks, points, decided, usedFour, strike };
+    }
+    // Team counts from the picks the viewer can see (so hidden picks don't show here either).
+    const counts = teamCounts(Object.fromEntries(Object.entries(weeks).map(([day, week]) => [day, week.picks.filter(pick => !pick.hidden)])));
+    return { id: player.id, name: player.name, total, wins, ties, losses, weeks,
+      survivor: { strikes, fourLeft, out: outAfter !== null, outAfter },
+      counts: Object.fromEntries([...teams.keys()].map(id => [id, counts.get(id) ?? 0])) };
+  });
+  // Latest week with a result in it, for the "this week" column.
+  const lastDay = [...days].reverse().find(day => fixtures.some(f => f.matchday === day && FINISHED.includes(f.status))) ?? null;
+  return { teams: [...teams.values()].sort((a, b) => a.name.localeCompare(b.name)), days, lastDay, players: rows,
+    rules: { MIN_PER_TEAM, MAX_PER_TEAM, PICKS_PER_WEEK, SURVIVE_POINTS, FOUR_POINT_WEEKS, STRIKES_OUT } };
+}
+
 // ----- Importing picks made before the site (the pool's spreadsheet) -----
 // A name as the spreadsheet or football-data.org writes it, reduced to compare:
 // "Brighton & Hove Albion FC", "Brighton & Hove" and "Brighton Hove" all match.

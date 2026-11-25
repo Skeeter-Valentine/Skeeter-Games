@@ -99,3 +99,38 @@ test('spreadsheet team names find their matches', async () => {
   assert.deepEqual(problems, ['Game week 1: no match found for "Chelsea"']);
   assert.match(resolveImport(fixtures, { 1: ['Arsenal', 'Brighton & Hove Albion'] }).problems[0], /already picked/);
 });
+
+test('the board scores picks and runs Survivor like the spreadsheet', async () => {
+  const { buildBoard } = await import('./eplPool.js');
+  // Six weeks, all played. Home teams always win except where noted.
+  const fixtures = league(6).map(f => ({ ...f, status: 'FINISHED', score: { home: 1, away: 0 } }));
+  const games = day => fixtures.filter(f => f.matchday === day);
+  const tie = id => { const f = fixtures.find(x => x.id === id); f.score = { home: 1, away: 1 }; };
+  const weeks = {};
+  // Week 1: 3 wins = 9. Week 2: W, T, L = 4 (first 4-point week). Week 3: 4 again (second).
+  // Week 4: 4 with none left = strike. Week 5: 2 losses + win = 3, strike. Week 6: L L L = strike 3, out.
+  weeks[1] = games(1).map(f => pick(f, 'home'));
+  tie(games(2)[1].id); weeks[2] = [pick(games(2)[0]), pick(games(2)[1]), pick(games(2)[2], 'away')];
+  tie(games(3)[1].id); weeks[3] = [pick(games(3)[0]), pick(games(3)[1]), pick(games(3)[2], 'away')];
+  tie(games(4)[1].id); weeks[4] = [pick(games(4)[0]), pick(games(4)[1]), pick(games(4)[2], 'away')];
+  weeks[5] = [pick(games(5)[0]), pick(games(5)[1], 'away'), pick(games(5)[2], 'away')];
+  weeks[6] = games(6).map(f => pick(f, 'away'));
+  const board = buildBoard({ fixtures, players: [{ id: 'me', name: 'Me', weeks }], now: Date.parse('2027-01-01') });
+  const me = board.players[0];
+  assert.equal(me.total, 9 + 4 + 4 + 4 + 3 + 0);
+  assert.deepEqual([me.wins, me.ties, me.losses], [3 + 1 + 1 + 1 + 1, 3, 8]);
+  assert.deepEqual(me.survivor, { strikes: 3, fourLeft: 0, out: true, outAfter: 6 });
+  assert.equal(me.weeks[2].usedFour, true);
+  assert.equal(me.weeks[4].strike, true);
+  assert.equal(board.lastDay, 6);
+});
+
+test('other players\' picks stay hidden until kickoff', async () => {
+  const { buildBoard } = await import('./eplPool.js');
+  const fixtures = league(2);
+  const weeks = { 1: [pick(fixtures[0])] };
+  const before = Date.parse('2026-08-15T12:00:00Z');
+  const board = buildBoard({ fixtures, players: [{ id: 'a', name: 'A', weeks }, { id: 'b', name: 'B', weeks }], now: before, seeAll: ['a'] });
+  assert.equal(board.players[0].weeks[1].picks[0].team, fixtures[0].home.id);
+  assert.deepEqual(board.players[1].weeks[1].picks[0], { hidden: true });
+});

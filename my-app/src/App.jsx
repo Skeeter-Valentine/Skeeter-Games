@@ -13,6 +13,7 @@ import AdminCreators from './pages/AdminCreators';
 import CreatorHome from './pages/CreatorHome';
 import EplPool from './pages/EplPool';
 import EplPoolAdmin from './pages/EplPoolAdmin';
+import EplStandings from './pages/EplStandings';
 import Gauntlet from './pages/Gauntlet';
 import SkeedleBeadle from './games/skeedle-beadle/SkeedleBeadle';
 import PepperPlacer from './games/pepper-placer/PepperPlacer';
@@ -88,6 +89,7 @@ export default function App() {
         {/* Invite-only EPL pick pool: unlinked and noindex. */}
         <Route path="/eplpool" element={<EplPool />} />
         <Route path="/eplpool/admin" element={<EplPoolAdmin />} />
+        <Route path="/eplpool/standings" element={<EplStandings />} />
         <Route path="*" element={<div>404 - Game Not Found</div>} />
       </Routes>
       <PageAds />
