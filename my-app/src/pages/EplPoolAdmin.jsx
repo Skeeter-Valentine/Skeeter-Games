@@ -126,6 +126,10 @@ function Members({ members, fixtures, me, onChange }) {
           <td><Managers member={member} members={members} onChange={onChange} /></td>
           <td className="epl-row">
             <button type="button" onClick={() => setFixing(fixing === member.uid ? null : member.uid)}>{fixing === member.uid ? 'Close' : 'Picks'}</button>
+            <button type="button" className="epl-link" onClick={() => {
+              const name = window.prompt(`New name for ${member.name}:`, member.name);
+              if (name && name.trim() && name.trim() !== member.name) poolAdmin('rename', { uid: member.uid, name }).then(onChange);
+            }}>Rename</button>
             {member.uid !== me && <button type="button" className="epl-link" onClick={() => {
               if (window.confirm(`Remove ${member.name} from the pool? Their picks are kept.`)) poolAdmin('removeMember', { uid: member.uid }).then(onChange);
             }}>Remove</button>}
