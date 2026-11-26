@@ -2,7 +2,7 @@ import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { createServer, loadEnv } from 'vite';
 import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { pages } from '../src/seo/pages.js';
+import { pages, privatePages } from '../src/seo/pages.js';
 import { adSettings, adsTxt, adHeadTags } from '../src/ads/adsSetup.js';
 
 const env = { ...loadEnv('production', process.cwd(), ''), ...process.env };
@@ -26,6 +26,15 @@ try {
     const directory = `dist${page.path === '/' ? '' : page.path}`;
     await mkdir(directory, { recursive: true });
     await writeFile(`${directory}/index.html`, html);
+  }
+  // Unlisted pages: a real page (not the 404) with their own title and link
+  // preview, marked noindex and left out of the sitemap.
+  for (const page of Object.values(privatePages)) {
+    const head = `<meta name="robots" content="noindex,nofollow" /><meta name="description" content="${escape(page.description)}" />`
+      + `<meta property="og:title" content="${escape(page.title)}" /><meta property="og:description" content="${escape(page.description)}" />`;
+    const html = template.replace(/<title>.*?<\/title>/s, `<title>${escape(page.title)}</title>`).replace('</head>', `${head}</head>`);
+    await mkdir(`dist${page.path}`, { recursive: true });
+    await writeFile(`dist${page.path}/index.html`, html);
   }
   const urls = Object.values(pages).map(page => `<url><loc>${escape(new URL(page.path, origin).href)}</loc></url>`).join('\n');
   await writeFile('dist/sitemap.xml', `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls}\n</urlset>`);

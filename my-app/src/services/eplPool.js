@@ -63,10 +63,13 @@ export async function loadMembers() {
 const OPEN = ['SCHEDULED', 'TIMED', 'POSTPONED'];
 export const isLocked = (fixture, now = Date.now()) => !OPEN.includes(fixture.status) || Date.parse(fixture.utcDate) <= now;
 export const matchdays = fixtures => [...new Set(fixtures.map(fixture => fixture.matchday))].sort((a, b) => a - b);
-// The week to show first: the first with a match still to kick off.
+// A game week's picks all lock when its first match kicks off.
+export const weekLocked = (fixtures, matchday, now = Date.now()) => fixtures.some(fixture => fixture.matchday === matchday && isLocked(fixture, now));
+export const firstKickoff = (fixtures, matchday) => fixtures.filter(fixture => fixture.matchday === matchday).map(fixture => fixture.utcDate).sort()[0];
+// The week to show first: the first that hasn't locked yet.
 export function currentMatchday(fixtures, now = Date.now()) {
-  const open = fixtures.filter(fixture => !isLocked(fixture, now)).map(fixture => fixture.matchday);
-  return open.length ? Math.min(...open) : Math.max(0, ...fixtures.map(fixture => fixture.matchday));
+  const open = matchdays(fixtures).filter(day => !weekLocked(fixtures, day, now));
+  return open.length ? open[0] : Math.max(0, ...fixtures.map(fixture => fixture.matchday));
 }
 export function teamsOf(fixtures) {
   const teams = new Map();

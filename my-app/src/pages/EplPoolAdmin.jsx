@@ -105,6 +105,36 @@ function Managers({ member, members, onChange }) {
   </div>;
 }
 
+// Enter or fix any team's picks for any week: members, and imported players
+// who haven't joined yet. Not held to the lock or the season limits.
+function EnterPicks({ members, invites, fixtures, onChange }) {
+  const teams = [
+    ...members.map(member => ({ key: `m:${member.uid}`, name: member.name, weeks: member.weeks, target: { uid: member.uid } })),
+    ...invites.filter(invite => !invite.usedBy).map(invite => ({ key: `i:${invite.code}`, name: invite.name || 'Unnamed invite', weeks: invite.weeks ?? {},
+      target: { invite: invite.code }, pending: true })),
+  ].sort((a, b) => a.name.localeCompare(b.name));
+  const [key, setKey] = useState('');
+  const [matchday, setMatchday] = useState(() => currentMatchday(fixtures));
+  const team = teams.find(entry => entry.key === key);
+  const days = matchdays(fixtures);
+  return <section className="epl-card epl-admin-section">
+    <h2>Enter picks</h2>
+    <p className="epl-note">Pick for any team, any week, including players who haven't joined yet (their picks come with them when they do).
+      This isn't held to the lock or the 4–7 limits, so double-check before saving.</p>
+    <div className="epl-row">
+      <select value={key} onChange={event => setKey(event.target.value)} aria-label="Team">
+        <option value="">Choose a team…</option>
+        {teams.map(entry => <option key={entry.key} value={entry.key}>{entry.name}{entry.pending ? ' (not joined yet)' : ''}</option>)}
+      </select>
+      <select value={matchday} onChange={event => setMatchday(Number(event.target.value))} aria-label="Game week">
+        {days.map(day => <option key={day} value={day}>Game week {day}{team ? ` (${team.weeks[day]?.length ?? 0}/${PICKS_PER_WEEK})` : ''}</option>)}
+      </select>
+    </div>
+    {team && <WeekPicker key={team.key} admin fixtures={fixtures} matchday={matchday} saved={team.weeks[matchday] ?? []} counts={teamCounts(team.weeks)}
+      onSave={picks => poolAdmin('setPicks', { ...team.target, matchday, picks }).then(onChange)} />}
+  </section>;
+}
+
 function Members({ members, fixtures, me, onChange }) {
   const [fixing, setFixing] = useState(null);
   const [matchday, setMatchday] = useState(() => currentMatchday(fixtures));
@@ -173,6 +203,7 @@ export default function EplPoolAdmin() {
   else body = <>
     <Fixtures season={data.season} onChange={reload} />
     {data.season.fixtures.length > 0 && <Import onChange={reload} />}
+    {data.season.fixtures.length > 0 && <EnterPicks members={data.members} invites={data.invites} fixtures={data.season.fixtures} onChange={reload} />}
     <Invites invites={data.invites} onChange={reload} />
     <Members members={data.members} fixtures={data.season.fixtures} me={user.uid} onChange={reload} />
   </>;

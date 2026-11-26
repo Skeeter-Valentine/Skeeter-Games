@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
-import { pages, pageFor, gamePages } from './pages.js';
+import { pages, pageFor, gamePages, privatePageFor } from './pages.js';
 import InfoContent from '../pages/info/InfoContent.jsx';
 import AdSlot from '../ads/AdSlot.jsx';
 import { GAUNTLET_START } from '../gauntlet/gauntlet.js';
@@ -27,14 +27,15 @@ export function Guide({ page, ad = null }) {
 export default function Seo() {
   const { pathname } = useLocation();
   const page = pageFor(pathname);
+  const unlisted = page ? null : privatePageFor(pathname);
   useEffect(() => {
-    document.title = page?.title || 'Page Not Found | Skeeter Games';
+    document.title = page?.title || unlisted?.title || 'Page Not Found | Skeeter Games';
     const setMeta = (name, content) => {
       let tag = document.head.querySelector(`meta[name="${name}"]`);
       if (!tag) { tag = document.createElement('meta'); tag.name = name; document.head.appendChild(tag); }
       tag.content = content;
     };
-    setMeta('description', page?.description || 'This puzzle page could not be found.');
+    setMeta('description', page?.description || unlisted?.description || 'This puzzle page could not be found.');
     setMeta('robots', page ? 'index,follow' : 'noindex,follow');
     let canonical = document.head.querySelector('link[rel="canonical"]');
     const origin = import.meta.env.VITE_SITE_URL;
@@ -42,6 +43,6 @@ export default function Seo() {
       if (!canonical) { canonical = document.createElement('link'); canonical.rel = 'canonical'; document.head.appendChild(canonical); }
       canonical.href = new URL(page.path, origin).href;
     } else canonical?.remove();
-  }, [page]);
+  }, [page, unlisted]);
   return <Guide page={page} ad={page && page.kind !== 'info' ? <AdSlot placement="guide" /> : null} />;
 }

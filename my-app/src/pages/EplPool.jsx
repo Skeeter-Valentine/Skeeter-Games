@@ -3,8 +3,8 @@ import { Link, useSearchParams } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import SignInDialog from '../components/SignInDialog';
 import { signOutPlayer } from '../services/gauntletBoard.js';
-import { MAX_PER_TEAM, MIN_PER_TEAM, PICKS_PER_WEEK, currentMatchday, friendlyPoolError, isLocked, joinPool, loadManagedTeams, loadPicks, loadSeason,
-  matchdays, savePicks, teamCounts, teamsOf, watchPoolMember } from '../services/eplPool.js';
+import { MAX_PER_TEAM, MIN_PER_TEAM, PICKS_PER_WEEK, currentMatchday, firstKickoff, friendlyPoolError, isLocked, joinPool, loadManagedTeams, loadPicks, loadSeason,
+  matchdays, savePicks, teamCounts, teamsOf, watchPoolMember, weekLocked } from '../services/eplPool.js';
 import './EplPool.css';
 
 const OWNER_UID = 'QtQwYuCN4vWR1XNyz9K6fe9G7jl1';
@@ -26,7 +26,10 @@ export function WeekPicker({ fixtures, matchday, saved, counts, onSave, admin = 
   // A new week or a fresh save: start from what's saved.
   useEffect(() => { setPicks(JSON.parse(savedKey)); }, [matchday, savedKey]);
   useEffect(() => { setStatus({ busy: false, error: '', note: '' }); }, [matchday]);
-  const locked = fixture => !admin && isLocked(fixture, now);
+  // The whole week locks at its first kickoff (admins fixing picks aren't held to it).
+  const closed = weekLocked(fixtures, matchday, now);
+  const locked = () => !admin && closed;
+  const lockAt = firstKickoff(fixtures, matchday);
   // Season counts with the unsaved changes.
   const live = new Map(counts);
   for (const pick of saved) live.set(pick.team, (live.get(pick.team) ?? 1) - 1);
@@ -53,12 +56,14 @@ export function WeekPicker({ fixtures, matchday, saved, counts, onSave, admin = 
 
   let lastDay = '';
   return <section className="epl-week" aria-label={`Game week ${matchday}`}>
-    <p className="epl-count"><strong>{picks.length}</strong> of {PICKS_PER_WEEK} picked{admin && ' · admin fix: kickoff locks and season limits are off'}</p>
+    <p className="epl-count"><strong>{picks.length}</strong> of {PICKS_PER_WEEK} picked{admin && ' · admin fix: the lock and season limits are off'}</p>
+    {lockAt && <p className={`epl-lock${closed ? ' closed' : ''}`}>{closed ? `Picks locked at the first kickoff (${kickoff({ utcDate: lockAt })}).`
+      : `Picks lock at the first kickoff: ${kickoff({ utcDate: lockAt })}.`}</p>}
     <ul className="epl-matches">
       {week.map(fixture => {
         const day = dayLabel(fixture), heading = day !== lastDay && day;
         lastDay = day;
-        const isLockedNow = locked(fixture);
+        const isLockedNow = locked();
         const pick = picks.find(entry => entry.match === fixture.id);
         return <li key={fixture.id} className={isLockedNow ? 'locked' : ''}>
           {heading && <h3 className="epl-day">{heading}</h3>}
@@ -73,8 +78,8 @@ export function WeekPicker({ fixtures, matchday, saved, counts, onSave, admin = 
                 <span className={`epl-badge${count >= MAX_PER_TEAM ? ' max' : count < MIN_PER_TEAM ? ' low' : ''}`} title={`Picked ${count} of ${MAX_PER_TEAM} times this season`}>{count}/{MAX_PER_TEAM}</span>
               </button>;
             })}
-            <span className="epl-kickoff">{isLockedNow
-              ? fixture.score?.home != null ? `${fixture.score.home}–${fixture.score.away}` : 'Locked'
+            <span className="epl-kickoff">{fixture.score?.home != null && isLocked(fixture, now)
+              ? `${fixture.score.home}–${fixture.score.away}`
               : new Date(fixture.utcDate).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })}</span>
           </div>
         </li>;
@@ -190,8 +195,8 @@ export default function EplPool() {
         {(member.admin || member.uid === OWNER_UID) && <> · <Link to="/eplpool/admin">Pool admin</Link></>}</p>}
     </header>
     {body}
-    {member && <p className="epl-note epl-rules">Pick {PICKS_PER_WEEK} teams each game week, each from a different match. A pick locks when its match kicks off;
-      until then you can change it. Times are shown in your time zone.</p>}
+    {member && <p className="epl-note epl-rules">Pick {PICKS_PER_WEEK} teams each game week, each from a different match. All of a week's picks lock when
+      its first match kicks off; until then you can change them. Times are shown in your time zone.</p>}
     {signingIn && <SignInDialog onClose={() => setSigningIn(false)} reason="Sign in to make your picks in the EPL pool." />}
   </main>;
 }

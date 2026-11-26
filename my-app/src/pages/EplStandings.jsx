@@ -20,7 +20,7 @@ function places(rows, key) {
 
 function Pick({ pick, teams }) {
   if (!pick) return <span className="epl-cell-empty">—</span>;
-  if (pick.hidden) return <span className="epl-cell-hidden" title="Shows once every match this week has kicked off">🔒</span>;
+  if (pick.hidden) return <span className="epl-cell-hidden" title="Shows when the week's first match kicks off">🔒</span>;
   return <span className={`epl-pick-cell${pick.result ? ` r-${pick.result}` : ''}`}>
     {teams.get(pick.team)?.name ?? '?'}{pick.result && <b>{pick.result}</b>}
   </span>;
@@ -134,7 +134,7 @@ export default function EplStandings() {
     {tab === 'standings' && <Standings board={board} teams={teams} onPlayer={id => go('player', id)} />}
     {tab === 'survivor' && <Survivor board={board} onPlayer={id => go('player', id)} />}
     {tab === 'player' && <PlayerPage board={board} teams={teams} player={player} onPlayer={id => go('player', id)} />}
-    <p className="epl-note epl-rules">3 points for a win, 1 for a tie. Other players' picks for a week show once every match that week has kicked off.</p>
+    <p className="epl-note epl-rules">3 points for a win, 1 for a tie. Picks lock, and everyone's show, when a week's first match kicks off.</p>
   </>;
   return <main className="epl-page epl-admin">
     <Navbar />

@@ -35,5 +35,13 @@ pages['/gauntlet'] = { path: '/gauntlet', name: 'Skeeter Gauntlet', title: 'Skee
 // Site information pages. kind: 'info' keeps them out of the game lists.
 pages['/about'] = { path: '/about', kind: 'info', name: 'About Skeeter Games', title: 'About | Skeeter Games', topic: 'About the site', description: 'Skeeter Games is a free puzzle site with new daily logic, word and number puzzles, archives, difficulty ratings and practice modes.' };
 pages['/privacy'] = { path: '/privacy', kind: 'info', name: 'Privacy Policy', title: 'Privacy Policy | Skeeter Games', topic: 'Privacy policy', description: 'How Skeeter Games uses local storage, anonymous puzzle results, analytics and advertising cookies, and the privacy choices available to you.' };
+// Unlisted pages (the invite-only EPL pool): their own title and link
+// preview, but kept out of search results, the sitemap and the game lists.
+export const privatePages = {
+  '/eplpool': { path: '/eplpool', title: 'EPL Pool | Skeeter Games', description: 'Make your picks in an invite-only Premier League pick pool.' },
+  '/eplpool/standings': { path: '/eplpool/standings', title: 'Standings | EPL Pool', description: 'Standings, Survivor and every player’s season in the EPL pool.' },
+  '/eplpool/admin': { path: '/eplpool/admin', title: 'Pool admin | EPL Pool', description: 'Admin for the EPL pick pool.' },
+};
+export const privatePageFor = pathname => privatePages[pathname.replace(/\/+$/, '') || '/'];
 export const gamePages = () => Object.values(pages).filter(page => page.path !== '/' && page.kind !== 'info');
 export function pageFor(pathname) { return pages[pathname.replace(/\/+$/, '') || '/']; }

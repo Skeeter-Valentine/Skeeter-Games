@@ -468,15 +468,21 @@ export const eplAdmin = onCall({ region: 'us-central1', maxInstances: 5 }, async
     return { updated, created, problems };
   }
   if (action === 'setPicks') {
-    // Fixing a member's picks: no kickoff locks or season limits.
+    // Entering or fixing a team's picks: no lock or season limits. `uid` for
+    // a member, or `invite` for a player who hasn't joined yet (their picks
+    // stay on the invite and come with them when they join).
     const fixtures = await eplFixtures(db);
-    const ref = db.doc(`eplPicks/${String(request.data.uid)}`);
+    const invite = request.data.invite ? db.doc(`eplInvites/${String(request.data.invite)}`) : null;
+    const ref = invite ?? db.doc(`eplPicks/${String(request.data.uid)}`);
     const snap = await ref.get();
+    if (invite && (!snap.exists || snap.get('usedBy'))) throw new HttpsError('not-found', 'That player has joined since; reload the page.');
     const weeks = snap.exists ? snap.get('weeks') ?? {} : {};
     let picks;
     try { picks = checkPicks({ fixtures, weeks, matchday: request.data.matchday, picks: request.data.picks, now: Date.now(), admin: true }); }
     catch (error) { eplFail(error); }
-    await ref.set({ weeks: { ...weeks, [request.data.matchday]: picks }, updatedAt: FieldValue.serverTimestamp() });
+    const update = { weeks: { ...weeks, [request.data.matchday]: picks } };
+    if (invite) await ref.update(update);
+    else await ref.set({ ...update, updatedAt: FieldValue.serverTimestamp() });
     return { picks };
   }
   throw new HttpsError('invalid-argument', 'Unknown pool action.');

@@ -91,3 +91,5 @@
 .epl-must td.low { color: #ffd37a; font-weight: bold; }
 .epl-must td.max { color: #ff9a9a; }
 @media (max-width: 760px) { .epl-player-grid { grid-template-columns: 1fr; } }
+.epl-lock { text-align: center; margin: 0 0 10px; color: #ffd37a; font-size: 14px; font-weight: bold; }
+.epl-lock.closed { color: #a99bbd; }

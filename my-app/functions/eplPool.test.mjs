@@ -26,7 +26,7 @@ test('fixtures come from football-data.org matches', () => {
   assert.equal(fixture.matchday, 13);
 });
 
-test('three picks a week, each from a different match, locked at kickoff', () => {
+test('three picks a week, each from a different match, all locked at the first kickoff', () => {
   const fixtures = league(38);
   const week1 = fixtures.filter(f => f.matchday === 1);
   const before = Date.parse('2026-08-15T12:00:00Z');
@@ -35,14 +35,16 @@ test('three picks a week, each from a different match, locked at kickoff', () =>
   assert.throws(() => checkPicks({ fixtures, matchday: 1, picks: [pick(week1[0]), pick(week1[0], 'away')], now: before }), /different match/);
   assert.throws(() => checkPicks({ fixtures, matchday: 1, picks: [pick(week1[0]), pick(week1[1]), pick(week1[2]), pick(week1[2])], now: before }), /at most 3/);
   assert.throws(() => checkPicks({ fixtures, matchday: 1, picks: [pick(fixtures[5])], now: before }), /not a team playing/);
-  // After the first match kicks off (14:00), it can't be added or changed...
+  // Once the first match kicks off (14:00), nothing that week can change,
+  // even picks in later matches.
   const during = Date.parse('2026-08-15T14:30:00Z');
-  assert.throws(() => checkPicks({ fixtures, matchday: 1, picks: [pick(week1[0])], now: during }), /already kicked off/);
   const weeks = { 1: [pick(week1[0]), pick(week1[1])] };
-  assert.throws(() => checkPicks({ fixtures, weeks, matchday: 1, picks: [pick(week1[1])], now: during }), /can't change/);
-  // ...but later matches can.
-  assert.equal(checkPicks({ fixtures, weeks, matchday: 1, picks: [pick(week1[0]), pick(week1[1], 'away'), pick(week1[2])], now: during }).length, 3);
-  // An admin fixing picks isn't held to the locks.
+  assert.throws(() => checkPicks({ fixtures, weeks, matchday: 1, picks: [pick(week1[0]), pick(week1[1]), pick(week1[2])], now: during }), /picks are locked/);
+  assert.throws(() => checkPicks({ fixtures, weeks, matchday: 1, picks: [pick(week1[1])], now: during }), /picks are locked/);
+  assert.equal(checkPicks({ fixtures, weeks, matchday: 1, picks: [pick(week1[1]), pick(week1[0])], now: during }).length, 2, 'saving the same picks is fine');
+  // Next week is still open.
+  assert.equal(checkPicks({ fixtures, weeks, matchday: 2, picks: [pick(fixtures.find(f => f.matchday === 2))], now: during }).length, 1);
+  // An admin fixing picks isn't held to the lock.
   assert.equal(checkPicks({ fixtures, weeks, matchday: 1, picks: [pick(week1[2])], now: during, admin: true }).length, 1);
 });
 
@@ -125,20 +127,16 @@ test('the board scores picks and runs Survivor like the spreadsheet', async () =
   assert.equal(board.lastDay, 6);
 });
 
-test('other players\' picks stay hidden until every match that week has kicked off', async () => {
+test('other players\' picks show when the week locks, at its first kickoff', async () => {
   const { buildBoard } = await import('./eplPool.js');
   const fixtures = league(2);
-  const weeks = { 1: [pick(fixtures[0])] };
+  const weeks = { 1: [pick(fixtures[2])] };
   const players = [{ id: 'a', name: 'A', weeks }, { id: 'b', name: 'B', weeks }];
   // Week 1's matches kick off at 14:00, 15:00 and 16:00.
   const at = time => buildBoard({ fixtures, players, now: Date.parse(`2026-08-15T${time}:00Z`), seeAll: ['a'] });
-  assert.equal(at('12:00').players[0].weeks[1].picks[0].team, fixtures[0].home.id, 'your own picks always show');
-  assert.deepEqual(at('12:00').players[1].weeks[1].picks[0], { hidden: true });
-  assert.deepEqual(at('15:30').players[1].weeks[1].picks[0], { hidden: true }, 'still hidden: one match to go');
-  assert.equal(at('16:00').players[1].weeks[1].picks[0].team, fixtures[0].home.id, 'shown once the last match kicks off');
-  // A postponed match doesn't keep the week hidden.
-  fixtures[2].status = 'POSTPONED';
-  assert.equal(at('15:30').players[1].weeks[1].picks[0].team, fixtures[0].home.id);
+  assert.equal(at('12:00').players[0].weeks[1].picks[0].team, fixtures[2].home.id, 'your own picks always show');
+  assert.deepEqual(at('13:59').players[1].weeks[1].picks[0], { hidden: true });
+  assert.equal(at('14:00').players[1].weeks[1].picks[0].team, fixtures[2].home.id, 'shown from the first kickoff, even for later matches');
 });
 
 test('weeks with no picks give no strike', async () => {

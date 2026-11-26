@@ -1,6 +1,6 @@
 // The EPL pool (skeetergames.org/eplpool): an invite-only Premier League pick
 // pool. Each game week every player picks PICKS_PER_WEEK teams, each from a
-// different match, and each pick locks when its match kicks off. Over the
+// different match, and all of a week's picks lock when its first match kicks off. Over the
 // season a player must pick every team at least MIN_PER_TEAM times and at
 // most MAX_PER_TEAM times.
 //
@@ -33,6 +33,8 @@ export const FOOTBALL_DATA_URL = `https://api.football-data.org/v4/competitions/
 // A match is locked once it kicks off (or has been played, or is underway).
 const OPEN_STATUSES = ['SCHEDULED', 'TIMED', 'POSTPONED'];
 export const isLocked = (fixture, now) => !OPEN_STATUSES.includes(fixture.status) || Date.parse(fixture.utcDate) <= now;
+// A game week's picks lock when its first match kicks off.
+export const weekLocked = (fixtures, matchday, now) => fixtures.some(fixture => fixture.matchday === matchday && isLocked(fixture, now));
 
 // ----- Picks -----
 // How many times each team (by id) has been picked across `weeks`.
@@ -55,8 +57,10 @@ export function shortfall(fixtures, weeks, now) {
   if (!totalNeed) return 0;
   // Open slots per week, and which needy teams could fill them.
   const byWeek = new Map();
+  const closed = new Map();
   for (const fixture of fixtures) {
-    if (isLocked(fixture, now)) continue;
+    if (!closed.has(fixture.matchday)) closed.set(fixture.matchday, weekLocked(fixtures, fixture.matchday, now));
+    if (closed.get(fixture.matchday)) continue;
     const week = byWeek.get(fixture.matchday) ?? { teams: new Set() };
     for (const side of [fixture.home, fixture.away]) if (need.has(side.id)) week.teams.add(side.id);
     byWeek.set(fixture.matchday, week);
@@ -101,13 +105,10 @@ export function checkPicks({ fixtures, weeks = {}, matchday, picks, now, admin =
   if (new Set(cleaned.map(pick => pick.match)).size !== cleaned.length) throw new EplError('invalid-argument', 'Pick each team from a different match.');
   const before = weeks[matchday] ?? [];
   if (!admin) {
-    const locked = id => isLocked(week.find(f => f.id === id), now);
     const same = (a, b) => a.team === b.team && a.match === b.match;
-    for (const old of before) {
-      if (locked(old.match) && !cleaned.some(pick => same(pick, old))) throw new EplError('failed-precondition', `${name(old.team)}'s match has kicked off, so that pick can't change.`);
-    }
-    for (const pick of cleaned) {
-      if (locked(pick.match) && !before.some(old => same(pick, old))) throw new EplError('failed-precondition', `${name(pick.team)}'s match has already kicked off.`);
+    const unchanged = before.length === cleaned.length && before.every(old => cleaned.some(pick => same(pick, old)));
+    if (weekLocked(fixtures, matchday, now) && !unchanged) {
+      throw new EplError('failed-precondition', `Game week ${matchday} has started, so its picks are locked.`);
     }
     const after = { ...weeks, [matchday]: cleaned };
     const counts = teamCounts(after);
@@ -138,17 +139,17 @@ export function result(fixture, teamId) {
 }
 
 // Everything the standings page shows, for `players` ([{ id, name, weeks }]).
-// Other players' picks for a week stay hidden until every match that week has
-// kicked off (or been postponed or cancelled), so nobody sees anyone's picks
-// while they can still change their own. `seeAll`: the ids whose picks the
+// Other players' picks for a week stay hidden until the week's first match
+// kicks off (when every pick locks), so nobody sees anyone's picks while they
+// can still change their own. `seeAll`: the ids whose picks the
 // viewer may always see (their own, and teams they pick for).
 export function buildBoard({ fixtures, players, now, seeAll = [] }) {
   const byId = new Map(fixtures.map(fixture => [fixture.id, fixture]));
   const days = [...new Set(fixtures.map(fixture => fixture.matchday))].sort((a, b) => a - b);
   const weekDone = new Map(days.map(day => [day, fixtures.filter(f => f.matchday === day).every(f => FINISHED.includes(f.status) || f.status === 'CANCELLED')]));
   const weekStarted = new Map(days.map(day => [day, fixtures.some(f => f.matchday === day && isLocked(f, now))]));
-  const weekRevealed = new Map(days.map(day => [day, fixtures.filter(f => f.matchday === day)
-    .every(f => isLocked(f, now) || f.status === 'POSTPONED' || f.status === 'CANCELLED')]));
+  // Picks lock at the week's first kickoff, so that's when everyone's show.
+  const weekRevealed = weekStarted;
   const teams = new Map();
   for (const fixture of fixtures) for (const side of [fixture.home, fixture.away]) if (side.id) teams.set(side.id, { id: side.id, name: side.name, crest: side.crest });
 
