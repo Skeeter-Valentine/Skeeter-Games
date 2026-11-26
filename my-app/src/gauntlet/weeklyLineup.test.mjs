@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { LINEUP_RULES_FROM, MAX_MILD, ONE_MILD_FROM, OTHER_GAMES, WORD_GAMES, addDays, gauntletLevel, lineupFor, otherGamesFor, seeded, weekStart } from './weeklyLineup.js';
+import { FAIR_FROM, LINEUP_RULES_FROM, MAX_MILD, ONE_MILD_FROM, OTHER_GAMES, WORD_GAMES, addDays, gauntletLevel, lineupFor, otherGamesFor, seeded, weekStart } from './weeklyLineup.js';
 import { gauntletLineup } from './gauntlet.js';
 import { lineupIds } from '../../functions/gauntlet.js';
 
@@ -52,8 +52,10 @@ test('each week the other puzzles are a new set every day, spread evenly', () =>
     // 28 slots over 10 puzzles: eight play 3 times, two play twice. From
     // ONE_MILD_FROM, swapping out extra Mild puzzles can shift a play or two.
     const plays = games.map(game => week.filter(day => day.includes(game)).length);
-    if (addDays(LINEUP_RULES_FROM, w * 7 + 6) < ONE_MILD_FROM) assert.deepEqual([...plays].sort(), [2, 2, 3, 3, 3, 3, 3, 3, 3, 3]);
-    else assert.ok(plays.every(count => count >= 1 && count <= 4), `week ${w}: ${plays}`);
+    // From FAIR_FROM the spread is kept over any seven days instead (see its own test).
+    const monday = addDays(LINEUP_RULES_FROM, w * 7);
+    if (addDays(monday, 6) < ONE_MILD_FROM) assert.deepEqual([...plays].sort(), [2, 2, 3, 3, 3, 3, 3, 3, 3, 3]);
+    else assert.ok(plays.every(count => count >= 1 && count <= 5), `week ${w}: ${plays}`);
     if (w >= 2) games.forEach((game, i) => { if (plays[i] === 2) lighter.add(game); });
   }
   // The two lighter puzzles change from week to week.
@@ -61,8 +63,10 @@ test('each week the other puzzles are a new set every day, spread evenly', () =>
 });
 
 test('weeks are not all alike', () => {
+  // Each Monday steers clear of the Sunday before, so Mondays vary less than
+  // a free draw would, but still change from week to week.
   const firstDays = new Set(weeks.map(week => week[0].slice().sort().join('+')));
-  assert.ok(firstDays.size > WEEKS * 0.9);
+  assert.ok(firstDays.size > WEEKS * 0.4);
   // Games can play on consecutive days (no every-other-day pattern).
   const days = weeks.flat();
   assert.ok(days.slice(1).some((day, i) => day.some(id => days[i].includes(id))));
@@ -97,4 +101,24 @@ test('from ONE_MILD_FROM, at most one single-pepper game a day', () => {
     if (mild === 1) mildDays += 1;
   }
   assert.ok(mildDays > 300, 'most days still have one easy game');
+});
+
+test('from FAIR_FROM: rarely the same puzzle two days running, never three, and an even spread', async () => {
+  const { FAIR_FROM } = await import('./weeklyLineup.js');
+  const others = day => lineupFor(day).filter(id => !WORD_GAMES.includes(id));
+  let days = 0, backToBack = 0;
+  const year = {};
+  // From a week after FAIR_FROM (the days before it were planned the old way).
+  for (let day = addDays(FAIR_FROM, 7); day < '2028-12-31'; day = addDays(day, 1)) {
+    days++;
+    const today = others(day), [a, b] = [others(addDays(day, -2)), others(addDays(day, -1))];
+    assert.ok(!today.some(id => a.includes(id) && b.includes(id)), `${day}: a puzzle on three days running`);
+    backToBack += today.filter(id => b.includes(id)).length;
+    const week = Array.from({ length: 7 }, (_, n) => others(addDays(day, -n)));
+    for (const id of OTHER_GAMES) assert.ok(week.filter(list => list.includes(id)).length <= 4, `${day}: ${id} more than 4 times in 7 days`);
+    if (day.startsWith('2027')) for (const id of today) year[id] = (year[id] ?? 0) + 1;
+  }
+  assert.ok(backToBack < days * 0.01, `${backToBack} repeats from the day before in ${days} days`);
+  // Over a year, every puzzle plays about equally (146 each on average).
+  for (const id of OTHER_GAMES) assert.ok(year[id] > 130 && year[id] < 160, `${id}: ${year[id]} plays in 2027`);
 });

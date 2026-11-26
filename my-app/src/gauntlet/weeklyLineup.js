@@ -44,6 +44,13 @@ export const LINEUP_RULES_FROM = '2026-10-26';
 // The first gauntlet day with at most MAX_MILD single-pepper games. Change
 // only to a later day, and only for days nobody has seen.
 export const ONE_MILD_FROM = '2026-11-19';
+// From FAIR_FROM each day's four puzzles are chosen day by day, looking back
+// over the last week (not the calendar week, so Mondays don't reset it):
+// never the same puzzle two days running when it can be helped, at most
+// MAX_PLAYS times in any seven days, the least recently and least often played
+// first. The one-pepper limit is part of the choice.
+export const FAIR_FROM = '2026-11-27';
+export const MAX_PLAYS = 3;
 export const MAX_MILD = 1;
 // Gauntlet puzzles come from the date this many days later (see gauntlet.js).
 export const PUZZLE_DAY_OFFSET = 20000;
@@ -171,6 +178,43 @@ function limitMild(plan, d, monday, games, rng) {
   plan[d] = { words, others };
 }
 
+// Chooses day d's four puzzles (from FAIR_FROM). `before(n)` is the puzzle
+// list n days earlier (into last week too). Rules are relaxed one at a time
+// only if a day can't be filled otherwise.
+function fairDay(plan, d, monday, games, rng, before) {
+  const day = addDays(monday, d);
+  const mild = id => gauntletLevel(id, day) === 1;
+  // Plays in the six days before (with today, any seven days).
+  const recent = [1, 2, 3, 4, 5, 6].map(before);
+  const plays = id => recent.filter(day => day.includes(id)).length;
+  const yesterday = recent[0], dayBefore = recent[1];
+  const order = shuffler(rng)(games);
+  const chosen = [];
+  const mildCount = () => plan[d].words.filter(mild).length + chosen.filter(mild).length;
+  // Never the same four as an earlier day this week.
+  const repeats = id => chosen.length === 3 && plan.slice(0, d).some(entry => sameSet(entry.others, [...chosen, id]));
+  const mildOk = id => !(mild(id) && mildCount() >= MAX_MILD);
+  const threeRunning = id => yesterday.includes(id) && dayBefore.includes(id);
+  // Best first; each later rule set gives a little ground, the one-pepper
+  // limit last of all.
+  const levels = [
+    id => !yesterday.includes(id) && plays(id) < MAX_PLAYS && mildOk(id) && !repeats(id),
+    id => !yesterday.includes(id) && mildOk(id) && !repeats(id),
+    id => !threeRunning(id) && plays(id) < MAX_PLAYS && mildOk(id) && !repeats(id),
+    id => !threeRunning(id) && mildOk(id),
+    mildOk,
+    () => true,
+  ];
+  while (chosen.length < GAUNTLET_SIZE - WORDS_PER_DAY) {
+    for (const allowed of levels) {
+      const options = order.filter(id => !chosen.includes(id) && allowed(id))
+        .sort((a, b) => plays(a) - plays(b) || Number(dayBefore.includes(a)) - Number(dayBefore.includes(b)));
+      if (options.length) { chosen.push(options[0]); break; }
+    }
+  }
+  plan[d] = { words: plan[d].words, others: chosen };
+}
+
 // A week's plan: seven days of { words, others }, worked out once per week.
 const plans = new Map();
 export function weekPlan(monday) {
@@ -183,6 +227,13 @@ export function weekPlan(monday) {
     // Its own random draw, so weeks before the rule never change.
     const swapRng = seeded(`skeeter-gauntlet-mild-v1:${monday}`);
     for (let d = 0; d < 7; d++) limitMild(plan, d, monday, games, swapRng);
+    // From FAIR_FROM, days are chosen for an even spread instead.
+    if (addDays(monday, 6) >= FAIR_FROM) {
+      const fairRng = seeded(`skeeter-gauntlet-fair-v1:${monday}`);
+      const lastWeek = () => weekPlan(addDays(monday, -7));
+      const before = d => n => (d - n >= 0 ? plan[d - n].others : lastWeek()[7 + d - n].others);
+      for (let d = 0; d < 7; d++) if (addDays(monday, d) >= FAIR_FROM) fairDay(plan, d, monday, games, fairRng, before(d));
+    }
     plans.set(monday, plan);
   }
   return plans.get(monday);

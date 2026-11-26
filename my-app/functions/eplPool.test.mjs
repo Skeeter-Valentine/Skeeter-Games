@@ -125,12 +125,29 @@ test('the board scores picks and runs Survivor like the spreadsheet', async () =
   assert.equal(board.lastDay, 6);
 });
 
-test('other players\' picks stay hidden until kickoff', async () => {
+test('other players\' picks stay hidden until every match that week has kicked off', async () => {
   const { buildBoard } = await import('./eplPool.js');
   const fixtures = league(2);
   const weeks = { 1: [pick(fixtures[0])] };
-  const before = Date.parse('2026-08-15T12:00:00Z');
-  const board = buildBoard({ fixtures, players: [{ id: 'a', name: 'A', weeks }, { id: 'b', name: 'B', weeks }], now: before, seeAll: ['a'] });
-  assert.equal(board.players[0].weeks[1].picks[0].team, fixtures[0].home.id);
-  assert.deepEqual(board.players[1].weeks[1].picks[0], { hidden: true });
+  const players = [{ id: 'a', name: 'A', weeks }, { id: 'b', name: 'B', weeks }];
+  // Week 1's matches kick off at 14:00, 15:00 and 16:00.
+  const at = time => buildBoard({ fixtures, players, now: Date.parse(`2026-08-15T${time}:00Z`), seeAll: ['a'] });
+  assert.equal(at('12:00').players[0].weeks[1].picks[0].team, fixtures[0].home.id, 'your own picks always show');
+  assert.deepEqual(at('12:00').players[1].weeks[1].picks[0], { hidden: true });
+  assert.deepEqual(at('15:30').players[1].weeks[1].picks[0], { hidden: true }, 'still hidden: one match to go');
+  assert.equal(at('16:00').players[1].weeks[1].picks[0].team, fixtures[0].home.id, 'shown once the last match kicks off');
+  // A postponed match doesn't keep the week hidden.
+  fixtures[2].status = 'POSTPONED';
+  assert.equal(at('15:30').players[1].weeks[1].picks[0].team, fixtures[0].home.id);
+});
+
+test('weeks with no picks give no strike', async () => {
+  const { buildBoard } = await import('./eplPool.js');
+  const fixtures = league(3).map(f => ({ ...f, status: 'FINISHED', score: { home: 1, away: 0 } }));
+  const weeks = { 1: fixtures.filter(f => f.matchday === 1).map(f => pick(f)) };
+  const board = buildBoard({ fixtures, players: [{ id: 'a', name: 'A', weeks }], now: Date.parse('2027-01-01') });
+  assert.deepEqual(board.players[0].survivor, { strikes: 0, fourLeft: 2, out: false, outAfter: null });
+  // One pick in a finished week still counts (the missing two score 0).
+  const partial = { ...weeks, 2: [pick(fixtures.find(f => f.matchday === 2))] };
+  assert.equal(buildBoard({ fixtures, players: [{ id: 'a', name: 'A', weeks: partial }], now: Date.parse('2027-01-01') }).players[0].survivor.strikes, 1);
 });

@@ -138,13 +138,17 @@ export function result(fixture, teamId) {
 }
 
 // Everything the standings page shows, for `players` ([{ id, name, weeks }]).
-// Other players' picks in matches that haven't kicked off come back hidden
-// (`seeAll`: the ids whose picks the viewer may always see).
+// Other players' picks for a week stay hidden until every match that week has
+// kicked off (or been postponed or cancelled), so nobody sees anyone's picks
+// while they can still change their own. `seeAll`: the ids whose picks the
+// viewer may always see (their own, and teams they pick for).
 export function buildBoard({ fixtures, players, now, seeAll = [] }) {
   const byId = new Map(fixtures.map(fixture => [fixture.id, fixture]));
   const days = [...new Set(fixtures.map(fixture => fixture.matchday))].sort((a, b) => a - b);
   const weekDone = new Map(days.map(day => [day, fixtures.filter(f => f.matchday === day).every(f => FINISHED.includes(f.status) || f.status === 'CANCELLED')]));
   const weekStarted = new Map(days.map(day => [day, fixtures.some(f => f.matchday === day && isLocked(f, now))]));
+  const weekRevealed = new Map(days.map(day => [day, fixtures.filter(f => f.matchday === day)
+    .every(f => isLocked(f, now) || f.status === 'POSTPONED' || f.status === 'CANCELLED')]));
   const teams = new Map();
   for (const fixture of fixtures) for (const side of [fixture.home, fixture.away]) if (side.id) teams.set(side.id, { id: side.id, name: side.name, crest: side.crest });
 
@@ -155,14 +159,16 @@ export function buildBoard({ fixtures, players, now, seeAll = [] }) {
     for (const day of days) {
       const picks = (player.weeks?.[day] ?? []).map(pick => {
         const fixture = byId.get(pick.match);
-        if (!open && fixture && !isLocked(fixture, now)) return { hidden: true };
+        if (!open && !weekRevealed.get(day)) return { hidden: true };
         const outcome = result(fixture, pick.team);
         if (outcome) { total += POINTS[outcome]; if (outcome === 'W') wins++; else if (outcome === 'T') ties++; else losses++; }
         return { team: pick.team, match: pick.match, result: outcome };
       });
       const points = picks.reduce((sum, pick) => sum + (pick.result ? POINTS[pick.result] : 0), 0);
       // Decided once every pick is played and the week has no picks still to come.
-      const decided = picks.every(pick => pick.result) && (picks.length === PICKS_PER_WEEK || weekDone.get(day));
+      // A week with no picks at all doesn't count (weeks before the pool's
+      // records start, or still to be entered): no points, no strike.
+      const decided = picks.length > 0 && picks.every(pick => pick.result) && (picks.length === PICKS_PER_WEEK || weekDone.get(day));
       let usedFour = false, strike = false;
       if (decided && outAfter === null) {
         if (points === 4 && fourLeft > 0) { fourLeft--; usedFour = true; }

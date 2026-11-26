@@ -375,7 +375,7 @@ export const eplSavePicks = onCall({ region: 'us-central1', maxInstances: 10 }, 
 
 // The standings, Survivor and every player's season, for pool members.
 // Includes imported players who haven't joined yet (their picks sit on their
-// invite). Others' picks show once their match kicks off; admins see all.
+// invite). Others' picks show once the whole week has kicked off (admins too).
 export const eplBoard = onCall({ region: 'us-central1', maxInstances: 10 }, async request => {
   const uid = eplUser(request);
   const db = getFirestore();
@@ -390,7 +390,7 @@ export const eplBoard = onCall({ region: 'us-central1', maxInstances: 10 }, asyn
     ...invites.docs.filter(entry => !entry.get('usedBy') && entry.get('weeks')).map(entry => ({ id: `invite-${entry.id}`, name: entry.get('name'), weeks: entry.get('weeks') })),
   ];
   const managed = members.docs.filter(entry => (entry.get('managers') ?? []).includes(uid)).map(entry => entry.id);
-  return { me: uid, ...buildBoard({ fixtures, players, now: Date.now(), seeAll: admin ? players.map(player => player.id) : [uid, ...managed] }) };
+  return { me: uid, ...buildBoard({ fixtures, players, now: Date.now(), seeAll: [uid, ...managed] }) };
 });
 
 // Pool admin actions.
